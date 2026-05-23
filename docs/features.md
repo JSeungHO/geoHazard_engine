@@ -19,6 +19,40 @@
 - [x] Production 빌드: `vite-plugin-cesium` (Workers/WASM)
 - [x] Vercel Production + `dev` Preview 배포
 
+## 알려진 이슈 (잔여)
+
+> [evaluation.md](./evaluation.md) — B-2 buffer 직접 업데이트, A-1~A-4, U-4~U-8 등 미구현 항목
+
+## 알려진 이슈 및 기술 부채
+
+> 상세: [기획·테스트 평가](./evaluation.md) §2~§4
+
+### 버그 / 성능 (요약)
+
+| 우선 | ID | 요약 |
+|------|-----|------|
+| 🔴 HIGH | B-1 | ~~WaterWaveEngine 경계 셀~~ → **수정됨** (흡수 damping) |
+| 🔴 HIGH | B-2 | body 재생성 — **0.05m 잔여** (buffer update는 미구현) |
+| 🔴 HIGH | B-3 | ~~매 버텍스 new Cartesian3~~ → **수정됨** |
+| 🟡 MED | B-4 | ~~강수 emitter 600m 고정~~ → **카메라 고도 비례** |
+| 🟡 MED | B-5 | ~~마운트마다 캔버스~~ → **상수화** |
+| 🟡 MED | B-6 | ~~drainage 없음~~ → **auto-rise drainage 추가** |
+| 🟡 MED | B-7 | ~~Error Boundary 없음~~ → **SimulationErrorBoundary** |
+| 🟢 LOW | B-8 | ~~O(n) 전체 비교~~ → **min/max fast-path** |
+
+### 아키텍처 개선 (요약)
+
+| ID | 요약 |
+|----|------|
+| A-1 | `FloodVisualization` 등 홍수 전용 코드가 `components/`에 분산 → `modules/flood/`로 통합 |
+| A-2 | `App.jsx` 단일 `<FloodModule />` — 모듈 라우터 필요 |
+| A-3 | 강남 좌표가 4곳 이상 분산 → `locations/gangnam.js` 통합 |
+| A-4 | 단위 테스트 없음 — Vitest + 순수 함수 3종 최소 커버 |
+
+### QA 체크리스트
+
+릴리스 전 확인 항목: [evaluation.md §7](./evaluation.md#7-테스터-체크리스트-다음-릴리스-전-확인-항목)
+
 ## 핵심 기술 제약
 
 - **State**: Cesium viewer는 `useRef`로 관리 (`FloodModule.viewerRef` → `RainSystem` / `FloodVisualization`)
@@ -80,7 +114,7 @@ pick 실패 시 `getDefaultFloodBounds()`(강남역 고정) fallback.
 | 범위 | `getViewFloodBounds` — 침수와 동일 pitch 밴드 |
 | 강도 | `emissionRate`: 0 또는 20~500 (`intensity` 0~100%) |
 | 파티클 | 세로 streak canvas, gravity `-280` |
-| 고도 | emitter center `EMITTER_ALTITUDE = 600m` |
+| 고도 | `max(cameraHeight × 1.2, 300m)` — 카메라 고도 비례 |
 | BoxEmitter Z | `120 + bandFrac × 320` m |
 | viewer | `viewerRef` — FloodModule과 동일 인스턴스 |
 
@@ -139,5 +173,6 @@ pick 실패 시 `getDefaultFloodBounds()`(강남역 고정) fallback.
 
 ## 관련 문서
 
-- [디자인 가이드](./design.md) — 레이아웃·컬러·패널
-- [작업 목표](./goals.md) — 로드맵·쓰나미·지진 확장
+- [기획·테스트 평가](./evaluation.md) — 버그·아키텍처 상세, QA 체크리스트
+- [디자인 가이드](./design.md) — UX 백로그
+- [작업 목표](./goals.md) — 수정 로드맵·우선순위

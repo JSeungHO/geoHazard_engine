@@ -1,4 +1,5 @@
 import './RainControl.css'
+import { rainIntensityToMmPerHour } from '../utils/displayUnits'
 
 export default function RainControl({
   intensity,
@@ -6,10 +7,12 @@ export default function RainControl({
   autoAccumulate,
   onAutoAccumulateChange,
 }) {
+  const mmPerHour = rainIntensityToMmPerHour(intensity)
+
   return (
     <div className="rain-control">
       <label htmlFor="rain-slider" className="rain-label">
-        강수량 (Rain Intensity)
+        강수량 (화면 내 강도)
       </label>
       <input
         id="rain-slider"
@@ -21,6 +24,9 @@ export default function RainControl({
         className="rain-slider"
       />
       <span className="rain-value">{intensity}%</span>
+      {intensity > 0 && (
+        <p className="rain-hint">≈ {mmPerHour} mm/h (교육용 근사치)</p>
+      )}
 
       <button
         type="button"

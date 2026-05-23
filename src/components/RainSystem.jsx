@@ -10,20 +10,10 @@ import {
 } from 'cesium'
 import { boundsChanged, addViewFloodBoundsListener, getRainEmitterPosition, getViewFloodBounds, getFloodBandStartForPitch } from '../utils/floodViewBounds'
 
-const EMITTER_ALTITUDE = 600
+const MIN_EMITTER_ALTITUDE = 300
+const EMITTER_ALTITUDE_FACTOR = 1.2
 
-const emissionRateFromIntensity = (intensity) =>
-  intensity === 0 ? 0 : Math.floor(20 + (intensity / 100) * 480)
-
-const gravityScratch = new Cartesian3()
-
-const applyGravity = (particle, dt) => {
-  Cartesian3.normalize(particle.position, gravityScratch)
-  Cartesian3.multiplyByScalar(gravityScratch, -280 * dt, gravityScratch)
-  particle.velocity = Cartesian3.add(particle.velocity, gravityScratch, particle.velocity)
-}
-
-const createRainStreakImage = () => {
+const RAIN_STREAK_IMAGE = (() => {
   const canvas = document.createElement('canvas')
   canvas.width = 8
   canvas.height = 128
@@ -37,6 +27,22 @@ const createRainStreakImage = () => {
   ctx.fillRect(2, 0, 4, 128)
 
   return canvas.toDataURL('image/png')
+})()
+
+const emissionRateFromIntensity = (intensity) =>
+  intensity === 0 ? 0 : Math.floor(20 + (intensity / 100) * 480)
+
+const gravityScratch = new Cartesian3()
+
+const applyGravity = (particle, dt) => {
+  Cartesian3.normalize(particle.position, gravityScratch)
+  Cartesian3.multiplyByScalar(gravityScratch, -280 * dt, gravityScratch)
+  particle.velocity = Cartesian3.add(particle.velocity, gravityScratch, particle.velocity)
+}
+
+const getEmitterAltitude = (viewer) => {
+  const cameraHeight = viewer.camera.positionCartographic.height
+  return Math.max(cameraHeight * EMITTER_ALTITUDE_FACTOR, MIN_EMITTER_ALTITUDE)
 }
 
 const getViewer = (viewerRef) => {
@@ -65,7 +71,8 @@ const applyBoundsToRain = (viewer, particleSystem, bounds) => {
   const { widthM, depthM } = boundsToEmitterSize(bounds)
   const bandFrac = 1 - getFloodBandStartForPitch(viewer.camera.pitch)
   const { lon, lat } = getRainEmitterPosition(viewer, bounds)
-  const center = Cartesian3.fromDegrees(lon, lat, EMITTER_ALTITUDE)
+  const altitude = getEmitterAltitude(viewer)
+  const center = Cartesian3.fromDegrees(lon, lat, altitude)
 
   particleSystem.modelMatrix = Transforms.eastNorthUpToFixedFrame(center)
   particleSystem.emitter = new BoxEmitter(
@@ -94,7 +101,7 @@ export default function RainSystem({ viewerRef, intensity }) {
     boundsRef.current = bounds
 
     const particleSystem = new ParticleSystem({
-      image: createRainStreakImage(),
+      image: RAIN_STREAK_IMAGE,
       startColor: Color.fromCssColorString('rgba(200, 230, 255, 0.95)'),
       endColor: Color.fromCssColorString('rgba(200, 230, 255, 0.08)'),
       startScale: 1.0,

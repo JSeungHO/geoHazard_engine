@@ -49,6 +49,13 @@
   text-align: right;
 }
 
+.rain-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-text-subtle);
+}
+
 .rain-toggle {
   display: flex;
   align-items: center;

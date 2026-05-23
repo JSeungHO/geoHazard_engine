@@ -204,6 +204,17 @@ export function terrainGridChanged(a, b, epsilon = 0.05) {
   if (!a || !b) return true
   if (a.resolution !== b.resolution || a.heights.length !== b.heights.length) return true
 
+  if (
+    Number.isFinite(a.minHeight) &&
+    Number.isFinite(b.minHeight) &&
+    Number.isFinite(a.maxHeight) &&
+    Number.isFinite(b.maxHeight) &&
+    Math.abs(a.minHeight - b.minHeight) <= epsilon &&
+    Math.abs(a.maxHeight - b.maxHeight) <= epsilon
+  ) {
+    return false
+  }
+
   for (let i = 0; i < a.heights.length; i++) {
     if (Math.abs(a.heights[i] - b.heights[i]) > epsilon) return true
   }

@@ -33,10 +33,39 @@ export class WaterWaveEngine {
       }
     }
 
-    for (let i = 0; i < heights.length; i++) {
-      velocities[i] = (velocities[i] + accelerations[i] * dt) * damping
-      heights[i] += velocities[i] * dt
-      heights[i] = Math.max(-this.maxAmplitude, Math.min(this.maxAmplitude, heights[i]))
+    for (let y = 1; y < res - 1; y++) {
+      for (let x = 1; x < res - 1; x++) {
+        const i = y * res + x
+        velocities[i] = (velocities[i] + accelerations[i] * dt) * damping
+        heights[i] += velocities[i] * dt
+        heights[i] = Math.max(-this.maxAmplitude, Math.min(this.maxAmplitude, heights[i]))
+      }
+    }
+
+    this._dampBoundary(res, heights, velocities)
+  }
+
+  /** 경계 셀 흡수 — 고정 0 경계에서의 반사 아티팩트 완화 */
+  _dampBoundary(res, heights, velocities) {
+    const edgeDamping = 0.82
+    const heightAbsorb = 0.88
+
+    for (let x = 0; x < res; x++) {
+      const top = x
+      const bottom = (res - 1) * res + x
+      velocities[top] *= edgeDamping
+      heights[top] *= heightAbsorb
+      velocities[bottom] *= edgeDamping
+      heights[bottom] *= heightAbsorb
+    }
+
+    for (let y = 0; y < res; y++) {
+      const left = y * res
+      const right = y * res + (res - 1)
+      velocities[left] *= edgeDamping
+      heights[left] *= heightAbsorb
+      velocities[right] *= edgeDamping
+      heights[right] *= heightAbsorb
     }
   }
 

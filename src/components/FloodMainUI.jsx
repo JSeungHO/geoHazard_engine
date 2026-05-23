@@ -13,12 +13,20 @@ export default function FloodMainUI({
   onWaterLevelChange,
   simulationOptions,
   onOptionChange,
+  onReset,
 }) {
   return (
     <aside className="flood-main-ui">
       <header className="flood-main-ui__header">
-        <h1 className="flood-main-ui__title">GeoHazard Engine</h1>
-        <p className="flood-main-ui__subtitle">강남역 침수 · 강수 시뮬레이션</p>
+        <div className="flood-main-ui__header-row">
+          <div>
+            <h1 className="flood-main-ui__title">GeoHazard Engine</h1>
+            <p className="flood-main-ui__subtitle">강남역 침수 · 강수 시뮬레이션</p>
+          </div>
+          <button type="button" className="flood-main-ui__reset" onClick={onReset}>
+            초기화
+          </button>
+        </div>
       </header>
 
       <div className="flood-main-ui__content">

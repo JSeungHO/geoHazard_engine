@@ -7,6 +7,9 @@ import SceneLayerController from '../../components/SceneLayerController'
 import RainSystem from '../../components/RainSystem'
 import FloodVisualization from '../../components/FloodVisualization'
 import MapStatusBar from '../../components/MapStatusBar'
+import SimulationErrorBoundary from '../../components/SimulationErrorBoundary'
+import WelcomeOverlay from '../../components/WelcomeOverlay'
+import TerrainLoadingBadge from '../../components/TerrainLoadingBadge'
 import { DEFAULT_SIMULATION_OPTIONS } from '../../constants/simulationDefaults'
 import { DEFAULT_LAYER_VISIBILITY } from '../../constants/sceneLayers'
 import useRainWaterAccumulation from './useRainWaterAccumulation'
@@ -28,6 +31,8 @@ export default function FloodModule() {
   const [autoWaterRise, setAutoWaterRise] = useState(false)
   const [simulationOptions, setSimulationOptions] = useState(DEFAULT_SIMULATION_OPTIONS)
   const [layerVisibility, setLayerVisibility] = useState(DEFAULT_LAYER_VISIBILITY)
+  const [isTerrainLoading, setIsTerrainLoading] = useState(false)
+  const [simulationEpoch, setSimulationEpoch] = useState(0)
 
   const handleViewerReady = useCallback(() => {
     setIsViewerReady(true)
@@ -43,6 +48,19 @@ export default function FloodModule() {
 
   const handleFlyToGangnam = useCallback(() => {
     flyToGangnam(viewerRef.current)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setRainIntensity(0)
+    setWaterLevel(0)
+    setAutoWaterRise(false)
+    setSimulationOptions(DEFAULT_SIMULATION_OPTIONS)
+    setIsTerrainLoading(false)
+    setSimulationEpoch((epoch) => epoch + 1)
+  }, [])
+
+  const handleTerrainLoadingChange = useCallback((loading) => {
+    setIsTerrainLoading(loading)
   }, [])
 
   useRainWaterAccumulation(
@@ -65,6 +83,7 @@ export default function FloodModule() {
         onWaterLevelChange={setWaterLevel}
         simulationOptions={simulationOptions}
         onOptionChange={handleOptionChange}
+        onReset={handleReset}
       />
 
       <div className="flood-module-stage">
@@ -76,17 +95,25 @@ export default function FloodModule() {
           />
           {isViewerReady && (
             <>
-              <SceneLayerController
-                viewerRef={viewerRef}
-                layerVisibility={layerVisibility}
-              />
-              <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
-              <FloodVisualization
-                viewerRef={viewerRef}
-                waterLevel={waterLevel}
-                rainIntensity={rainIntensity}
-                simulationOptions={simulationOptions}
-              />
+              <WelcomeOverlay />
+              <TerrainLoadingBadge visible={isTerrainLoading} />
+              <SimulationErrorBoundary
+                key={simulationEpoch}
+                onRetry={() => setSimulationEpoch((epoch) => epoch + 1)}
+              >
+                <SceneLayerController
+                  viewerRef={viewerRef}
+                  layerVisibility={layerVisibility}
+                />
+                <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
+                <FloodVisualization
+                  viewerRef={viewerRef}
+                  waterLevel={waterLevel}
+                  rainIntensity={rainIntensity}
+                  simulationOptions={simulationOptions}
+                  onTerrainLoadingChange={handleTerrainLoadingChange}
+                />
+              </SimulationErrorBoundary>
               <MapStatusBar viewerRef={viewerRef} isActive={isViewerReady} />
             </>
           )}

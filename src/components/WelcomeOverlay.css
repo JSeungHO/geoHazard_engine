@@ -1,0 +1,55 @@
+.welcome-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 850;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  pointer-events: auto;
+}
+
+.welcome-overlay__card {
+  max-width: 360px;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.welcome-overlay__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.welcome-overlay__body {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.welcome-overlay__body strong {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.welcome-overlay__cta {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.welcome-overlay__cta:hover {
+  filter: brightness(1.08);
+}

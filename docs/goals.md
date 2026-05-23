@@ -2,6 +2,8 @@
 
 프로젝트 방향, 로드맵, 배포, Cesium 재난 표현 범위.
 
+> **2026-05-24 평가 반영**: [기획·테스트 평가](./evaluation.md) §5 권장 로드맵을 아래에 반영함.
+
 ## 프로젝트 목표
 
 - 현실적인 재난(홍수, 지진 등) 시뮬레이션 플랫폼 구축
@@ -10,12 +12,11 @@
 
 **원칙**: 정밀 CFD/구조 해석은 외부 계산 → Cesium 시각화. GeoHazard Engine은 **교육·체험용 단순화 모델 + 3D 연출**에 집중.
 
-## 로드맵
+**제품 목표** (평가 §1): 렌더링 파이프라인 완성도는 높으나, 온보딩·단위 설명·초기화 등 **사용자 경험**을 다음 스프린트에서 보완.
 
-### 1. 범람 엔진 고도화
+## 완료된 마일스톤
 
-- [x] `WaterLevelControl.jsx`
-- [x] Entity → Primitive 전환
+- [x] `WaterLevelControl.jsx`, Entity → Primitive 전환
 - [x] `WaterWaveEngine` 2D 파동 + 동적 수면 mesh
 - [x] `FloodPhysicsWater` 하늘색 + 태양 glint
 - [x] 강수량 → 수면 파문, 강수 → 수위 자동 상승
@@ -23,16 +24,72 @@
 - [x] terrain grid + 저지대 기준 홍수 채움
 - [x] 성능 1차 (수면 캐시, rAF 분리, 비동기 지형)
 - [x] pitch view bounds (`floodViewBounds.js`)
-- [ ] **성능 2차** — Primitive 재생성 → buffer update 검토
+- [x] Vercel Production + `dev` Preview, `docs/` 문서 분리
 
-### 2. 모듈화
+## 수정 로드맵 (평가 §5 권장)
 
-- 모든 재난 컴포넌트를 `src/modules/` 하위로 구조화 (홍수는 `modules/flood/` 완료)
+### 즉시 — ~1주
 
-### 3. 다음 재난 모듈 (우선순위)
+| ID | 항목 | 유형 |
+|----|------|------|
+| B-1 | WaterWaveEngine 경계 셀 흡수 BC | 버그 |
+| B-3 | `buildFloodBodyGeometry` Cartesian3 scratch 재사용 | 성능 |
+| B-5 | `createRainStreakImage()` 모듈 상수화 | 성능 |
+| U-3 | 시뮬레이션 **초기화** 버튼 | UX |
+| U-6 | 지형 async 샘플링 **로딩 배지** | UX |
 
-- [ ] **쓰나미** — 진원 전파 + 해안 침수 + 건물 하부 침수 연출 (아래 §쓰나미 설계)
-- [ ] **지진** — 카메라 쉐이크 + 건물 흔들림/손상 표현
+### 단기 — 2~3주
+
+| ID | 항목 | 유형 |
+|----|------|------|
+| B-2 | **성능 2차** — 수위 변화 임계값 + body buffer 재사용 | 성능 |
+| B-6 | 자동 수위 **drainage** (강수 감소 시 하강) | UX/로직 |
+| U-1 | Welcome **온보딩** 오버레이 | UX |
+| U-2 | 슬라이더 **단위·의미 힌트** (저지대 대비 m, mm/h 환산) | UX |
+| A-1 | `modules/flood/`로 홍수 컴포넌트 **디렉토리 정리** | 아키텍처 |
+| A-2 | `App.jsx` **모듈 라우터** (쓰나미·지진 대비) | 아키텍처 |
+
+### 중기 — ~1개월
+
+| ID | 항목 | 유형 |
+|----|------|------|
+| U-4 | 시뮬레이션 옵션 **프리셋** (잔잔/보통/폭풍) | UX |
+| U-7 | **프리셋 시나리오** (강남 침수 사례 등) | UX |
+| A-4 | Vitest **단위 테스트** (WaterWaveEngine, terrainHeight, floodViewBounds) | 품질 |
+| — | **쓰나미 Phase 1** — 진원 + ring 수위 | 모듈 |
+| — | **쓰나미 Phase 2** — 방향성 전파, run-up | 모듈 |
+
+### 장기 — 2~3개월
+
+| ID | 항목 | 유형 |
+|----|------|------|
+| — | **쓰나미 Phase 3a** — 건물 침수 shader | 모듈 |
+| — | **지진 Phase 1** — camera shake 단독 (쓰나미 완료 전 선행 가능) | 모듈 |
+| — | **쓰나미 Phase 3b** — 타임라인 UI | 모듈 |
+| — | **지진 Phase 2** — 건물 흔들림 | 모듈 |
+| A-3 | 위치 추상화 — 강남 외 지점 지원 | 아키텍처 |
+
+### 범위 외 (당분간 보류)
+
+- 산불·태풍·산사태 등 — 홍수/쓰나미/지진 3종 **완성도 우선** (평가 §5)
+- U-8 모바일 반응형 — 단기: 768px 이하 데스크탑 안내, 장기: 레이아웃 개편
+
+## 다음 재난 모듈
+
+### 쓰나미 (우선)
+
+**Phase 3 분리** (평가 §5): 기존 Phase 3(건물 침수 + shake + 타임라인)은 볼륨 과대 → **3a(건물 침수 shader)** / **3b(타임라인 UI)** 로 분리.
+
+1. **Phase 1** — 진원 + 반경 확장 ring 수위, 저지대 채움 재사용
+2. **Phase 2** — 방향성 전파, 해안 run-up
+3. **Phase 3a** — OSM 건물 하부 침수 (Classification / shader)
+4. **Phase 3b** — camera shake, UI 시나리오 타임라인
+5. **Phase 4** (선택) — splash/debris, collapse tileset
+
+### 지진
+
+- **Phase 1** (단독 빠른 구현): camera shake — 쓰나미 4단계 전부 끝날 때까지 기다리지 않아도 됨
+- **Phase 2**: 3D Tiles 흔들림/손상 표현
 
 ## 배포·브랜치
 
@@ -65,10 +122,8 @@ Cesium은 **지구·지형·3D 객체 위 재난 시각화** 엔진. CFD·구조
 | 폭우 | ParticleSystem | ★☆☆ | 강수 일부 구현 |
 | 쓰나미 | 홍수 확장 + wave front + run-up | ★★★ | 설계 |
 | 지진 | Camera shake, 3D Tiles 변형/클리핑 | ★★☆ | Roadmap |
-| 산불·화산 | ParticleSystem, Polygon extrusion | ★★★ | — |
-| 태풍·폭풍 해일 | 강수 + storm surge | ★★★ | — |
-| 산사태 | 파티클/경로, 침식 Polygon | ★★★ | — |
-| 대기·화학 확산 | heatmap, plume 파티클 | ★★★ | — |
+| 산불·화산 | ParticleSystem, Polygon extrusion | ★★★ | 범위 외 |
+| 태풍·폭풍 해일 | 강수 + storm surge | ★★★ | 범위 외 |
 
 ### Cesium 빌딩 블록 (재난 공통)
 
@@ -106,13 +161,6 @@ Cesium은 **지구·지형·3D 객체 위 재난 시각화** 엔진. CFD·구조
 | `FloodVisualization` | `TsunamiVisualization` + 타임라인 |
 | OSM Buildings | Classification / 층별 침수 shader |
 
-**구현 단계**:
-
-1. **Phase 1** — 진원 + 반경 확장 ring 수위, 저지대 채움 재사용
-2. **Phase 2** — 방향성 전파, 해안 run-up
-3. **Phase 3** — 건물 하부 침수, camera shake, UI 타임라인
-4. **Phase 4** (선택) — splash/debris, collapse tileset
-
 **모듈 구조 (안)**:
 
 ```
@@ -132,9 +180,10 @@ World Terrain = **지표면 DEM 메쉬**. 속이 채워진 3D 지질 모델이 �
 | 지표면 고도 | ✅ | `globe.getHeight`, `sampleTerrainMostDetailed` |
 | 저지대 기준 침수 | ✅ | `min(terrain grid) + depth` (현재) |
 | 굴착 후 지층 깊이 | ❌ | 지질 데이터 없으면 불가 |
-| 시각적 굴착·단면 | ✅ | Clipping Plane — 렌더 절단만, 지하 데이터 자동 생성 아님 |
+| 시각적 굴착·단면 | ✅ | Clipping Plane — 렌더 절단만 |
 
 ## 관련 문서
 
+- [기획·테스트 평가](./evaluation.md) — 이슈 상세, QA 체크리스트
 - [구현 기능](./features.md) — 현재 코드·아키텍처
-- [디자인 가이드](./design.md) — UI·컬러
+- [디자인 가이드](./design.md) — UX 백로그

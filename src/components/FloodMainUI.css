@@ -20,6 +20,31 @@
   background: linear-gradient(180deg, var(--color-primary-glow) 0%, transparent 100%);
 }
 
+.flood-main-ui__header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flood-main-ui__reset {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.flood-main-ui__reset:hover {
+  color: var(--color-text);
+  border-color: var(--color-primary-border);
+  background: var(--color-surface-hover);
+}
+
 .flood-main-ui__title {
   margin: 0;
   font-size: 18px;

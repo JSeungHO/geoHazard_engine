@@ -11,6 +11,7 @@
 | [docs/design.md](./docs/design.md) | UI 레이아웃, 컬러, 레이어 패널 |
 | [docs/features.md](./docs/features.md) | 구현된 기능, view bounds, 강수·범람 아키텍처 |
 | [docs/goals.md](./docs/goals.md) | 프로젝트 목표, 로드맵, 배포, 쓰나미·지진 설계 |
+| [docs/evaluation.md](./docs/evaluation.md) | 기획·QA 평가, 버그/UX/아키텍처 이슈, QA 체크리스트 |
 | [docs/README.md](./docs/README.md) | 문서 목차 |
 
 ## 기술 스택
@@ -58,9 +59,10 @@ src/
 │   └── floodWaterMesh.js
 └── physics/WaterWaveEngine.js
 docs/
-├── design.md      # 디자인
-├── features.md    # 구현 기능
-└── goals.md       # 작업 목표
+├── design.md       # 디자인 + UX 백로그
+├── features.md     # 구현 기능 + 알려진 이슈
+├── goals.md        # 작업 목표 + 수정 로드맵
+└── evaluation.md   # 기획·테스트 평가 보고서
 ```
 
 ## 배포

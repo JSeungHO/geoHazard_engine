@@ -275,11 +275,12 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth) {
   const bodyRes = bodyGrid.resolution
   const positions = []
   const indices = []
+  const vertexScratch = new Cartesian3()
 
   const heightAt = (i, j) => getTerrainHeightAtCell(bodyGrid, bodyRes, i, j, Infinity)
 
   const pushVertex = (lon, lat, height) => {
-    const c = cartesianFromLonLatHeight(lon, lat, height, new Cartesian3())
+    const c = cartesianFromLonLatHeight(lon, lat, height, vertexScratch)
     positions.push(c.x, c.y, c.z)
     return positions.length / 3 - 1
   }
