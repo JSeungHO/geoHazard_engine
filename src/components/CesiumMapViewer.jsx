@@ -2,9 +2,9 @@ import { memo, useRef, useCallback, useEffect } from 'react'
 import { Viewer, CameraFlyTo } from 'resium'
 import { Terrain } from 'cesium'
 import {
-  getGangnamCameraDestination,
+  getLocationCameraDestination,
   GANGNAM_CAMERA_ORIENTATION,
-} from '../utils/flyToGangnam'
+} from '../locations/gangnam'
 
 const resizeViewer = (viewer) => {
   if (!viewer || viewer.isDestroyed?.()) return
@@ -126,7 +126,7 @@ function CesiumMapViewer({ viewerRef, mapContainerRef, onViewerReady }) {
       <CameraFlyTo
         once
         duration={0}
-        destination={getGangnamCameraDestination()}
+        destination={getLocationCameraDestination()}
         orientation={GANGNAM_CAMERA_ORIENTATION}
       />
     </Viewer>

@@ -36,6 +36,7 @@ npm run dev
 | `npm run build` | Production 빌드 |
 | `npm run preview` | 빌드 결과 미리보기 |
 | `npm run lint` | ESLint |
+| `npm test` | Vitest 단위 테스트 |
 
 ## 주요 기능
 
@@ -48,21 +49,18 @@ npm run dev
 
 ```
 src/
-├── modules/flood/FloodModule.jsx
-├── components/
-│   ├── CesiumMapViewer.jsx
-│   ├── FloodVisualization.jsx
-│   └── RainSystem.jsx
-├── utils/
-│   ├── floodViewBounds.js
-│   ├── terrainHeight.js
-│   └── floodWaterMesh.js
+├── App.jsx                         # 모듈 라우터 (ModuleShell)
+├── components/                     # 공용 UI (Cesium, 레이어, ModuleShell)
+├── locations/gangnam.js            # 좌표·카메라·bounds·flyTo 통합
+├── modules/
+│   ├── registry.js                 # 재난 모듈 등록
+│   └── flood/
+│       ├── FloodModule.jsx
+│       ├── components/             # 홍수 전용 UI·시뮬레이션
+│       ├── hooks/
+│       └── constants/
+├── utils/                          # floodViewBounds, terrainHeight, …
 └── physics/WaterWaveEngine.js
-docs/
-├── design.md       # 디자인 + UX 백로그
-├── features.md     # 구현 기능 + 알려진 이슈
-├── goals.md        # 작업 목표 + 수정 로드맵
-└── evaluation.md   # 기획·테스트 평가 보고서
 ```
 
 ## 배포

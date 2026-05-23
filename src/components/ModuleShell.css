@@ -1,0 +1,70 @@
+.module-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.module-shell__nav {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-footer-bg);
+}
+
+.module-shell__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.module-shell__tab:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-primary-border);
+  background: var(--color-surface-hover);
+}
+
+.module-shell__tab--active {
+  color: var(--color-text);
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-dim);
+}
+
+.module-shell__tab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.module-shell__badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--color-border);
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.module-shell__main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.module-shell__main > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}

@@ -4,29 +4,13 @@ import {
   Math as CesiumMath,
   Rectangle,
 } from 'cesium'
-import { GANGNAM_LAT, GANGNAM_LON } from '../constants/gangnam'
+import { getLocationDefaultFloodBounds, FLOOD_HALF_SIZE_DEG } from '../locations/gangnam'
 
 /** @typedef {{ west: number, south: number, east: number, north: number, centerLon: number, centerLat: number, halfLon: number, halfLat: number }} FloodBounds */
 
-export const FLOOD_HALF_SIZE_DEG = 0.005
+export { FLOOD_HALF_SIZE_DEG }
 
-export const getDefaultFloodBounds = () => {
-  const west = GANGNAM_LON - FLOOD_HALF_SIZE_DEG
-  const east = GANGNAM_LON + FLOOD_HALF_SIZE_DEG
-  const south = GANGNAM_LAT - FLOOD_HALF_SIZE_DEG
-  const north = GANGNAM_LAT + FLOOD_HALF_SIZE_DEG
-
-  return {
-    west,
-    south,
-    east,
-    north,
-    centerLon: GANGNAM_LON,
-    centerLat: GANGNAM_LAT,
-    halfLon: FLOOD_HALF_SIZE_DEG,
-    halfLat: FLOOD_HALF_SIZE_DEG,
-  }
-}
+export const getDefaultFloodBounds = getLocationDefaultFloodBounds
 
 /** pitch(rad) <= 이 값이면 화면 전체에 침수·강수 표시 (더 아래를 보면 포함) */
 export const FLOOD_PITCH_FULL_SCREEN = -0.5894654192726403

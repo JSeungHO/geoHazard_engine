@@ -1,20 +1,20 @@
 import { useEffect, useRef } from 'react'
-import { WaterWaveEngine } from '../physics/WaterWaveEngine'
+import { WaterWaveEngine } from '../../../physics/WaterWaveEngine'
 import {
   createFloodBodyMaterial,
   createFloodBodyPrimitive,
   createWaterSurfaceCache,
   createWaterSurfacePrimitiveFromCache,
-} from '../utils/floodWaterMesh'
-import { createFloodSurfaceMaterial } from '../utils/floodWaterMaterial'
-import { boundsChanged, addViewFloodBoundsListener, getViewFloodBounds } from '../utils/floodViewBounds'
+} from '../../../utils/floodWaterMesh'
+import { createFloodSurfaceMaterial } from '../../../utils/floodWaterMaterial'
+import { boundsChanged, addViewFloodBoundsListener, getViewFloodBounds } from '../../../utils/floodViewBounds'
 import {
   refineTerrainHeightGrid,
   sampleTerrainHeightGrid,
   sampleTerrainHeightGridAsync,
   terrainGridChanged,
   upsampleTerrainGrid,
-} from '../utils/terrainHeight'
+} from '../../../utils/terrainHeight'
 
 const WAVE_RESOLUTION = 56
 const TERRAIN_QUICK_RES = 16

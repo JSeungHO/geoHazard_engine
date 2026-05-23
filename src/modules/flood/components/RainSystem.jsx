@@ -8,7 +8,7 @@ import {
   Math as CesiumMath,
   Transforms,
 } from 'cesium'
-import { boundsChanged, addViewFloodBoundsListener, getRainEmitterPosition, getViewFloodBounds, getFloodBandStartForPitch } from '../utils/floodViewBounds'
+import { boundsChanged, addViewFloodBoundsListener, getRainEmitterPosition, getViewFloodBounds, getFloodBandStartForPitch } from '../../../utils/floodViewBounds'
 
 const MIN_EMITTER_ALTITUDE = 300
 const EMITTER_ALTITUDE_FACTOR = 1.2

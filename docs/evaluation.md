@@ -21,6 +21,10 @@
 | U-2 | ✅ 슬라이더 힌트 (mm/h, 저지대 m) |
 | U-3 | ✅ 초기화 버튼 |
 | U-6 | ✅ 지형 정밀화 배지 |
+| A-1 | ✅ `modules/flood/` 디렉토리 정리 |
+| A-2 | ✅ `App.jsx` + `ModuleShell` 모듈 라우터 |
+| A-3 | ✅ `locations/gangnam.js` 좌표 통합 |
+| A-4 | ✅ Vitest 단위 테스트 17개 |
 
 ---
 

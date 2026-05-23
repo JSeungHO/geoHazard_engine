@@ -1,5 +1,5 @@
 import { SIMULATION_OPTION_RANGES } from '../constants/simulationDefaults'
-import CollapsibleSection from './CollapsibleSection'
+import CollapsibleSection from '../../../components/CollapsibleSection'
 import './SimulationOptions.css'
 
 const OPTION_SECTIONS = [

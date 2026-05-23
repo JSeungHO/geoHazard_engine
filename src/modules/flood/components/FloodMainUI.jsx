@@ -1,7 +1,7 @@
 import RainControl from './RainControl'
 import WaterLevelControl from './WaterLevelControl'
 import SimulationOptions from './SimulationOptions'
-import CollapsibleSection from './CollapsibleSection'
+import CollapsibleSection from '../../../components/CollapsibleSection'
 import './FloodMainUI.css'
 
 export default function FloodMainUI({
