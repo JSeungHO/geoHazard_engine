@@ -1,9 +1,10 @@
 import { SIMULATION_OPTION_RANGES } from '../constants/simulationDefaults'
+import CollapsibleSection from './CollapsibleSection'
 import './SimulationOptions.css'
 
 const OPTION_SECTIONS = [
   {
-    title: '수위',
+    title: '수위 상승',
     items: [
       {
         key: 'waterRiseSpeed',
@@ -91,8 +92,7 @@ export default function SimulationOptions({ options, onOptionChange }) {
   return (
     <div className="sim-options">
       {OPTION_SECTIONS.map((section) => (
-        <section key={section.title} className="sim-options-group">
-          <h3 className="sim-options-group-title">{section.title}</h3>
+        <CollapsibleSection key={section.title} title={section.title} nested>
           {section.items.map((item) => (
             <OptionSlider
               key={item.key}
@@ -104,7 +104,7 @@ export default function SimulationOptions({ options, onOptionChange }) {
               onChange={onOptionChange}
             />
           ))}
-        </section>
+        </CollapsibleSection>
       ))}
     </div>
   )

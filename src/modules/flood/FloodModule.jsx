@@ -6,10 +6,12 @@ import SceneLayersPanel from '../../components/SceneLayersPanel'
 import SceneLayerController from '../../components/SceneLayerController'
 import RainSystem from '../../components/RainSystem'
 import FloodVisualization from '../../components/FloodVisualization'
+import MapStatusBar from '../../components/MapStatusBar'
 import { DEFAULT_SIMULATION_OPTIONS } from '../../constants/simulationDefaults'
 import { DEFAULT_LAYER_VISIBILITY } from '../../constants/sceneLayers'
 import useRainWaterAccumulation from './useRainWaterAccumulation'
 import useMapLayout from './useMapLayout'
+import { flyToGangnam } from '../../utils/flyToGangnam'
 import './FloodModule.css'
 
 window.CESIUM_BASE_URL = '/node_modules/cesium/Build/Cesium/'
@@ -38,6 +40,10 @@ export default function FloodModule() {
 
   const handleLayerVisibilityChange = useCallback((layerId, visible) => {
     setLayerVisibility((prev) => ({ ...prev, [layerId]: visible }))
+  }, [])
+
+  const handleFlyToGangnam = useCallback(() => {
+    flyToGangnam(viewerRef.current)
   }, [])
 
   useRainWaterAccumulation(
@@ -79,6 +85,7 @@ export default function FloodModule() {
                 rainIntensity={rainIntensity}
                 simulationOptions={simulationOptions}
               />
+              <MapStatusBar viewerRef={viewerRef} isActive={isViewerReady} />
             </>
           )}
         </div>
@@ -87,6 +94,7 @@ export default function FloodModule() {
       <SceneLayersPanel
         layerVisibility={layerVisibility}
         onLayerVisibilityChange={handleLayerVisibilityChange}
+        onFlyToGangnam={handleFlyToGangnam}
       />
     </div>
   )

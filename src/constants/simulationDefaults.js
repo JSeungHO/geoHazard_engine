@@ -4,8 +4,8 @@ export const DEFAULT_SIMULATION_OPTIONS = {
   waveStiffness: 0.16,
   waveMaxAmplitude: 4.2,
   rainImpactStrength: 0.03,
-  glintStrength: 1.35,
-  reflectivity: 0.82,
+  glintStrength: 0.35,
+  reflectivity: 0.28,
 }
 
 export const SIMULATION_OPTION_RANGES = {

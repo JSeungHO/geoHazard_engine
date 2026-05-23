@@ -1,14 +1,7 @@
-.sim-options-group + .sim-options-group {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-.sim-options-group-title {
-  margin: 0 0 12px;
-  color: var(--color-text-faint);
-  font-size: 11px;
-  font-weight: 600;
+.sim-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .sim-option-field + .sim-option-field {

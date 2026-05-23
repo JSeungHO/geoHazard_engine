@@ -23,7 +23,7 @@ function LayerToggle({ layer, visible, onChange }) {
   )
 }
 
-function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange }) {
+function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange, onFlyToGangnam }) {
   return (
     <aside
       className="scene-layers-panel"
@@ -43,6 +43,17 @@ function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange }) {
       </header>
 
       <div className="scene-layers-panel__content">
+        <section className="scene-layers-panel__section">
+          <h3 className="scene-layers-panel__section-title">뷰</h3>
+          <button
+            type="button"
+            className="scene-layers-panel__fly-btn"
+            onClick={onFlyToGangnam}
+          >
+            강남역으로 이동
+          </button>
+        </section>
+
         <section className="scene-layers-panel__section">
           <h3 className="scene-layers-panel__section-title">3D 객체</h3>
           <div className="scene-layers-panel__list">

@@ -6,6 +6,7 @@ import {
   createWaterSurfacePrimitive,
 } from '../utils/floodWaterMesh'
 import { createFloodSurfaceMaterial } from '../utils/floodWaterMaterial'
+import { boundsChanged, getViewFloodBounds } from '../utils/floodViewBounds'
 
 const getViewer = (viewerRef) => {
   const viewer = viewerRef.current
@@ -35,9 +36,28 @@ const stopSimulation = (viewer, simRef) => {
   if (!sim || !viewer) return
 
   sim.removeListener?.()
+  sim.removeCameraListener?.()
   removePrimitive(viewer, sim.surface)
   removePrimitive(viewer, sim.body)
   simRef.current = null
+}
+
+const rebuildFloodMeshes = (viewer, sim, level, bounds) => {
+  removePrimitive(viewer, sim.surface)
+  removePrimitive(viewer, sim.body)
+
+  sim.bounds = bounds
+  sim.body = createFloodBodyPrimitive(level, sim.bodyMaterial, bounds)
+  viewer.scene.primitives.add(sim.body)
+
+  sim.surface = createWaterSurfacePrimitive(sim.engine, level, sim.surfaceMaterial, bounds)
+  viewer.scene.primitives.add(sim.surface)
+}
+
+const resetWaveEngine = (sim, level) => {
+  sim.engine = new WaterWaveEngine(56)
+  sim.engine.addDisturbance(0.5, 0.5, 0.28, Math.min(level * 0.04, 1.2))
+  sim.frameCount = 0
 }
 
 const startSimulation = (
@@ -46,9 +66,13 @@ const startSimulation = (
   simRef,
   waterLevelRef,
   rainIntensityRef,
-  simulationOptionsRef
+  simulationOptionsRef,
+  boundsRef
 ) => {
   stopSimulation(viewer, simRef)
+
+  const bounds = boundsRef.current ?? getViewFloodBounds(viewer)
+  boundsRef.current = bounds
 
   const engine = new WaterWaveEngine(56)
   engine.addDisturbance(0.5, 0.5, 0.28, Math.min(initialLevel * 0.04, 1.2))
@@ -61,17 +85,28 @@ const startSimulation = (
     engine,
     surfaceMaterial,
     bodyMaterial,
+    bounds,
     baseLevel: initialLevel,
     surface: null,
-    body: createFloodBodyPrimitive(initialLevel, bodyMaterial),
+    body: null,
     removeListener: null,
+    removeCameraListener: null,
     frameCount: 0,
     lastFrameMs: performance.now(),
   }
 
-  viewer.scene.primitives.add(sim.body)
-  sim.surface = createWaterSurfacePrimitive(engine, initialLevel, surfaceMaterial)
-  viewer.scene.primitives.add(sim.surface)
+  rebuildFloodMeshes(viewer, sim, initialLevel, bounds)
+
+  const syncBoundsFromView = () => {
+    const nextBounds = getViewFloodBounds(viewer)
+    if (!boundsChanged(sim.bounds, nextBounds)) return
+
+    boundsRef.current = nextBounds
+    resetWaveEngine(sim, waterLevelRef.current)
+    rebuildFloodMeshes(viewer, sim, waterLevelRef.current, nextBounds)
+  }
+
+  sim.removeCameraListener = viewer.camera.moveEnd.addEventListener(syncBoundsFromView)
 
   sim.removeListener = viewer.scene.postUpdate.addEventListener(() => {
     try {
@@ -91,7 +126,7 @@ const startSimulation = (
         const delta = level - sim.baseLevel
         sim.engine.addDisturbance(0.5, 0.5, 0.32, delta * 0.03)
         removePrimitive(viewer, sim.body)
-        sim.body = createFloodBodyPrimitive(level, bodyMaterial)
+        sim.body = createFloodBodyPrimitive(level, bodyMaterial, sim.bounds)
         viewer.scene.primitives.add(sim.body)
         sim.baseLevel = level
       }
@@ -104,7 +139,12 @@ const startSimulation = (
       }
 
       removePrimitive(viewer, sim.surface)
-      sim.surface = createWaterSurfacePrimitive(sim.engine, level, sim.surfaceMaterial)
+      sim.surface = createWaterSurfacePrimitive(
+        sim.engine,
+        level,
+        sim.surfaceMaterial,
+        sim.bounds
+      )
       viewer.scene.primitives.add(sim.surface)
     } catch (error) {
       console.error('[FloodVisualization] simulation step failed:', error)
@@ -116,7 +156,7 @@ const startSimulation = (
 
 /**
  * viewerRef + WaterWaveEngine 기반 물리 수면.
- * postUpdate마다 파동 1스텝 → 수면 mesh 재생성 (정점 높이 = 수위 + 파동).
+ * 카메라 화면 범위에 맞춰 물 영역 위치·크기 갱신.
  */
 export default function FloodVisualization({
   viewerRef,
@@ -125,6 +165,7 @@ export default function FloodVisualization({
   simulationOptions,
 }) {
   const simRef = useRef(null)
+  const boundsRef = useRef(null)
   const waterLevelRef = useRef(waterLevel)
   const rainIntensityRef = useRef(rainIntensity)
   const simulationOptionsRef = useRef(simulationOptions)
@@ -151,7 +192,8 @@ export default function FloodVisualization({
       simRef,
       waterLevelRef,
       rainIntensityRef,
-      simulationOptionsRef
+      simulationOptionsRef,
+      boundsRef
     )
 
     return () => stopSimulation(viewer, simRef)

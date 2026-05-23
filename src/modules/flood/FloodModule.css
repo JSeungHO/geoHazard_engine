@@ -22,6 +22,10 @@
   overflow: hidden;
 }
 
+.flood-module-map .map-status-bar {
+  padding-right: 120px;
+}
+
 .flood-module-map .cesium-map-viewer,
 .flood-module-map .cesium-viewer {
   width: 100%;

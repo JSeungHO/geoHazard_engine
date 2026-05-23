@@ -1,19 +1,10 @@
 import { memo, useRef, useCallback, useEffect } from 'react'
 import { Viewer, CameraFlyTo } from 'resium'
-import { Terrain, Cartesian3, Math as CesiumMath } from 'cesium'
-import { GANGNAM_LAT, GANGNAM_LON, GANGNAM_CAMERA_HEIGHT } from '../constants/gangnam'
-
-const GANGNAM_DESTINATION = Cartesian3.fromDegrees(
-  GANGNAM_LON,
-  GANGNAM_LAT,
-  GANGNAM_CAMERA_HEIGHT
-)
-
-const GANGNAM_ORIENTATION = {
-  heading: CesiumMath.toRadians(15),
-  pitch: CesiumMath.toRadians(-45),
-  roll: 0,
-}
+import { Terrain } from 'cesium'
+import {
+  getGangnamCameraDestination,
+  GANGNAM_CAMERA_ORIENTATION,
+} from '../utils/flyToGangnam'
 
 const resizeViewer = (viewer) => {
   if (!viewer || viewer.isDestroyed?.()) return
@@ -135,8 +126,8 @@ function CesiumMapViewer({ viewerRef, mapContainerRef, onViewerReady }) {
       <CameraFlyTo
         once
         duration={0}
-        destination={GANGNAM_DESTINATION}
-        orientation={GANGNAM_ORIENTATION}
+        destination={getGangnamCameraDestination()}
+        orientation={GANGNAM_CAMERA_ORIENTATION}
       />
     </Viewer>
   )

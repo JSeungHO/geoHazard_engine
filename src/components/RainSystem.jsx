@@ -5,10 +5,10 @@ import {
   Cartesian2,
   Cartesian3,
   Color,
-  Matrix4,
-  Quaternion,
+  Math as CesiumMath,
+  Transforms,
 } from 'cesium'
-import { GANGNAM_LAT, GANGNAM_LON } from '../constants/gangnam'
+import { boundsChanged, getViewFloodBounds } from '../utils/floodViewBounds'
 
 const EMITTER_ALTITUDE = 600
 
@@ -50,10 +50,30 @@ const applyRainIntensity = (particleSystem, intensity) => {
   particleSystem.show = intensity > 0
 }
 
+const boundsToEmitterSize = (bounds) => {
+  const latRad = CesiumMath.toRadians(bounds.centerLat)
+  const metersPerDegreeLon = 111320 * Math.cos(latRad)
+  const metersPerDegreeLat = 111320
+
+  const widthM = Math.max(200, (bounds.east - bounds.west) * metersPerDegreeLon * 1.08)
+  const depthM = Math.max(200, (bounds.north - bounds.south) * metersPerDegreeLat * 1.08)
+
+  return { widthM, depthM }
+}
+
+const applyBoundsToRain = (particleSystem, bounds) => {
+  const { widthM, depthM } = boundsToEmitterSize(bounds)
+  const center = Cartesian3.fromDegrees(bounds.centerLon, bounds.centerLat, EMITTER_ALTITUDE)
+
+  particleSystem.modelMatrix = Transforms.eastNorthUpToFixedFrame(center)
+  particleSystem.emitter = new BoxEmitter(new Cartesian3(widthM / 2, depthM / 2, 400))
+}
+
 /** viewerRef.current 내부 객체만 갱신 (뷰어 재마운트 없음) */
 export default function RainSystem({ viewerRef, intensity }) {
   const particleSystemRef = useRef(null)
   const intensityRef = useRef(intensity)
+  const boundsRef = useRef(null)
 
   useEffect(() => {
     intensityRef.current = intensity
@@ -66,7 +86,8 @@ export default function RainSystem({ viewerRef, intensity }) {
     const scene = viewer.scene
     viewer.clock.shouldAnimate = true
 
-    const position = Cartesian3.fromDegrees(GANGNAM_LON, GANGNAM_LAT, EMITTER_ALTITUDE)
+    const bounds = getViewFloodBounds(viewer)
+    boundsRef.current = bounds
 
     const particleSystem = new ParticleSystem({
       image: createRainStreakImage(),
@@ -80,22 +101,28 @@ export default function RainSystem({ viewerRef, intensity }) {
       speed: 28,
       speedIsRandomized: true,
       emissionRate: 0,
-      emitter: new BoxEmitter(new Cartesian3(1200, 1200, 500)),
-      modelMatrix: Matrix4.fromTranslationQuaternionRotationScale(
-        position,
-        Quaternion.IDENTITY,
-        new Cartesian3(1, 1, 1)
-      ),
+      emitter: new BoxEmitter(new Cartesian3(600, 600, 400)),
       minimumSpeed: 18,
       maximumSpeed: 42,
       updateCallback: applyGravity,
     })
 
+    applyBoundsToRain(particleSystem, bounds)
     scene.primitives.add(particleSystem)
     particleSystemRef.current = particleSystem
     applyRainIntensity(particleSystem, intensityRef.current)
 
+    const removeCameraListener = viewer.camera.moveEnd.addEventListener(() => {
+      const nextBounds = getViewFloodBounds(viewer)
+      if (!boundsChanged(boundsRef.current, nextBounds)) return
+
+      boundsRef.current = nextBounds
+      applyBoundsToRain(particleSystem, nextBounds)
+      scene.requestRender()
+    })
+
     return () => {
+      removeCameraListener?.()
       if (!viewer.isDestroyed?.()) {
         scene.primitives.remove(particleSystem)
       }
