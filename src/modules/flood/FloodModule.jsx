@@ -3,6 +3,8 @@ import { Viewer, CameraFlyTo } from 'resium'
 import { Ion, Cartesian3, Math as CesiumMath } from 'cesium'
 import RainControl from '../../components/RainControl'
 import RainSystem from '../../components/RainSystem'
+import WaterLevelControl from '../../components/WaterLevelControl'
+import FloodVisualization from '../../components/FloodVisualization'
 import './FloodModule.css'
 
 window.CESIUM_BASE_URL = '/node_modules/cesium/Build/Cesium/'
@@ -10,6 +12,7 @@ Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN
 
 export default function FloodModule() {
   const [rainIntensity, setRainIntensity] = useState(0)
+  const [waterLevel, setWaterLevel] = useState(0)
   const viewerRef = useRef(null)
   const [viewer, setViewer] = useState(null)
 
@@ -35,7 +38,9 @@ export default function FloodModule() {
         />
       </Viewer>
       <RainControl intensity={rainIntensity} onIntensityChange={setRainIntensity} />
+      <WaterLevelControl waterLevel={waterLevel} onWaterLevelChange={setWaterLevel} />
       {viewer && <RainSystem viewer={viewer} intensity={rainIntensity} />}
+      {viewer && <FloodVisualization viewer={viewer} waterLevel={waterLevel} />}
     </div>
   )
 }
