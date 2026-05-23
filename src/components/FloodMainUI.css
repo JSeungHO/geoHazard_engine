@@ -1,4 +1,6 @@
 .flood-main-ui {
+  position: relative;
+  z-index: 1000;
   flex-shrink: 0;
   width: var(--sidebar-width);
   height: 100%;

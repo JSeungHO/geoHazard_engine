@@ -4,7 +4,7 @@ export default function WaterLevelControl({ waterLevel, onWaterLevelChange }) {
   return (
     <div className="water-control">
       <label htmlFor="water-slider" className="water-label">
-        침수 깊이 (Water Level)
+        침수 깊이 — 저지대 기준 (m)
       </label>
       <input
         id="water-slider"

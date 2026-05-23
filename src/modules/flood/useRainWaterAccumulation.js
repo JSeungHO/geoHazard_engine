@@ -19,10 +19,12 @@ export default function useRainWaterAccumulation(
   const waterRiseSpeedRef = useRef(waterRiseSpeed)
   const setWaterLevelRef = useRef(setWaterLevel)
 
-  enabledRef.current = enabled
-  rainIntensityRef.current = rainIntensity
-  waterRiseSpeedRef.current = waterRiseSpeed
-  setWaterLevelRef.current = setWaterLevel
+  useEffect(() => {
+    enabledRef.current = enabled
+    rainIntensityRef.current = rainIntensity
+    waterRiseSpeedRef.current = waterRiseSpeed
+    setWaterLevelRef.current = setWaterLevel
+  }, [enabled, rainIntensity, waterRiseSpeed, setWaterLevel])
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
