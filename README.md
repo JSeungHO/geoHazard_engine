@@ -1,2 +1,14 @@
-# geoHazard_engine
-A modular simulation engine for natural disasters (Flood, Earthquake, etc.) using Cesium.js and React.
+# GeoHazard Engine
+지구의 다양한 재난(홍수, 지진, 화산 등)을 시뮬레이션하기 위한 모듈형 3D 엔진입니다.
+
+## 프로젝트 철학
+- **모듈형 설계**: 새로운 재난 유형을 쉽게 추가할 수 있는 독립적 구조.
+- **Cesium.js 기반**: 고정밀 지리 정보 데이터 위에서 시각화.
+
+## 개발 로드맵
+- [ ] **Phase 1: 홍수 시뮬레이션** (비 효과 및 수위 범람 엔진)
+- [ ] **Phase 2: 재난 제어 UI** (강수량, 수위 등 변수 조절)
+- [ ] **Phase 3: 확장 모듈** (지진/쓰나미 모듈 인터페이스 구축)
+
+## 기술 스택
+- React, Cesium.js, Tailwind CSS
