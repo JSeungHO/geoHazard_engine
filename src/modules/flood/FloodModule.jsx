@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
-import { Viewer, CameraFlyTo } from 'resium'
-import { Ion, Cartesian3, Math as CesiumMath } from 'cesium'
+import { useState, useRef, useCallback } from 'react'
+import { Ion } from 'cesium'
+import CesiumMapViewer from '../../components/CesiumMapViewer'
 import RainControl from '../../components/RainControl'
 import RainSystem from '../../components/RainSystem'
 import WaterLevelControl from '../../components/WaterLevelControl'
@@ -11,37 +11,28 @@ window.CESIUM_BASE_URL = '/node_modules/cesium/Build/Cesium/'
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN
 
 export default function FloodModule() {
+  /** @type {import('react').RefObject<import('cesium').Viewer | null>} */
+  const viewerRef = useRef(null)
+
+  const [isViewerReady, setIsViewerReady] = useState(false)
   const [rainIntensity, setRainIntensity] = useState(0)
   const [waterLevel, setWaterLevel] = useState(0)
-  const viewerRef = useRef(null)
-  const [viewer, setViewer] = useState(null)
+
+  const handleViewerReady = useCallback(() => {
+    setIsViewerReady(true)
+  }, [])
 
   return (
     <div className="flood-module">
-      <Viewer
-        full
-        ref={viewerRef}
-        onViewerCesiumReady={() => {
-          if (viewerRef.current?.cesiumElement) {
-            setViewer(viewerRef.current.cesiumElement)
-          }
-        }}
-      >
-        <CameraFlyTo
-          destination={Cartesian3.fromDegrees(127.0267, 37.4975, 500)}
-          orientation={{
-            heading: CesiumMath.toRadians(0),
-            pitch: CesiumMath.toRadians(-60),
-            roll: 0
-          }}
-          duration={0}
-        />
-      </Viewer>
+      <CesiumMapViewer viewerRef={viewerRef} onViewerReady={handleViewerReady} />
       <RainControl intensity={rainIntensity} onIntensityChange={setRainIntensity} />
       <WaterLevelControl waterLevel={waterLevel} onWaterLevelChange={setWaterLevel} />
-      {viewer && <RainSystem viewer={viewer} intensity={rainIntensity} />}
-      {viewer && <FloodVisualization viewer={viewer} waterLevel={waterLevel} />}
+      {isViewerReady && (
+        <>
+          <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
+          <FloodVisualization viewerRef={viewerRef} waterLevel={waterLevel} />
+        </>
+      )}
     </div>
   )
 }
-

@@ -1,98 +1,105 @@
 import { useEffect, useRef } from 'react'
 import {
-  PolygonGeometry,
   Cartesian3,
   Color,
-  PolygonOutlineGeometry,
-  Primitive,
-  PerInstanceColorAppearance,
+  CallbackProperty,
+  HeightReference,
+  JulianDate,
+  PolygonHierarchy,
 } from 'cesium'
+import { GANGNAM_LAT, GANGNAM_LON } from '../constants/gangnam'
+import { FloodWaterMaterialProperty } from '../utils/floodWaterMaterial'
 
-export default function FloodVisualization({ viewer, waterLevel }) {
-  const floodPrimitiveRef = useRef(null)
-  const outlinePrimitiveRef = useRef(null)
+const FLOOD_ENTITY_ID = 'gangnam-flood-zone'
+const FLOOD_HALF_SIZE_DEG = 0.005
+
+const createFloodHierarchy = () =>
+  new PolygonHierarchy(
+    Cartesian3.fromDegreesArray([
+      GANGNAM_LON - FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LAT - FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LON + FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LAT - FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LON + FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LAT + FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LON - FLOOD_HALF_SIZE_DEG,
+      GANGNAM_LAT + FLOOD_HALF_SIZE_DEG,
+    ])
+  )
+
+const createAnimatedOutlineColor = () =>
+  new CallbackProperty((time) => {
+    const seconds = JulianDate.toDate(time ?? JulianDate.now()).getTime() / 1000
+    const pulse = 0.6 + 0.3 * Math.sin(seconds * 3.2)
+    return Color.CYAN.withAlpha(pulse)
+  }, false)
+
+const getViewer = (viewerRef) => {
+  const viewer = viewerRef.current
+  if (!viewer || viewer.isDestroyed?.()) return null
+  return viewer
+}
+
+/** viewerRef.current의 entity만 갱신 (뷰어·카메라 재마운트 없음) */
+export default function FloodVisualization({ viewerRef, waterLevel }) {
+  const entityRef = useRef(null)
+  const waterMaterialRef = useRef(null)
 
   useEffect(() => {
-    if (!viewer || waterLevel === 0) {
-      if (floodPrimitiveRef.current) {
-        viewer.scene.primitives.remove(floodPrimitiveRef.current)
-        floodPrimitiveRef.current = null
+    const viewer = getViewer(viewerRef)
+    if (!viewer) return
+
+    if (!waterMaterialRef.current) {
+      waterMaterialRef.current = new FloodWaterMaterialProperty()
+    }
+
+    let entity = viewer.entities.getById(FLOOD_ENTITY_ID)
+    if (!entity) {
+      entity = viewer.entities.add({
+        id: FLOOD_ENTITY_ID,
+        show: false,
+        polygon: {
+          hierarchy: createFloodHierarchy(),
+          height: 0,
+          heightReference: HeightReference.CLAMP_TO_GROUND,
+          extrudedHeight: 1,
+          extrudedHeightReference: HeightReference.RELATIVE_TO_GROUND,
+          material: waterMaterialRef.current,
+          outline: true,
+          outlineColor: createAnimatedOutlineColor(),
+          outlineWidth: 2,
+        },
+      })
+    } else {
+      entity.polygon.material = waterMaterialRef.current
+    }
+
+    entityRef.current = entity
+
+    return () => {
+      if (!viewer.isDestroyed?.()) {
+        const existing = viewer.entities.getById(FLOOD_ENTITY_ID)
+        if (existing) {
+          viewer.entities.remove(existing)
+        }
       }
-      if (outlinePrimitiveRef.current) {
-        viewer.scene.primitives.remove(outlinePrimitiveRef.current)
-        outlinePrimitiveRef.current = null
-      }
+      entityRef.current = null
+      waterMaterialRef.current = null
+    }
+  }, [viewerRef])
+
+  useEffect(() => {
+    const entity = entityRef.current
+    if (!entity) return
+
+    if (waterLevel <= 0) {
+      entity.show = false
       return
     }
 
-    if (floodPrimitiveRef.current) {
-      viewer.scene.primitives.remove(floodPrimitiveRef.current)
-    }
-    if (outlinePrimitiveRef.current) {
-      viewer.scene.primitives.remove(outlinePrimitiveRef.current)
-    }
-
-    const gangnamLat = 37.4975
-    const gangnamLon = 127.0267
-
-    const positions = [
-      Cartesian3.fromDegrees(gangnamLon - 0.005, gangnamLat - 0.005, 0),
-      Cartesian3.fromDegrees(gangnamLon + 0.005, gangnamLat - 0.005, 0),
-      Cartesian3.fromDegrees(gangnamLon + 0.005, gangnamLat + 0.005, 0),
-      Cartesian3.fromDegrees(gangnamLon - 0.005, gangnamLat + 0.005, 0),
-    ]
-
-    const polygonGeometry = new PolygonGeometry({
-      polygonHierarchy: {
-        positions: positions,
-      },
-      extrudedHeight: waterLevel,
-      vertexFormat: PerInstanceColorAppearance.VERTEX_FORMAT,
-    })
-
-    const outlineGeometry = new PolygonOutlineGeometry({
-      polygonHierarchy: {
-        positions: positions,
-      },
-      extrudedHeight: waterLevel,
-    })
-
-    const floodPrimitive = new Primitive({
-      geometryInstances: {
-        geometry: polygonGeometry,
-        attributes: {
-          color: PerInstanceColorAppearance.createColorAttribute(
-            new Color(0.1, 0.5, 0.9, 0.6)
-          ),
-        },
-      },
-      appearance: new PerInstanceColorAppearance({
-        translucent: true,
-        flat: false,
-      }),
-    })
-
-    const outlinePrimitive = new Primitive({
-      geometryInstances: {
-        geometry: outlineGeometry,
-        attributes: {
-          color: PerInstanceColorAppearance.createColorAttribute(
-            new Color(0.0, 0.8, 1.0, 1.0)
-          ),
-        },
-      },
-      appearance: new PerInstanceColorAppearance({
-        flat: false,
-      }),
-    })
-
-    viewer.scene.primitives.add(floodPrimitive)
-    viewer.scene.primitives.add(outlinePrimitive)
-
-    floodPrimitiveRef.current = floodPrimitive
-    outlinePrimitiveRef.current = outlinePrimitive
-
-  }, [viewer, waterLevel])
+    entity.show = true
+    entity.polygon.extrudedHeight = waterLevel
+  }, [waterLevel])
 
   return null
 }
