@@ -47,17 +47,17 @@
 
 ## 현재 로드맵
 
-### 🔜 진행 중 — 성능 2차
+### ✅ 완료 — 성능 2차
 
-상세 기획: [perf-phase2.md](./perf-phase2.md)
+상세: [perf-phase2.md](./perf-phase2.md)
 
-| 항목 | 내용 | 위험도 |
-|------|------|--------|
-| P-1 | positionBuffer 재사용 — Surface 74KB 할당 제거 | 🟢 낮음 |
-| P-2 | body 이중 제어 (0.3m + 400ms 게이트) | 🟢 낮음 |
-| P-3 | FPS 적응형 surface skip | 🟢 낮음 |
-| P-4 | body 상단 캡 삼각형 제거 | 🟡 중간 |
-| P-5 | 파동 에너지 기반 동적 update interval | 🟡 중간 |
+| 항목 | 내용 |
+|------|------|
+| P-1 | positionBuffer 재사용 — Surface Float64Array 할당 제거 |
+| P-2 | body 이중 제어 (0.3m + 400ms 게이트) |
+| P-3 | FPS 적응형 surface skip (>22ms) |
+| P-4 | body 상단 캡 삼각형 제거 (`omitTopCap`) |
+| P-5 | 파동 에너지 기반 동적 update interval (2~6프레임) |
 
 ### 📌 다음 — 쓰나미 모듈
 

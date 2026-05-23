@@ -19,8 +19,19 @@ import {
 const WAVE_RESOLUTION = 56
 const TERRAIN_QUICK_RES = 16
 const TERRAIN_REFINE_INTERVAL = 240
-const SURFACE_UPDATE_INTERVAL = 2
-const BODY_REBUILD_THRESHOLD = 0.05
+const BODY_REBUILD_THRESHOLD = 0.3
+const BODY_REBUILD_INTERVAL_MS = 400
+const SLOW_FRAME_THRESHOLD_MS = 22
+
+const getSurfaceUpdateInterval = (engine) => {
+  const heights = engine.heights
+  let sumSq = 0
+  for (let i = 0; i < heights.length; i++) sumSq += heights[i] * heights[i]
+  const surfaceEnergy = sumSq / heights.length
+  if (surfaceEnergy < 0.01) return 6
+  if (surfaceEnergy < 0.5) return 3
+  return 2
+}
 
 const getViewer = (viewerRef) => {
   const viewer = viewerRef.current
@@ -83,22 +94,29 @@ const syncSurfacePrimitive = (viewer, sim) => {
   sim.surface = createWaterSurfacePrimitiveFromCache(
     sim.surfaceCache,
     sim.engine,
-    sim.surfaceMaterial
+    sim.surfaceMaterial,
+    sim.positionBuffer
   )
   if (sim.surface) viewer.scene.primitives.add(sim.surface)
 }
 
-const rebuildFloodBody = (viewer, sim, floodDepth) => {
+const rebuildFloodBody = (viewer, sim, floodDepth, now = performance.now()) => {
   removePrimitive(viewer, sim.body)
   sim.body = createFloodBodyPrimitive(floodDepth, sim.bodyMaterial, sim.bounds, sim.terrainGrid)
   if (sim.body) viewer.scene.primitives.add(sim.body)
   sim.lastBodyLevel = floodDepth
+  sim.lastBodyRebuildMs = now
 }
 
-const syncBodyForLevel = (viewer, sim, level) => {
-  const bodyDelta = Math.abs(level - (sim.lastBodyLevel ?? NaN))
-  if (!Number.isFinite(sim.lastBodyLevel) || bodyDelta >= BODY_REBUILD_THRESHOLD) {
-    rebuildFloodBody(viewer, sim, level)
+const syncBodyForLevel = (viewer, sim, level, now) => {
+  const deltaLevel = Math.abs(level - (sim.lastBodyLevel ?? NaN))
+  const deltaTime = now - (sim.lastBodyRebuildMs ?? 0)
+
+  if (
+    !Number.isFinite(sim.lastBodyLevel)
+    || (deltaLevel >= BODY_REBUILD_THRESHOLD && deltaTime >= BODY_REBUILD_INTERVAL_MS)
+  ) {
+    rebuildFloodBody(viewer, sim, level, now)
   }
 }
 
@@ -224,6 +242,8 @@ const startSimulation = (
     terrainSampleToken: 0,
     baseLevel: initialLevel,
     lastBodyLevel: initialLevel,
+    lastBodyRebuildMs: performance.now(),
+    positionBuffer: new Float64Array(WAVE_RESOLUTION * WAVE_RESOLUTION * 3),
     surface: null,
     body: null,
     removeListener: null,
@@ -231,6 +251,7 @@ const startSimulation = (
     rafId: null,
     frameCount: 0,
     lastFrameMs: performance.now(),
+    lastFrameDeltaMs: 0,
     surfaceDirty: true,
   }
 
@@ -263,6 +284,7 @@ const startSimulation = (
 
       const now = performance.now()
       const deltaSeconds = Math.min((now - sim.lastFrameMs) / 1000, 0.05)
+      sim.lastFrameDeltaMs = deltaSeconds * 1000
       sim.lastFrameMs = now
 
       if (sim.frameCount > 0 && sim.frameCount % TERRAIN_REFINE_INTERVAL === 0) {
@@ -275,7 +297,7 @@ const startSimulation = (
         const delta = level - sim.baseLevel
         sim.engine.addDisturbance(0.5, 0.5, 0.32, delta * 0.03)
         rebuildSurfaceCache(sim, level)
-        syncBodyForLevel(viewer, sim, level)
+        syncBodyForLevel(viewer, sim, level, now)
         sim.baseLevel = level
         sim.surfaceDirty = true
       }
@@ -298,7 +320,10 @@ const startSimulation = (
 
     if (simRef.current !== sim || waterLevelRef.current <= 0) return
 
-    if (!sim.surfaceDirty || sim.frameCount % SURFACE_UPDATE_INTERVAL !== 0) return
+    if (sim.lastFrameDeltaMs > SLOW_FRAME_THRESHOLD_MS) return
+
+    const surfaceInterval = getSurfaceUpdateInterval(sim.engine)
+    if (!sim.surfaceDirty || sim.frameCount % surfaceInterval !== 0) return
 
     try {
       syncSurfacePrimitive(viewer, sim)

@@ -3,6 +3,7 @@
 > 작성일: 2026-05-24  
 > 작성자: 기획  
 > 대상 브랜치: `dev`  
+> 상태: **구현 완료** (P-1~P-5)  
 > 참조: [evaluation.md](./evaluation.md) — B-2, [goals.md](./goals.md) — 성능 2차
 
 ---

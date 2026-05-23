@@ -109,10 +109,10 @@ export function buildWaterSurfacePositionsFromCache(cache, waveEngine, target) {
   return positions
 }
 
-export function buildWaterSurfaceGeometryFromCache(cache, waveEngine) {
+export function buildWaterSurfaceGeometryFromCache(cache, waveEngine, positionBuffer) {
   if (cache.indices.length === 0) return null
 
-  const positions = buildWaterSurfacePositionsFromCache(cache, waveEngine)
+  const positions = buildWaterSurfacePositionsFromCache(cache, waveEngine, positionBuffer)
 
   return new Geometry({
     attributes: {
@@ -206,8 +206,8 @@ export function createWaterSurfacePrimitive(waveEngine, floodDepthMeters, materi
   })
 }
 
-export function createWaterSurfacePrimitiveFromCache(cache, waveEngine, material) {
-  const geometry = buildWaterSurfaceGeometryFromCache(cache, waveEngine)
+export function createWaterSurfacePrimitiveFromCache(cache, waveEngine, material, positionBuffer) {
+  const geometry = buildWaterSurfaceGeometryFromCache(cache, waveEngine, positionBuffer)
   if (!geometry) return null
 
   return new Primitive({
@@ -262,7 +262,8 @@ export function downsampleTerrainGrid(fullGrid, targetRes) {
 const BODY_GRID_RES = 28
 
 /** 지형 그리드 기준 침수 수체 (저지대→수면 높이, 침수 구역만) */
-export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth) {
+export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options = {}) {
+  const { omitTopCap = false } = options
   if (!terrainGrid?.heights || floodDepth <= 0) return null
 
   const waterSurfaceHeight = getFloodWaterSurfaceHeight(terrainGrid, floodDepth)
@@ -317,8 +318,10 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth) {
       pushTriangle(indices, bLL, bLR, bUL)
       pushTriangle(indices, bLR, bUR, bUL)
 
-      pushTriangle(indices, tLL, tUL, tLR)
-      pushTriangle(indices, tLR, tUL, tUR)
+      if (!omitTopCap) {
+        pushTriangle(indices, tLL, tUL, tLR)
+        pushTriangle(indices, tLR, tUL, tUR)
+      }
 
       pushTriangle(indices, bLL, tLL, bLR)
       pushTriangle(indices, bLR, tLL, tLR)
@@ -354,8 +357,9 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth) {
   return GeometryPipeline.computeNormal(geometry)
 }
 
-export function createFloodBodyPrimitive(floodDepth, material, bounds, terrainGrid) {
-  const geometry = buildFloodBodyGeometry(bounds, terrainGrid, floodDepth)
+export function createFloodBodyPrimitive(floodDepth, material, bounds, terrainGrid, options = {}) {
+  const { omitTopCap = true } = options
+  const geometry = buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, { omitTopCap })
   if (!geometry) return null
 
   return new Primitive({

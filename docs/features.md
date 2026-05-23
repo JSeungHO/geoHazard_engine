@@ -159,13 +159,13 @@ src/
 ```
 postUpdate (60fps)
   └── WaterWaveEngine.step()              ← 파동 물리
-  └── syncBodyForLevel()                  ← body 재생성 (현재: 0.05m 임계값)
+  └── syncBodyForLevel()                  ← body 재생성 (0.3m + 400ms 게이트)
 
-rAF (~30fps, SURFACE_UPDATE_INTERVAL=2)
-  └── syncSurfacePrimitive()              ← 수면 mesh 교체 (매 2프레임 Primitive 재생성)
+rAF (동적 interval: 2~6프레임, 파동 에너지 기반)
+  └── syncSurfacePrimitive()              ← positionBuffer 재사용, 느린 프레임(>22ms) skip
 ```
 
-> **성능 2차 (미구현)**: P-2에서 0.3m + 400ms 게이트, P-1 positionBuffer 재사용 등 — [perf-phase2.md](./perf-phase2.md)
+> **성능 2차 (구현 완료)**: P-1~P-5 — [perf-phase2.md](./perf-phase2.md)
 
 ### WaterWaveEngine
 
@@ -222,20 +222,6 @@ MODULE_REGISTRY = [
 | `terrainHeight.test.js` | 5 | baseline, 수면고도, terrainGridChanged fast-path |
 | `floodViewBounds.test.js` | 7 | pitch band, boundsChanged, 강남 기준 중심 |
 | **합계** | **20** | **전부 통과** |
-
----
-
-## 다음 작업 (성능 2차)
-
-Surface/Body Primitive 최적화 계획: [perf-phase2.md](./perf-phase2.md)
-
-| 항목 | 효과 |
-|------|------|
-| P-1 positionBuffer 재사용 | Surface 74KB 할당 제거 |
-| P-2 body 이중 제어 (0.3m + 400ms) | 재생성 빈도 절반 |
-| P-3 FPS 적응형 skip | 저사양 기기 여유 |
-| P-4 body 상단 캡 제거 | 삼각형 17% 감소 |
-| P-5 파동 에너지 동적 주기 | 잔잔 시 GPU 50~67% 절감 |
 
 ---
 
