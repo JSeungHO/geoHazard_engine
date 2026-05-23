@@ -1,110 +1,134 @@
 # 구현 기능
 
-현재 GeoHazard Engine에 구현된 기능과 기술 아키텍처.
+현재 GeoHazard Engine에 구현된 기능과 기술 아키텍처.  
+마지막 갱신: 2026-05-24
+
+---
 
 ## 구현 완료 체크리스트
 
+### 렌더링 · 시뮬레이션
 - [x] Cesium 3D Viewport (World Terrain, 강남역 카메라 300m)
-- [x] `CesiumMapViewer` — viewer 단일 마운트, `CameraFlyTo once`, 조명·대기
-- [x] `FloodModule` viewer `useRef` 패턴 (슬라이더 조절 시 뷰어·카메라 유지)
-- [x] `RainSystem.jsx` — 파티클 강우 + view bounds 연동
-- [x] `RainControl.jsx` / `WaterLevelControl.jsx` — 강수·수위 슬라이더
-- [x] `FloodVisualization.jsx` — Primitive + 2D 파동 물리 + 하늘색 수면 반사
+- [x] `CesiumMapViewer` — viewer 단일 마운트, 조명·대기
+- [x] `FloodVisualization` — Primitive 수면 + 2D 파동 물리 + 하늘색 Fresnel 반사
+- [x] `WaterWaveEngine` — 2D ripple tank, 경계 셀 흡수 damping (`_dampBoundary`)
+- [x] terrain grid 클램핑 + 저지대 기준 홍수 채움 (`terrainHeight.js`, `floodWaterMesh.js`)
 - [x] pitch 기준 view bounds — 침수·강수 공통 (`floodViewBounds.js`)
-- [x] 지형 그리드 클램핑 + 저지대 기준 홍수 채움 (`terrainHeight.js`, `floodWaterMesh.js`)
-- [x] 강수 → 수위 자동 상승 (`useRainWaterAccumulation`)
-- [x] 시뮬레이션 옵션 (파도·반사·상승 속도) — `simulationDefaults.js`
+- [x] `RainSystem` — 파티클 강우 + pitch view bounds 연동, 카메라 고도 비례 emitter 고도
+- [x] 강수 → 수위 자동 상승 + drainage (`useRainWaterAccumulation`)
+- [x] 시뮬레이션 프리셋 (잔잔/보통/폭풍) + 개별 슬라이더 (`WAVE_PRESETS`)
 - [x] `SceneLayersPanel` — OSM 건물 토글 (기본 ON)
-- [x] `CollapsibleSection`, `MapStatusBar`, 강남역 flyTo
+
+### UX · UI
+- [x] 좌측 사이드바 (`FloodMainUI`) — 강수·수위·자동상승·시뮬 옵션·초기화
+- [x] 시나리오 패널 — 소나기/집중호우/2022 강남역/태풍급 1클릭 세팅 (`ScenarioPanel`)
+- [x] `WelcomeOverlay` — 첫 방문 온보딩, localStorage 영구 닫기
+- [x] 슬라이더 힌트 — 강수 mm/h 환산, 수위 저지대 기준 m (`displayUnits.js`)
+- [x] `TerrainLoadingBadge` — 지형 정밀화 중 로딩 표시
+- [x] `MapStatusBar` — 경위도·카메라 고도·지표 고도·침수 pill
+- [x] `MobileWarning` — 1000px 미만 전체 화면 차단 오버레이
+- [x] 강남역 flyTo (`locations/gangnam.js`)
+
+### 아키텍처 · 인프라
+- [x] `ModuleShell` + `registry.js` — 홍수/쓰나미/지진 탭 라우터 (쓰나미·지진 비활성)
+- [x] `SimulationErrorBoundary` — Cesium 렌더링 오류 격리 + 재시도
+- [x] `locations/gangnam.js` — 좌표·카메라·bounds 단일 소스
+- [x] Vitest 단위 테스트 20개 (4파일)
 - [x] Production 빌드: `vite-plugin-cesium` (Workers/WASM)
-- [x] Vercel Production + `dev` Preview 배포
+- [x] Vercel Production (`main`) + Preview (`dev`) 자동 배포
 
-## 알려진 이슈 (잔여)
+---
 
-> [evaluation.md](./evaluation.md) — B-2 buffer 직접 업데이트, A-1~A-4, U-4~U-8 등 미구현 항목
+## 파일 구조
 
-## 알려진 이슈 및 기술 부채
+```
+src/
+├── App.jsx                          ← ModuleShell + registry 연결
+├── locations/
+│   └── gangnam.js                   ← 좌표·카메라·bounds 단일 소스
+├── modules/
+│   ├── registry.js                  ← 모듈 정의 (flood/tsunami/earthquake)
+│   └── flood/
+│       ├── FloodModule.jsx          ← viewerRef, 레이아웃, 상태 관리
+│       ├── components/
+│       │   ├── FloodVisualization.jsx   ← 물리 루프, view bounds, rAF 수면
+│       │   ├── RainSystem.jsx           ← 강수 ParticleSystem
+│       │   ├── FloodMainUI.jsx          ← 사이드바 레이아웃
+│       │   ├── SimulationOptions.jsx    ← 프리셋 버튼 + 슬라이더
+│       │   ├── WaterLevelControl.jsx    ← 수위 슬라이더 + 저지대 힌트
+│       │   ├── RainControl.jsx          ← 강수 슬라이더 + mm/h 힌트
+│       │   ├── ScenarioPanel.jsx        ← 프리셋 시나리오 버튼
+│       │   ├── WelcomeOverlay.jsx       ← 첫 방문 온보딩
+│       │   └── TerrainLoadingBadge.jsx  ← 지형 샘플링 로딩 표시
+│       ├── hooks/
+│       │   ├── useMapLayout.js          ← Cesium canvas 리사이즈
+│       │   └── useRainWaterAccumulation.js ← 자동 상승 + drainage
+│       ├── constants/
+│       │   ├── simulationDefaults.js    ← DEFAULT_OPTIONS, WAVE_PRESETS, helpers
+│       │   ├── simulationDefaults.test.js
+│       │   └── scenarios.js             ← SCENARIOS 4종
+│       └── utils/
+│           └── displayUnits.js          ← mm/h 환산, 저지대 힌트 문자열
+├── components/                       ← 공용 컴포넌트만
+│   ├── CesiumMapViewer.jsx
+│   ├── CollapsibleSection.jsx
+│   ├── MapStatusBar.jsx
+│   ├── ModuleShell.jsx
+│   ├── MobileWarning.jsx
+│   ├── SimulationErrorBoundary.jsx
+│   ├── SceneLayersPanel.jsx
+│   └── SceneLayerController.jsx
+├── physics/
+│   ├── WaterWaveEngine.js
+│   └── WaterWaveEngine.test.js
+├── utils/
+│   ├── floodViewBounds.js
+│   ├── floodViewBounds.test.js
+│   ├── floodWaterMesh.js
+│   ├── floodWaterMaterial.js
+│   ├── terrainHeight.js
+│   └── terrainHeight.test.js
+├── scene/
+│   └── sceneLayerRuntime.js
+└── constants/
+    └── sceneLayers.js
+```
 
-> 상세: [기획·테스트 평가](./evaluation.md) §2~§4
-
-### 버그 / 성능 (요약)
-
-| 우선 | ID | 요약 |
-|------|-----|------|
-| 🔴 HIGH | B-1 | ~~WaterWaveEngine 경계 셀~~ → **수정됨** (흡수 damping) |
-| 🔴 HIGH | B-2 | body 재생성 — **0.05m 잔여** (buffer update는 미구현) |
-| 🔴 HIGH | B-3 | ~~매 버텍스 new Cartesian3~~ → **수정됨** |
-| 🟡 MED | B-4 | ~~강수 emitter 600m 고정~~ → **카메라 고도 비례** |
-| 🟡 MED | B-5 | ~~마운트마다 캔버스~~ → **상수화** |
-| 🟡 MED | B-6 | ~~drainage 없음~~ → **auto-rise drainage 추가** |
-| 🟡 MED | B-7 | ~~Error Boundary 없음~~ → **SimulationErrorBoundary** |
-| 🟢 LOW | B-8 | ~~O(n) 전체 비교~~ → **min/max fast-path** |
-
-### 아키텍처 개선 (요약)
-
-| ID | 요약 |
-|----|------|
-| A-1 | `FloodVisualization` 등 홍수 전용 코드가 `components/`에 분산 → `modules/flood/`로 통합 |
-| A-2 | `App.jsx` 단일 `<FloodModule />` — 모듈 라우터 필요 |
-| A-3 | 강남 좌표가 4곳 이상 분산 → `locations/gangnam.js` 통합 |
-| A-4 | 단위 테스트 없음 — Vitest + 순수 함수 3종 최소 커버 |
-
-### QA 체크리스트
-
-릴리스 전 확인 항목: [evaluation.md §7](./evaluation.md#7-테스터-체크리스트-다음-릴리스-전-확인-항목)
+---
 
 ## 핵심 기술 제약
 
-- **State**: Cesium viewer는 `useRef`로 관리 (`FloodModule.viewerRef` → `RainSystem` / `FloodVisualization`)
-- **Rendering**: `CesiumMapViewer`에서 viewer **한 번만** 마운트. UI state 변경 시 viewer **내부** 객체만 수정
-- **Vite**: `vite-plugin-cesium`으로 정적 에셋 번들. `optimizeDeps.exclude: ['cesium']` **금지** (mersenne-twister ESM → blank)
-- **환경 변수**: 로컬 `.env`, Production `VITE_CESIUM_TOKEN`. `.env.example` 참고
+| 제약 | 내용 |
+|------|------|
+| **Viewer 인스턴스** | `CesiumMapViewer`에서 **한 번만** 마운트. UI state 변경 시 viewer **내부** 객체만 수정 (`viewerRef` 경유) |
+| **Primitive 재생성** | Cesium 공개 API 상 vertex buffer 직접 업데이트 불가 → Primitive를 교체하는 방식 유지 (성능 2차 기획 참고) |
+| **Vite 번들** | `vite-plugin-cesium`으로 정적 에셋 번들. `optimizeDeps.exclude: ['cesium']` **금지** |
+| **환경 변수** | 로컬 `.env`, Production `VITE_CESIUM_TOKEN`. `.env.example` 참고 |
+
+---
 
 ## View Bounds — 침수·강수 공통 (`floodViewBounds.js`)
 
-침수 mesh와 강수 emitter는 **카메라가 보는 지표 범위**를 공유한다. `computeViewRectangle` 대신 **화면 세로 밴드 ray pick**으로 bounds 생성.
-
-### pitch → 화면 밴드
-
-Cesium `camera.pitch`(rad): **0 = 수평**, **음수 = 아래를 봄** (강남 기본 -45° ≈ -0.785).
-
-| pitch (rad) | 대략 | 화면 샘플 (세로) | 효과 |
-|-------------|------|------------------|------|
-| **≤ -0.589** | ~-33.8° 이하 | **0 ~ 100%** | oblique·하향 — 화면 전체 물·비 |
-| **-0.589 → 0** | 수평에 가까움 | **위쪽부터 축소** | 지평선 제외, 전경만 |
-| **0** | 수평 | **하단 1/3** | 최대 crop |
-
-**상수**: `FLOOD_PITCH_FULL_SCREEN = -0.5894654192726403`
-
-### API
+침수 mesh와 강수 emitter는 **카메라가 보는 지표 범위**를 공유한다.
 
 | 함수 | 역할 |
 |------|------|
 | `getViewFloodBounds(viewer)` | pitch 밴드 pick → lon/lat AABB |
-| `getFloodBandStartForPitch(pitch)` | pitch → 화면 y 시작 비율 (0=위, 1=아래) |
+| `getFloodBandStartForPitch(pitch)` | pitch → 화면 y 시작 비율 |
 | `getRainEmitterPosition(viewer, bounds)` | 밴드 세로 중앙을 지표에 투영 |
 | `addViewFloodBoundsListener(viewer, cb, opts?)` | `camera.changed` + `moveEnd` 시 bounds 갱신 |
 | `boundsChanged(a, b)` | bounds 변화 감지 (ε = 1e-6°) |
+| `getDefaultFloodBounds()` | pick 실패 시 강남역 고정 fallback |
 
-### 소비처
+**pitch 기준**:
 
-| 컴포넌트 | bounds 사용 | 갱신 |
-|----------|-------------|------|
-| `FloodVisualization.jsx` | terrain grid·mesh 범위 | listener, debounce 200ms |
-| `RainSystem.jsx` | `BoxEmitter` 크기·위치 | listener, 즉시 |
+| pitch (rad) | 화면 샘플 | 효과 |
+|-------------|-----------|------|
+| ≤ -0.589 (≈ -33.8°) | 0 ~ 100% | 화면 전체 물·비 |
+| -0.589 → 0 | 위쪽부터 축소 | 지평선 제외 전경만 |
+| 0 (수평) | 하단 1/3 | 최대 crop |
 
-### 동작 흐름
-
-```
-camera.pitch
-    → getFloodBandStartForPitch
-    → 화면 [yStart, 1] 구간 corner/mid ray pick
-    → getViewFloodBounds (lon/lat AABB)
-    → FloodVisualization: mesh 재생성
-    → RainSystem: emitter modelMatrix / BoxEmitter 갱신
-```
-
-pick 실패 시 `getDefaultFloodBounds()`(강남역 고정) fallback.
+---
 
 ## 강수 시스템 (`RainSystem.jsx`)
 
@@ -112,67 +136,112 @@ pick 실패 시 `getDefaultFloodBounds()`(강남역 고정) fallback.
 |------|-----------|
 | API | Cesium `ParticleSystem` + `BoxEmitter` |
 | 범위 | `getViewFloodBounds` — 침수와 동일 pitch 밴드 |
-| 강도 | `emissionRate`: 0 또는 20~500 (`intensity` 0~100%) |
-| 파티클 | 세로 streak canvas, gravity `-280` |
-| 고도 | `max(cameraHeight × 1.2, 300m)` — 카메라 고도 비례 |
+| 강도 | `emissionRate` 0 또는 20~500 (`intensity` 0~100%) |
+| 파티클 | 세로 streak canvas (모듈 상수 `RAIN_STREAK_IMAGE`), gravity `-280` |
+| 고도 | `max(cameraHeight × 1.2, 300m)` — 카메라 고도 비례 동적 계산 |
 | BoxEmitter Z | `120 + bandFrac × 320` m |
-| viewer | `viewerRef` — FloodModule과 동일 인스턴스 |
 
-## 범람 시각화 (`FloodVisualization`)
+---
 
-홍수 수위는 **Entity가 아닌 Primitive**로 구현.
+## 범람 시각화 (`FloodVisualization.jsx`)
 
-| 구분 | 선택 | 이유 |
+| 구분 | 방식 | 이유 |
 |------|------|------|
-| 렌더링 | `Primitive` + 동적 `Geometry` | terrain grid + 파동, 저지대 기준 수면 |
+| 렌더링 | `Primitive` + 동적 `Geometry` | terrain grid + 파동 |
 | 수면 | `WaterWaveEngine` + `createWaterSurfaceCache` | 침수 구역만 mesh |
 | 부피 | terrain grid extrusion | 지형~수면, 건조 셀 skip |
-| 지형 | `sampleTerrainHeightGrid` → `refineTerrainHeightGrid` | 16×16 즉시 → 56×56 async |
-| 침수 기준 | `getFloodBaselineHeight` (grid min) | 슬라이더 = 저지대 대비 깊이(m) |
+| 지형 | 16×16 즉시 → 56×56 async refine | 초기 빠른 렌더 + 정밀화 |
+| 침수 기준 | `getFloodBaselineHeight` (grid min) | 슬라이더 = 저지대 대비 깊이 |
 | 머티리얼 | `FloodPhysicsWater` (Fabric) | 하늘색 + glint + Fresnel |
-| 성능 | rAF 수면 갱신 | postUpdate는 물리만; 2프레임마다 mesh |
 
-### 동작 순서
+### 렌더 루프
 
-1. **수위 > 0**: terrain grid → baseline + depth → body/surface Primitive
-2. **`postUpdate`**: `WaterWaveEngine.step`, 수위 변경 시 body/cache 재생성
-3. **rAF**: cache + 파동 → Primitive (2프레임 간격)
-4. **view bounds 변경**: pitch·카메라 이동 → grid·mesh 재샘플 (debounce 200ms)
-5. **수위 = 0**: Primitive 제거 (viewer·카메라 유지)
+```
+postUpdate (60fps)
+  └── WaterWaveEngine.step()              ← 파동 물리
+  └── syncBodyForLevel()                  ← body 재생성 (현재: 0.05m 임계값)
 
-### FloodPhysicsWater 셰이더
+rAF (~30fps, SURFACE_UPDATE_INTERVAL=2)
+  └── syncSurfacePrimitive()              ← 수면 mesh 교체 (매 2프레임 Primitive 재생성)
+```
 
-- 베이스: 하늘색 `#96D7FA` 계열, 반투명
-- 하늘 거울 반사: Fresnel + `skyMirrorColor`
-- 태양 glint: broad + crest + fine ripples
-- 외부 텍스처 미사용 (Vite dev image decode 오류 방지)
+> **성능 2차 (미구현)**: P-2에서 0.3m + 400ms 게이트, P-1 positionBuffer 재사용 등 — [perf-phase2.md](./perf-phase2.md)
 
-### WaterWaveEngine 파라미터
+### WaterWaveEngine
 
-| 파라미터 | 값 | 설명 |
-|---------|-----|------|
+| 파라미터 (기본값) | 값 | 설명 |
+|------|-----|------|
 | resolution | 56 | 격자 해상도 |
 | stiffness | 0.16 | 파동 전파 속도 |
 | timeScale | 0.32 | 시간 배율 |
 | damping | 0.994 | 감쇠 |
 | maxAmplitude | 4.2 | 최대 파고 (m) |
+| `_dampBoundary` | 흡수 BC | 경계 반사 아티팩트 방지 |
 
-## 관련 파일
+### 시뮬레이션 프리셋
 
-| 파일 | 역할 |
+| 프리셋 | waveTimeScale | waveMaxAmplitude | 특징 |
+|--------|---------------|------------------|------|
+| 잔잔 | 0.12 | 1.8 m | 낮은 파동·반사 강조 |
+| 보통 | 0.32 | 4.2 m | 기본값 |
+| 폭풍 | 0.75 | 8.0 m | 거친 파고 |
+
+---
+
+## 프리셋 시나리오 (`scenarios.js`)
+
+| ID | 라벨 | 강수 | 수위 | 자동상승 |
+|----|------|------|------|----------|
+| drizzle | 소나기 | 40% | 0 m | ON |
+| heavy_rain | 집중호우 | 75% | 3.5 m | ON |
+| gangnam_2022 | 2022 강남역 | 85% | 8.5 m | OFF |
+| typhoon | 태풍급 | 100% | 15 m | ON |
+
+---
+
+## 모듈 라우터 (`registry.js`)
+
+```js
+MODULE_REGISTRY = [
+  { id: 'flood',     available: true,  component: FloodModule },
+  { id: 'tsunami',   available: false, component: null },   // 준비 중
+  { id: 'earthquake',available: false, component: null },   // 준비 중
+]
+```
+
+`ModuleShell` 탭 UI가 레지스트리를 렌더링. `available: false` 항목은 비활성 표시.
+
+---
+
+## 테스트 현황
+
+| 파일 | 케이스 수 | 커버 내용 |
+|------|-----------|-----------|
+| `WaterWaveEngine.test.js` | 4 | step, disturbance, boundary damping, rain |
+| `simulationDefaults.test.js` | 3 | preset match, findActivePresetId |
+| `terrainHeight.test.js` | 5 | baseline, 수면고도, terrainGridChanged fast-path |
+| `floodViewBounds.test.js` | 7 | pitch band, boundsChanged, 강남 기준 중심 |
+| **합계** | **20** | **전부 통과** |
+
+---
+
+## 다음 작업 (성능 2차)
+
+Surface/Body Primitive 최적화 계획: [perf-phase2.md](./perf-phase2.md)
+
+| 항목 | 효과 |
 |------|------|
-| `src/modules/flood/FloodModule.jsx` | viewerRef, 레이아웃 |
-| `src/components/CesiumMapViewer.jsx` | Viewer 마운트, 카메라·조명 |
-| `src/components/FloodVisualization.jsx` | 물리 루프, view bounds, rAF 수면 |
-| `src/components/RainSystem.jsx` | 강수 ParticleSystem |
-| `src/physics/WaterWaveEngine.js` | 2D ripple tank |
-| `src/utils/floodWaterMesh.js` | 수면 Geometry / 부피 Primitive |
-| `src/utils/floodWaterMaterial.js` | `FloodPhysicsWater` 셰이더 |
-| `src/utils/terrainHeight.js` | terrain grid, 저지대 baseline |
-| `src/utils/floodViewBounds.js` | pitch view band, bounds listener |
+| P-1 positionBuffer 재사용 | Surface 74KB 할당 제거 |
+| P-2 body 이중 제어 (0.3m + 400ms) | 재생성 빈도 절반 |
+| P-3 FPS 적응형 skip | 저사양 기기 여유 |
+| P-4 body 상단 캡 제거 | 삼각형 17% 감소 |
+| P-5 파동 에너지 동적 주기 | 잔잔 시 GPU 50~67% 절감 |
+
+---
 
 ## 관련 문서
 
-- [기획·테스트 평가](./evaluation.md) — 버그·아키텍처 상세, QA 체크리스트
-- [디자인 가이드](./design.md) — UX 백로그
-- [작업 목표](./goals.md) — 수정 로드맵·우선순위
+- [기획·테스트 평가](./evaluation.md)
+- [성능 2차 기획서](./perf-phase2.md)
+- [작업 목표](./goals.md)
+- [디자인 가이드](./design.md)

@@ -12,7 +12,9 @@
 | [docs/features.md](./docs/features.md) | 구현된 기능, view bounds, 강수·범람 아키텍처 |
 | [docs/goals.md](./docs/goals.md) | 프로젝트 목표, 로드맵, 배포, 쓰나미·지진 설계 |
 | [docs/evaluation.md](./docs/evaluation.md) | 기획·QA 평가, 버그/UX/아키텍처 이슈, QA 체크리스트 |
-| [docs/README.md](./docs/README.md) | 문서 목차 |
+| [docs/README.md](./docs/README.md) | 문서 목차·읽는 순서 |
+| [docs/perf-phase2.md](./docs/perf-phase2.md) | 성능 2차 기획 (P-1~P-5) |
+| [docs/ux-implementation.md](./docs/ux-implementation.md) | U-4~U-8 UX 구현 결과 |
 
 ## 기술 스택
 
