@@ -15,7 +15,7 @@ export default function WaterLevelControl({ waterLevel, onWaterLevelChange }) {
         onChange={(e) => onWaterLevelChange(Number(e.target.value))}
         className="water-slider"
       />
-      <span className="water-value">{waterLevel}m</span>
+      <span className="water-value">{Number(waterLevel).toFixed(2)}m</span>
     </div>
   )
 }

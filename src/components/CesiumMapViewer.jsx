@@ -15,11 +15,17 @@ const GANGNAM_ORIENTATION = {
   roll: 0,
 }
 
+const resizeViewer = (viewer) => {
+  if (!viewer || viewer.isDestroyed?.()) return
+  viewer.resize()
+  viewer.scene.requestRender()
+}
+
 /**
  * Cesium Viewer는 이 컴포넌트에서 단 한 번만 마운트된다.
  * viewer 인스턴스는 부모의 viewerRef에 저장한다 (PROJECT_PLAN.md).
  */
-function CesiumMapViewer({ viewerRef, onViewerReady }) {
+function CesiumMapViewer({ viewerRef, mapContainerRef, onViewerReady }) {
   const resiumRef = useRef(null)
   const readyNotifiedRef = useRef(false)
 
@@ -51,7 +57,13 @@ function CesiumMapViewer({ viewerRef, onViewerReady }) {
       if (!viewer) return false
 
       readyNotifiedRef.current = true
+      resizeViewer(viewer)
       onViewerReady?.()
+
+      requestAnimationFrame(() => {
+        if (!cancelled) resizeViewer(viewerRef.current)
+      })
+
       return true
     }
 
@@ -67,13 +79,51 @@ function CesiumMapViewer({ viewerRef, onViewerReady }) {
       cancelled = true
       cancelAnimationFrame(frameId)
     }
-  }, [attachViewer, onViewerReady])
+  }, [attachViewer, onViewerReady, viewerRef])
+
+  useEffect(() => {
+    const container = mapContainerRef?.current
+    if (!container) return undefined
+
+    let resizeObserver = null
+    let frameId = 0
+
+    const bindResize = () => {
+      const viewer = viewerRef.current
+      if (!viewer || viewer.isDestroyed?.()) return false
+
+      resizeViewer(viewer)
+      return true
+    }
+
+    resizeObserver = new ResizeObserver(() => {
+      bindResize()
+    })
+    resizeObserver.observe(container)
+
+    if (!bindResize()) {
+      const poll = () => {
+        if (bindResize()) return
+        frameId = requestAnimationFrame(poll)
+      }
+      poll()
+    }
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      resizeObserver?.disconnect()
+    }
+  }, [mapContainerRef, viewerRef])
 
   return (
     <Viewer
-      full
       ref={resiumRef}
+      className="cesium-map-viewer"
+      style={{ width: '100%', height: '100%' }}
       terrain={Terrain.fromWorldTerrain({ requestVertexNormals: true })}
+      shouldAnimate
+      animation={false}
+      timeline={false}
       infoBox={false}
       selectionIndicator={false}
       geocoder={false}

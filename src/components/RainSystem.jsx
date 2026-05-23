@@ -10,7 +10,7 @@ import {
 } from 'cesium'
 import { GANGNAM_LAT, GANGNAM_LON } from '../constants/gangnam'
 
-const EMITTER_ALTITUDE = 800
+const EMITTER_ALTITUDE = 600
 
 const emissionRateFromIntensity = (intensity) =>
   intensity === 0 ? 0 : Math.floor(20 + (intensity / 100) * 480)
@@ -45,6 +45,11 @@ const getViewer = (viewerRef) => {
   return viewer
 }
 
+const applyRainIntensity = (particleSystem, intensity) => {
+  particleSystem.emissionRate = emissionRateFromIntensity(intensity)
+  particleSystem.show = intensity > 0
+}
+
 /** viewerRef.current 내부 객체만 갱신 (뷰어 재마운트 없음) */
 export default function RainSystem({ viewerRef, intensity }) {
   const particleSystemRef = useRef(null)
@@ -56,39 +61,39 @@ export default function RainSystem({ viewerRef, intensity }) {
 
   useEffect(() => {
     const viewer = getViewer(viewerRef)
-    if (!viewer) return
+    if (!viewer) return undefined
 
     const scene = viewer.scene
+    viewer.clock.shouldAnimate = true
+
     const position = Cartesian3.fromDegrees(GANGNAM_LON, GANGNAM_LAT, EMITTER_ALTITUDE)
-    const initialIntensity = intensityRef.current
 
     const particleSystem = new ParticleSystem({
       image: createRainStreakImage(),
-      startColor: Color.fromCssColorString('rgba(200, 230, 255, 0.9)'),
-      endColor: Color.fromCssColorString('rgba(200, 230, 255, 0.05)'),
+      startColor: Color.fromCssColorString('rgba(200, 230, 255, 0.95)'),
+      endColor: Color.fromCssColorString('rgba(200, 230, 255, 0.08)'),
       startScale: 1.0,
       endScale: 0.6,
-      minimumImageSize: new Cartesian2(2, 18),
-      maximumImageSize: new Cartesian2(4, 32),
-      particleLife: 1.8,
-      speed: 30,
+      minimumImageSize: new Cartesian2(3, 22),
+      maximumImageSize: new Cartesian2(5, 38),
+      particleLife: 2.2,
+      speed: 28,
       speedIsRandomized: true,
-      lifetime: 60.0,
-      emissionRate: emissionRateFromIntensity(initialIntensity),
-      emitter: new BoxEmitter(new Cartesian3(1200, 1200, 600)),
+      emissionRate: 0,
+      emitter: new BoxEmitter(new Cartesian3(1200, 1200, 500)),
       modelMatrix: Matrix4.fromTranslationQuaternionRotationScale(
         position,
         Quaternion.IDENTITY,
         new Cartesian3(1, 1, 1)
       ),
-      minimumSpeed: 20,
-      maximumSpeed: 40,
+      minimumSpeed: 18,
+      maximumSpeed: 42,
       updateCallback: applyGravity,
     })
 
-    particleSystem.show = initialIntensity > 0
     scene.primitives.add(particleSystem)
     particleSystemRef.current = particleSystem
+    applyRainIntensity(particleSystem, intensityRef.current)
 
     return () => {
       if (!viewer.isDestroyed?.()) {
@@ -99,12 +104,13 @@ export default function RainSystem({ viewerRef, intensity }) {
   }, [viewerRef])
 
   useEffect(() => {
+    const viewer = getViewer(viewerRef)
     const particleSystem = particleSystemRef.current
-    if (!particleSystem) return
+    if (!viewer || !particleSystem) return
 
-    particleSystem.emissionRate = emissionRateFromIntensity(intensity)
-    particleSystem.show = intensity > 0
-  }, [intensity])
+    applyRainIntensity(particleSystem, intensity)
+    viewer.scene.requestRender()
+  }, [intensity, viewerRef])
 
   return null
 }

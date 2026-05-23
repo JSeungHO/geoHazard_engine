@@ -19,6 +19,17 @@ const removePrimitive = (viewer, primitive) => {
   }
 }
 
+const applySimulationOptions = (engine, surfaceMaterial, options) => {
+  engine.timeScale = options.waveTimeScale
+  engine.stiffness = options.waveStiffness
+  engine.maxAmplitude = options.waveMaxAmplitude
+
+  if (surfaceMaterial?.uniforms) {
+    surfaceMaterial.uniforms.glintStrength = options.glintStrength
+    surfaceMaterial.uniforms.reflectivity = options.reflectivity
+  }
+}
+
 const stopSimulation = (viewer, simRef) => {
   const sim = simRef.current
   if (!sim || !viewer) return
@@ -29,7 +40,14 @@ const stopSimulation = (viewer, simRef) => {
   simRef.current = null
 }
 
-const startSimulation = (viewer, initialLevel, simRef, waterLevelRef, rainIntensityRef) => {
+const startSimulation = (
+  viewer,
+  initialLevel,
+  simRef,
+  waterLevelRef,
+  rainIntensityRef,
+  simulationOptionsRef
+) => {
   stopSimulation(viewer, simRef)
 
   const engine = new WaterWaveEngine(56)
@@ -37,6 +55,7 @@ const startSimulation = (viewer, initialLevel, simRef, waterLevelRef, rainIntens
 
   const surfaceMaterial = createFloodSurfaceMaterial()
   const bodyMaterial = createFloodBodyMaterial()
+  applySimulationOptions(engine, surfaceMaterial, simulationOptionsRef.current)
 
   const sim = {
     engine,
@@ -58,6 +77,7 @@ const startSimulation = (viewer, initialLevel, simRef, waterLevelRef, rainIntens
     try {
       const level = waterLevelRef.current
       const rain = rainIntensityRef.current
+      const options = simulationOptionsRef.current
 
       if (level <= 0) return
 
@@ -65,24 +85,26 @@ const startSimulation = (viewer, initialLevel, simRef, waterLevelRef, rainIntens
       const deltaSeconds = Math.min((now - sim.lastFrameMs) / 1000, 0.05)
       sim.lastFrameMs = now
 
+      applySimulationOptions(sim.engine, sim.surfaceMaterial, options)
+
       if (sim.baseLevel !== level) {
         const delta = level - sim.baseLevel
-        engine.addDisturbance(0.5, 0.5, 0.32, delta * 0.03)
+        sim.engine.addDisturbance(0.5, 0.5, 0.32, delta * 0.03)
         removePrimitive(viewer, sim.body)
         sim.body = createFloodBodyPrimitive(level, bodyMaterial)
         viewer.scene.primitives.add(sim.body)
         sim.baseLevel = level
       }
 
-      engine.step(deltaSeconds)
+      sim.engine.step(deltaSeconds)
 
       sim.frameCount += 1
       if (rain > 0 && sim.frameCount % 5 === 0) {
-        engine.addRainImpacts(rain, 0.03)
+        sim.engine.addRainImpacts(rain, options.rainImpactStrength)
       }
 
       removePrimitive(viewer, sim.surface)
-      sim.surface = createWaterSurfacePrimitive(engine, level, surfaceMaterial)
+      sim.surface = createWaterSurfacePrimitive(sim.engine, level, sim.surfaceMaterial)
       viewer.scene.primitives.add(sim.surface)
     } catch (error) {
       console.error('[FloodVisualization] simulation step failed:', error)
@@ -96,19 +118,23 @@ const startSimulation = (viewer, initialLevel, simRef, waterLevelRef, rainIntens
  * viewerRef + WaterWaveEngine 기반 물리 수면.
  * postUpdate마다 파동 1스텝 → 수면 mesh 재생성 (정점 높이 = 수위 + 파동).
  */
-export default function FloodVisualization({ viewerRef, waterLevel, rainIntensity = 0 }) {
+export default function FloodVisualization({
+  viewerRef,
+  waterLevel,
+  rainIntensity = 0,
+  simulationOptions,
+}) {
   const simRef = useRef(null)
   const waterLevelRef = useRef(waterLevel)
   const rainIntensityRef = useRef(rainIntensity)
+  const simulationOptionsRef = useRef(simulationOptions)
   const isSimulationActive = waterLevel > 0
 
   useEffect(() => {
     waterLevelRef.current = waterLevel
-  }, [waterLevel])
-
-  useEffect(() => {
     rainIntensityRef.current = rainIntensity
-  }, [rainIntensity])
+    simulationOptionsRef.current = simulationOptions
+  }, [waterLevel, rainIntensity, simulationOptions])
 
   useEffect(() => {
     const viewer = getViewer(viewerRef)
@@ -119,7 +145,14 @@ export default function FloodVisualization({ viewerRef, waterLevel, rainIntensit
       return undefined
     }
 
-    startSimulation(viewer, waterLevelRef.current, simRef, waterLevelRef, rainIntensityRef)
+    startSimulation(
+      viewer,
+      waterLevelRef.current,
+      simRef,
+      waterLevelRef,
+      rainIntensityRef,
+      simulationOptionsRef
+    )
 
     return () => stopSimulation(viewer, simRef)
   }, [viewerRef, isSimulationActive])

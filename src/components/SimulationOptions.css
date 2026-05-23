@@ -1,0 +1,73 @@
+.sim-options-group + .sim-options-group {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.sim-options-group-title {
+  margin: 0 0 12px;
+  color: var(--color-text-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.sim-option-field + .sim-option-field {
+  margin-top: 14px;
+}
+
+.sim-option-label {
+  display: block;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.sim-option-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-border);
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+}
+
+.sim-option-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.sim-option-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sim-option-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.sim-option-value {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sim-option-hint {
+  color: var(--color-text-subtle);
+  font-size: 11px;
+}

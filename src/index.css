@@ -1,10 +1,35 @@
+:root {
+  --color-bg: #0f172a;
+  --color-primary: #38bdf8;
+  --color-danger: #f43f5e;
+  --color-text: #f1f5f9;
+
+  --color-text-muted: color-mix(in srgb, var(--color-text) 55%, transparent);
+  --color-text-subtle: color-mix(in srgb, var(--color-text) 40%, transparent);
+  --color-text-faint: color-mix(in srgb, var(--color-text) 35%, transparent);
+  --color-border: color-mix(in srgb, var(--color-text) 10%, transparent);
+  --color-border-subtle: color-mix(in srgb, var(--color-text) 6%, transparent);
+  --color-surface: color-mix(in srgb, var(--color-text) 4%, transparent);
+  --color-surface-hover: color-mix(in srgb, var(--color-text) 8%, transparent);
+  --color-primary-dim: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  --color-primary-border: color-mix(in srgb, var(--color-primary) 45%, transparent);
+  --color-primary-glow: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  --color-danger-dim: color-mix(in srgb, var(--color-danger) 18%, transparent);
+  --color-footer-bg: color-mix(in srgb, var(--color-bg) 70%, black);
+
+  --sidebar-width: 320px;
+  --layer-panel-width: 280px;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -25,4 +50,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: var(--color-bg);
+  color: var(--color-text);
 }

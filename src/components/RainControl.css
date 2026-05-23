@@ -1,21 +1,18 @@
 .rain-control {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 15px 20px;
-  border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-width: 250px;
-  z-index: 100;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.rain-control + .water-control {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .rain-label {
-  color: #fff;
-  font-size: 14px;
+  color: var(--color-text);
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -24,7 +21,7 @@
   height: 6px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-border);
   border-radius: 5px;
   outline: none;
   cursor: pointer;
@@ -35,25 +32,87 @@
   appearance: none;
   width: 16px;
   height: 16px;
-  background: #4a9eff;
+  background: var(--color-primary);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 .rain-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: #4a9eff;
+  background: var(--color-primary);
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 .rain-value {
-  color: #4a9eff;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 600;
   text-align: right;
+}
+
+.rain-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.rain-toggle:hover {
+  background: var(--color-surface-hover);
+}
+
+.rain-toggle--on {
+  background: var(--color-primary-dim);
+  border-color: var(--color-primary-border);
+}
+
+.rain-toggle-knob {
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--color-border);
+  position: relative;
+  transition: background 0.2s;
+}
+
+.rain-toggle-knob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-text);
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.rain-toggle--on .rain-toggle-knob {
+  background: var(--color-primary);
+}
+
+.rain-toggle--on .rain-toggle-knob::after {
+  transform: translateX(16px);
+}
+
+.rain-toggle-label {
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  line-height: 1.3;
 }

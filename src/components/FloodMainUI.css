@@ -1,0 +1,106 @@
+.flood-main-ui {
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.flood-main-ui__header {
+  flex-shrink: 0;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, var(--color-primary-glow) 0%, transparent 100%);
+}
+
+.flood-main-ui__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.flood-main-ui__subtitle {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.flood-main-ui__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.flood-main-ui__section + .flood-main-ui__section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.flood-main-ui__section-title {
+  margin: 0 0 14px;
+  color: var(--color-text-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flood-main-ui__footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-footer-bg);
+}
+
+.flood-main-ui__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.flood-main-ui__stat-label {
+  color: var(--color-text-subtle);
+  font-size: 11px;
+}
+
+.flood-main-ui__stat-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.flood-main-ui__stat:first-child .flood-main-ui__stat-value {
+  color: var(--color-primary);
+}
+
+.flood-main-ui__stat:last-child .flood-main-ui__stat-value {
+  color: var(--color-danger);
+}
+
+.flood-main-ui__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.flood-main-ui__content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.flood-main-ui__content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-faint);
+}
