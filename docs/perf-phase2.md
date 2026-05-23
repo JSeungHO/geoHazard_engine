@@ -237,15 +237,45 @@ src/modules/flood/components/FloodVisualization.jsx
 
 ## 7. 테스트 포인트 (개발자 체크리스트)
 
-- [ ] P-1: positionBuffer 공유 후 수면 파동이 이전과 동일하게 보이는지 확인  
-  (Float64Array 재사용 시 이전 프레임 값이 덮어써져야 함 → `buildWaterSurfacePositionsFromCache`가 전체 버퍼를 채우는지 확인)
-- [ ] P-2: auto-rise 100% 상태에서 0.3m 미만 변화 시 body 재생성 없는지 확인
-- [ ] P-2: 수위 급변(초기화 → 시나리오 적용) 시 body가 즉시 반영되는지 확인  
-  (첫 렌더는 `!Number.isFinite(sim.lastBodyLevel)` 조건으로 항상 실행)
-- [ ] P-3: 저사양 기기(개발자 도구 CPU throttle 6x)에서 visual glitch 없는지 확인
-- [ ] P-4: surface와 body 사이에 투명한 틈 없는지 확인 (상단 캡 제거 후)
-- [ ] P-5: 강수 OFF + 수위 고정 상태에서 surface 업데이트가 6프레임 간격으로 줄어드는지 확인  
-  (`TERRAIN_REFINE_INTERVAL` 카운터는 그대로 유지)
+> 범례: ✅ 코드 검증 완료 · 🖥️ 런타임 테스트 필요
+
+- [x] **P-1** ✅ positionBuffer 공유 후 수면 파동이 이전과 동일하게 보이는지 확인  
+  → `sim.positionBuffer = new Float64Array(56 × 56 × 3)` 할당 확인 (FloodVisualization.jsx:246)  
+  → `createWaterSurfacePrimitiveFromCache(..., sim.positionBuffer)` 전달 확인 (FloodVisualization.jsx:94-99)  
+  → `buildWaterSurfacePositionsFromCache`가 `target` 전체를 루프로 덮어씀 (floodWaterMesh.js:101-107) — 버퍼 완전 갱신 ✅
+
+- [x] **P-2** ✅ auto-rise 100% 상태에서 0.3m 미만 변화 시 body 재생성 없는지 확인  
+  → `BODY_REBUILD_THRESHOLD = 0.3`, `BODY_REBUILD_INTERVAL_MS = 400` 상수 확인 (FloodVisualization.jsx:22-23)  
+  → `deltaLevel >= 0.3 && deltaTime >= 400` AND 조건 확인 (FloodVisualization.jsx:115-118)
+
+- [x] **P-2** ✅ 수위 급변(초기화 → 시나리오 적용) 시 body가 즉시 반영되는지 확인  
+  → 초기 body는 `startSimulation` 내 `rebuildFloodMeshes → rebuildFloodBody` 경로로 직접 빌드 (FloodVisualization.jsx:149, 258)  
+  ⚠️ 참고: `!Number.isFinite(sim.lastBodyLevel)` 분기는 실제 실행되지 않음. 초기 body가 이 경로가 아닌 `rebuildFloodMeshes`에서 확실히 빌드되므로 기능상 동일하나, 스펙과 구현 경로가 다름.
+
+- [ ] **P-3** 🖥️ 저사양 기기(개발자 도구 CPU throttle 6x)에서 visual glitch 없는지 확인  
+  → 로직 코드 검증: `SLOW_FRAME_THRESHOLD_MS = 22` + `if (sim.lastFrameDeltaMs > 22) return` 확인 (FloodVisualization.jsx:24, 323)  
+  → `lastFrameDeltaMs = deltaSeconds * 1000` (FloodVisualization.jsx:287), 초기값 `0` (첫 프레임 skip 없음) ✅  
+  → **런타임 확인 필요**: 느린 프레임 skip 중 수면 mesh가 마지막 렌더 상태로 유지되는지
+
+- [ ] **P-4** 🖥️ surface와 body 사이에 투명한 틈 없는지 확인 (상단 캡 제거 후)  
+  → `buildFloodBodyGeometry(..., { omitTopCap })` 옵션 확인 (floodWaterMesh.js:265-266)  
+  → `if (!omitTopCap) { 상단 캡 삼각형 }` 블록 확인 (floodWaterMesh.js:321-324)  
+  → `createFloodBodyPrimitive` 기본값 `omitTopCap = true` — 최적화 기본 활성 (floodWaterMesh.js:361)  
+  → **런타임 확인 필요**: 수면과 body 경계에 z-fighting 또는 투명 틈 없는지
+
+- [x] **P-5** ✅ 강수 OFF + 수위 고정 상태에서 surface 업데이트가 6프레임 간격으로 줄어드는지 확인  
+  → `getSurfaceUpdateInterval(engine)` 함수: `energy < 0.01 → 6, < 0.5 → 3, else → 2` (FloodVisualization.jsx:26-34)  
+  → `.reduce()` 대신 `for` 루프 — 스펙보다 효율적 구현 ✅  
+  → `sim.frameCount % surfaceInterval !== 0` 조건 확인 (FloodVisualization.jsx:326)
+
+---
+
+### 스펙 외 추가 구현
+
+| 항목 | 내용 |
+|------|------|
+| `sim.surfaceDirty` 플래그 | postUpdate마다 `true`, `syncSurfacePrimitive` 후 `false`. 동일 프레임 중복 렌더 방지. 스펙에 없던 개선 ✅ |
+| `getSurfaceUpdateInterval` `for` 루프 | 스펙의 `.reduce()` 대신 단순 루프 — GC 부담 없이 동등한 동작 ✅ |
 
 ---
 
