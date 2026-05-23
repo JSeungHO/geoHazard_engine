@@ -14,7 +14,6 @@ import useMapLayout from './useMapLayout'
 import { flyToGangnam } from '../../utils/flyToGangnam'
 import './FloodModule.css'
 
-window.CESIUM_BASE_URL = '/node_modules/cesium/Build/Cesium/'
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN
 
 export default function FloodModule() {
