@@ -22,13 +22,14 @@ export { FLOOD_HALF_SIZE_DEG } from './floodViewBounds'
 export const createFloodHierarchy = (bounds) =>
   new PolygonHierarchy(Cartesian3.fromDegreesArray(boundsToDegreesArray(bounds)))
 
-/** 물리 시뮬레이션 결과로 수면 Geometry 생성 (정점 높이 = baseLevel + wave) */
-export function buildWaterSurfaceGeometry(waveEngine, baseLevelMeters, bounds) {
+/** 물리 시뮬레이션 결과로 수면 Geometry 생성 (정점 높이 = terrainBase + depth + wave) */
+export function buildWaterSurfaceGeometry(waveEngine, floodDepthMeters, bounds, terrainBase = 0) {
   const res = waveEngine.resolution
   const vertexCount = res * res
   const positions = new Float64Array(vertexCount * 3)
   const sts = new Float32Array(vertexCount * 2)
   const indices = []
+  const surfaceHeight = terrainBase + floodDepthMeters
 
   for (let j = 0; j < res; j++) {
     for (let i = 0; i < res; i++) {
@@ -36,7 +37,7 @@ export function buildWaterSurfaceGeometry(waveEngine, baseLevelMeters, bounds) {
       const v = j / (res - 1)
       const { lon, lat } = lonLatFromUV(bounds, u, v)
       const wave = waveEngine.heights[j * res + i]
-      const cartesian = Cartesian3.fromDegrees(lon, lat, baseLevelMeters + wave)
+      const cartesian = Cartesian3.fromDegrees(lon, lat, surfaceHeight + wave)
 
       const pi = (j * res + i) * 3
       positions[pi] = cartesian.x
@@ -80,8 +81,8 @@ export function buildWaterSurfaceGeometry(waveEngine, baseLevelMeters, bounds) {
   return GeometryPipeline.computeNormal(geometry)
 }
 
-export function createWaterSurfacePrimitive(waveEngine, baseLevelMeters, material, bounds) {
-  const geometry = buildWaterSurfaceGeometry(waveEngine, baseLevelMeters, bounds)
+export function createWaterSurfacePrimitive(waveEngine, floodDepthMeters, material, bounds, terrainBase = 0) {
+  const geometry = buildWaterSurfaceGeometry(waveEngine, floodDepthMeters, bounds, terrainBase)
   return new Primitive({
     geometryInstances: new GeometryInstance({ geometry }),
     appearance: new MaterialAppearance({
@@ -95,11 +96,11 @@ export function createWaterSurfacePrimitive(waveEngine, baseLevelMeters, materia
 }
 
 /** 수면 아래 정적 부피 (extruded) */
-export function createFloodBodyPrimitive(waterLevel, material, bounds) {
+export function createFloodBodyPrimitive(floodDepth, material, bounds, terrainBase = 0) {
   const geometry = new PolygonGeometry({
     polygonHierarchy: createFloodHierarchy(bounds),
-    height: 0,
-    extrudedHeight: waterLevel,
+    height: terrainBase,
+    extrudedHeight: terrainBase + floodDepth,
     vertexFormat: MaterialAppearance.VERTEX_FORMAT,
   })
 

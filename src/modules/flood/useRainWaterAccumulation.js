@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 
 const WATER_LEVEL_MAX = 100
+const TICK_MS = 50
 
 const roundWaterLevel = (value) => Math.round(value * 100) / 100
 
 /**
- * 토글이 켜진 동안 강수량에 비례해 수위를 자동 증가.
- * viewer/Cesium과 무관 — FloodModule state만 갱신.
+ * 토글이 켜진 동안 강수량에 비례해 침수 깊이(m)를 자동 증가.
  */
 export default function useRainWaterAccumulation(
   enabled,
@@ -14,38 +14,31 @@ export default function useRainWaterAccumulation(
   waterRiseSpeed,
   setWaterLevel
 ) {
+  const enabledRef = useRef(enabled)
   const rainIntensityRef = useRef(rainIntensity)
   const waterRiseSpeedRef = useRef(waterRiseSpeed)
+  const setWaterLevelRef = useRef(setWaterLevel)
+
+  enabledRef.current = enabled
+  rainIntensityRef.current = rainIntensity
+  waterRiseSpeedRef.current = waterRiseSpeed
+  setWaterLevelRef.current = setWaterLevel
 
   useEffect(() => {
-    rainIntensityRef.current = rainIntensity
-    waterRiseSpeedRef.current = waterRiseSpeed
-  }, [rainIntensity, waterRiseSpeed])
-
-  useEffect(() => {
-    if (!enabled) return undefined
-
-    let frameId = 0
-    let lastMs = performance.now()
-
-    const tick = (now) => {
-      const dt = Math.min((now - lastMs) / 1000, 0.1)
-      lastMs = now
+    const intervalId = window.setInterval(() => {
+      if (!enabledRef.current) return
 
       const intensity = rainIntensityRef.current
-      if (intensity > 0) {
-        const rise = waterRiseSpeedRef.current * (intensity / 100) * dt
-        setWaterLevel((prev) => {
-          if (prev >= WATER_LEVEL_MAX) return prev
-          return roundWaterLevel(Math.min(WATER_LEVEL_MAX, prev + rise))
-        })
-      }
+      if (intensity <= 0) return
 
-      frameId = requestAnimationFrame(tick)
-    }
+      const rise = waterRiseSpeedRef.current * (intensity / 100) * (TICK_MS / 1000)
 
-    frameId = requestAnimationFrame(tick)
+      setWaterLevelRef.current((prev) => {
+        if (prev >= WATER_LEVEL_MAX) return prev
+        return roundWaterLevel(Math.min(WATER_LEVEL_MAX, prev + rise))
+      })
+    }, TICK_MS)
 
-    return () => cancelAnimationFrame(frameId)
-  }, [enabled, setWaterLevel])
+    return () => window.clearInterval(intervalId)
+  }, [])
 }

@@ -77,7 +77,10 @@ export default function FloodModule() {
           />
           {isViewerReady && (
             <>
-              <SceneLayerController viewerRef={viewerRef} layerVisibility={layerVisibility} />
+              <SceneLayerController
+                viewerRef={viewerRef}
+                layerVisibility={layerVisibility}
+              />
               <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
               <FloodVisualization
                 viewerRef={viewerRef}

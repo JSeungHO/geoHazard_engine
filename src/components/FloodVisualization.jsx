@@ -7,6 +7,7 @@ import {
 } from '../utils/floodWaterMesh'
 import { createFloodSurfaceMaterial } from '../utils/floodWaterMaterial'
 import { boundsChanged, getViewFloodBounds } from '../utils/floodViewBounds'
+import { getTerrainHeightAtBounds } from '../utils/terrainHeight'
 
 const getViewer = (viewerRef) => {
   const viewer = viewerRef.current
@@ -42,15 +43,22 @@ const stopSimulation = (viewer, simRef) => {
   simRef.current = null
 }
 
-const rebuildFloodMeshes = (viewer, sim, level, bounds) => {
+const rebuildFloodMeshes = (viewer, sim, floodDepth, bounds) => {
   removePrimitive(viewer, sim.surface)
   removePrimitive(viewer, sim.body)
 
   sim.bounds = bounds
-  sim.body = createFloodBodyPrimitive(level, sim.bodyMaterial, bounds)
+  sim.terrainBase = getTerrainHeightAtBounds(viewer, bounds)
+  sim.body = createFloodBodyPrimitive(floodDepth, sim.bodyMaterial, bounds, sim.terrainBase)
   viewer.scene.primitives.add(sim.body)
 
-  sim.surface = createWaterSurfacePrimitive(sim.engine, level, sim.surfaceMaterial, bounds)
+  sim.surface = createWaterSurfacePrimitive(
+    sim.engine,
+    floodDepth,
+    sim.surfaceMaterial,
+    bounds,
+    sim.terrainBase
+  )
   viewer.scene.primitives.add(sim.surface)
 }
 
@@ -120,13 +128,23 @@ const startSimulation = (
       const deltaSeconds = Math.min((now - sim.lastFrameMs) / 1000, 0.05)
       sim.lastFrameMs = now
 
+      if (sim.terrainBase === 0 && sim.frameCount % 20 === 0) {
+        const sampledBase = getTerrainHeightAtBounds(viewer, sim.bounds)
+        if (sampledBase > 0 && sampledBase !== sim.terrainBase) {
+          sim.terrainBase = sampledBase
+          removePrimitive(viewer, sim.body)
+          sim.body = createFloodBodyPrimitive(level, bodyMaterial, sim.bounds, sim.terrainBase)
+          viewer.scene.primitives.add(sim.body)
+        }
+      }
+
       applySimulationOptions(sim.engine, sim.surfaceMaterial, options)
 
       if (sim.baseLevel !== level) {
         const delta = level - sim.baseLevel
         sim.engine.addDisturbance(0.5, 0.5, 0.32, delta * 0.03)
         removePrimitive(viewer, sim.body)
-        sim.body = createFloodBodyPrimitive(level, bodyMaterial, sim.bounds)
+        sim.body = createFloodBodyPrimitive(level, bodyMaterial, sim.bounds, sim.terrainBase)
         viewer.scene.primitives.add(sim.body)
         sim.baseLevel = level
       }
@@ -143,7 +161,8 @@ const startSimulation = (
         sim.engine,
         level,
         sim.surfaceMaterial,
-        sim.bounds
+        sim.bounds,
+        sim.terrainBase
       )
       viewer.scene.primitives.add(sim.surface)
     } catch (error) {

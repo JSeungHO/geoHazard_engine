@@ -12,13 +12,13 @@ const registerFloodPhysicsMaterial = () => {
       uniforms: {
         waterColor: new Color(0.42, 0.38, 0.30, 0.82),
         depthColor: new Color(0.26, 0.22, 0.18, 0.88),
-        sunGlintColor: new Color(0.82, 0.76, 0.64, 1.0),
-        skyMirrorColor: new Color(0.48, 0.44, 0.38, 1.0),
-        reflectivity: 0.28,
-        broadPower: 24.0,
-        crestPower: 68.0,
-        finePower: 120.0,
-        glintStrength: 0.35,
+        sunGlintColor: new Color(0.95, 0.90, 0.78, 1.0),
+        skyMirrorColor: new Color(0.62, 0.68, 0.72, 1.0),
+        reflectivity: 0.48,
+        broadPower: 20.0,
+        crestPower: 58.0,
+        finePower: 96.0,
+        glintStrength: 0.78,
       },
       source: `
         uniform vec4 waterColor;
@@ -45,10 +45,11 @@ const registerFloodPhysicsMaterial = () => {
 
           vec3 skyBlue = mix(depthColor.rgb, waterColor.rgb, 0.55 + ndv * 0.15);
 
-          // 하늘 거울 반사 (탁수는 반사 약함)
+          // 탁수: 하늘·태양 반사는 약하지만 grazing 각도에서 은은히 보임
           vec3 reflectDir = reflect(-viewDir, normal);
-          float skyMirror = pow(max(reflectDir.z, 0.0), 1.8);
-          vec3 reflected = mix(skyBlue, skyMirrorColor.rgb, (fresnel * 0.28 + skyMirror * 0.06) * reflectivity);
+          float skyMirror = pow(max(reflectDir.z, 0.0), 1.4);
+          float skyMix = (fresnel * 0.48 + skyMirror * 0.22) * reflectivity;
+          vec3 reflected = mix(skyBlue, skyMirrorColor.rgb, skyMix);
           material.diffuse = reflected;
 
           // 3단계 태양 반사: 넓은 햇빛 + 파도 crest + 미세 glint
@@ -61,8 +62,11 @@ const registerFloodPhysicsMaterial = () => {
           vec3 glintNormal = normalize(normal + vec3(rippleX, rippleY, 0.0));
           float fine = pow(max(dot(glintNormal, halfDir), 0.0), finePower);
 
-          float glint = broad * 0.25 + crest * 0.45 + fine * 0.65;
+          float glint = broad * 0.38 + crest * 0.72 + fine * 0.95;
           material.diffuse += sunGlintColor.rgb * glint * glintStrength;
+
+          // 수면 rim sheen (탁수 표면 광택)
+          material.diffuse += sunGlintColor.rgb * fresnel * 0.12 * glintStrength;
 
           material.alpha = mix(depthColor.a, waterColor.a, 0.55 + fresnel * 0.08);
           material.specular = 1.0;
@@ -83,13 +87,13 @@ export function createFloodPhysicsMaterial(options = {}) {
       uniforms: {
         waterColor: options.waterColor ?? Color.fromBytes(102, 92, 72, 210),
         depthColor: options.depthColor ?? Color.fromBytes(62, 54, 44, 225),
-        sunGlintColor: options.sunGlintColor ?? Color.fromBytes(195, 185, 160, 255),
-        skyMirrorColor: options.skyMirrorColor ?? Color.fromBytes(110, 105, 95, 255),
-        reflectivity: options.reflectivity ?? 0.28,
-        broadPower: options.broadPower ?? 24,
-        crestPower: options.crestPower ?? 68,
-        finePower: options.finePower ?? 120,
-        glintStrength: options.glintStrength ?? 0.35,
+        sunGlintColor: options.sunGlintColor ?? Color.fromBytes(242, 230, 200, 255),
+        skyMirrorColor: options.skyMirrorColor ?? Color.fromBytes(158, 172, 184, 255),
+        reflectivity: options.reflectivity ?? 0.48,
+        broadPower: options.broadPower ?? 20,
+        crestPower: options.crestPower ?? 58,
+        finePower: options.finePower ?? 96,
+        glintStrength: options.glintStrength ?? 0.78,
       },
     },
   })
@@ -99,13 +103,13 @@ export function createFloodSurfaceMaterial() {
   return createFloodPhysicsMaterial({
     waterColor: Color.fromBytes(102, 92, 72, 210),
     depthColor: Color.fromBytes(62, 54, 44, 225),
-    sunGlintColor: Color.fromBytes(195, 185, 160, 255),
-    skyMirrorColor: Color.fromBytes(110, 105, 95, 255),
-    reflectivity: 0.28,
-    broadPower: 24,
-    crestPower: 68,
-    finePower: 120,
-    glintStrength: 0.35,
+    sunGlintColor: Color.fromBytes(242, 230, 200, 255),
+    skyMirrorColor: Color.fromBytes(158, 172, 184, 255),
+    reflectivity: 0.48,
+    broadPower: 20,
+    crestPower: 58,
+    finePower: 96,
+    glintStrength: 0.78,
   })
 }
 
@@ -113,9 +117,9 @@ export function createFloodBodyMaterialFromShader() {
   return createFloodPhysicsMaterial({
     waterColor: Color.fromBytes(82, 74, 58, 145),
     depthColor: Color.fromBytes(48, 42, 34, 165),
-    sunGlintColor: Color.fromBytes(160, 150, 130, 255),
-    skyMirrorColor: Color.fromBytes(90, 85, 75, 255),
-    reflectivity: 0.08,
-    glintStrength: 0.02,
+    sunGlintColor: Color.fromBytes(200, 190, 165, 255),
+    skyMirrorColor: Color.fromBytes(130, 140, 148, 255),
+    reflectivity: 0.22,
+    glintStrength: 0.12,
   })
 }
