@@ -1,0 +1,39 @@
+.mobile-warning {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 24px;
+}
+
+.mobile-warning__card {
+  max-width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mobile-warning__icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.mobile-warning__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.mobile-warning__body {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}

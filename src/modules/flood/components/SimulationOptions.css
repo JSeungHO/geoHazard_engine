@@ -4,6 +4,37 @@
   gap: 0;
 }
 
+.sim-preset-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.sim-preset-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sim-preset-btn:hover {
+  border-color: var(--color-primary-border);
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.sim-preset-btn--active {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-dim);
+  color: var(--color-primary);
+}
+
 .sim-option-field + .sim-option-field {
   margin-top: 14px;
 }

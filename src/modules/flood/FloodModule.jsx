@@ -50,6 +50,16 @@ export default function FloodModule() {
     flyToGangnam(viewerRef.current)
   }, [])
 
+  const handlePresetApply = useCallback((values) => {
+    setSimulationOptions(values)
+  }, [])
+
+  const handleScenarioApply = useCallback((scenario) => {
+    setRainIntensity(scenario.rain)
+    setWaterLevel(scenario.water)
+    setAutoWaterRise(scenario.autoRise)
+  }, [])
+
   const handleReset = useCallback(() => {
     setRainIntensity(0)
     setWaterLevel(0)
@@ -83,6 +93,8 @@ export default function FloodModule() {
         onWaterLevelChange={setWaterLevel}
         simulationOptions={simulationOptions}
         onOptionChange={handleOptionChange}
+        onPresetApply={handlePresetApply}
+        onScenarioApply={handleScenarioApply}
         onReset={handleReset}
       />
 
@@ -114,7 +126,11 @@ export default function FloodModule() {
                   onTerrainLoadingChange={handleTerrainLoadingChange}
                 />
               </SimulationErrorBoundary>
-              <MapStatusBar viewerRef={viewerRef} isActive={isViewerReady} />
+              <MapStatusBar
+                viewerRef={viewerRef}
+                isActive={isViewerReady}
+                waterLevel={waterLevel}
+              />
             </>
           )}
         </div>

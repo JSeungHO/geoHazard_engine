@@ -1,4 +1,4 @@
-import { SIMULATION_OPTION_RANGES } from '../constants/simulationDefaults'
+import { SIMULATION_OPTION_RANGES, WAVE_PRESETS, findActivePresetId } from '../constants/simulationDefaults'
 import CollapsibleSection from '../../../components/CollapsibleSection'
 import './SimulationOptions.css'
 
@@ -88,9 +88,26 @@ function OptionSlider({ optionKey, label, hint, value, format, onChange }) {
   )
 }
 
-export default function SimulationOptions({ options, onOptionChange }) {
+export default function SimulationOptions({ options, onOptionChange, onPresetApply }) {
+  const activePresetId = findActivePresetId(options)
+
   return (
     <div className="sim-options">
+      <div className="sim-preset-bar" role="group" aria-label="시뮬레이션 프리셋">
+        {WAVE_PRESETS.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            className={`sim-preset-btn ${activePresetId === preset.id ? 'sim-preset-btn--active' : ''}`}
+            title={preset.description}
+            aria-pressed={activePresetId === preset.id}
+            onClick={() => onPresetApply(preset.values)}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
       {OPTION_SECTIONS.map((section) => (
         <CollapsibleSection key={section.title} title={section.title} nested>
           {section.items.map((item) => (

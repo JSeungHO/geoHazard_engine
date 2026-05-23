@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ModuleShell from './components/ModuleShell'
+import MobileWarning from './components/MobileWarning'
 import { DEFAULT_MODULE_ID, getModuleById, MODULE_REGISTRY } from './modules/registry'
 
 function App() {
@@ -8,13 +9,16 @@ function App() {
   const ModuleComponent = activeModule.component
 
   return (
-    <ModuleShell
-      modules={MODULE_REGISTRY}
-      activeId={moduleId}
-      onModuleChange={setModuleId}
-    >
-      {ModuleComponent ? <ModuleComponent /> : null}
-    </ModuleShell>
+    <>
+      <MobileWarning />
+      <ModuleShell
+        modules={MODULE_REGISTRY}
+        activeId={moduleId}
+        onModuleChange={setModuleId}
+      >
+        {ModuleComponent ? <ModuleComponent /> : null}
+      </ModuleShell>
+    </>
   )
 }
 

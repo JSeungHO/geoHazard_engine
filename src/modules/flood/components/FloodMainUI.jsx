@@ -1,6 +1,7 @@
 import RainControl from './RainControl'
 import WaterLevelControl from './WaterLevelControl'
 import SimulationOptions from './SimulationOptions'
+import ScenarioPanel from './ScenarioPanel'
 import CollapsibleSection from '../../../components/CollapsibleSection'
 import './FloodMainUI.css'
 
@@ -13,6 +14,8 @@ export default function FloodMainUI({
   onWaterLevelChange,
   simulationOptions,
   onOptionChange,
+  onPresetApply,
+  onScenarioApply,
   onReset,
 }) {
   return (
@@ -30,6 +33,10 @@ export default function FloodMainUI({
       </header>
 
       <div className="flood-main-ui__content">
+        <CollapsibleSection title="📋 시나리오" defaultOpen>
+          <ScenarioPanel onApply={onScenarioApply} />
+        </CollapsibleSection>
+
         <CollapsibleSection title="강수" defaultOpen badge={`${rainIntensity}%`}>
           <RainControl
             intensity={rainIntensity}
@@ -51,7 +58,11 @@ export default function FloodMainUI({
         </CollapsibleSection>
 
         <CollapsibleSection title="시뮬레이션 옵션">
-          <SimulationOptions options={simulationOptions} onOptionChange={onOptionChange} />
+          <SimulationOptions
+            options={simulationOptions}
+            onOptionChange={onOptionChange}
+            onPresetApply={onPresetApply}
+          />
         </CollapsibleSection>
       </div>
 

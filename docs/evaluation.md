@@ -25,6 +25,10 @@
 | A-2 | ✅ `App.jsx` + `ModuleShell` 모듈 라우터 |
 | A-3 | ✅ `locations/gangnam.js` 좌표 통합 |
 | A-4 | ✅ Vitest 단위 테스트 17개 |
+| U-4 | ✅ 시뮬레이션 프리셋 (잔잔/보통/폭풍) |
+| U-5 | ✅ 상태바 침수 pill + 지표 고도 |
+| U-7 | ✅ 시나리오 패널 (4종) |
+| U-8 | ✅ MobileWarning (1000px) |
 
 ---
 
