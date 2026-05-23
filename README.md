@@ -1,16 +1,72 @@
-# React + Vite
+# GeoHazard Engine
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+강남역(37.4975, 127.0267)을 기준으로 **홍수·강수** 재난 시뮬레이션을 Cesium 3D 지도 위에서 체험하는 React + Vite 앱입니다.
 
-Currently, two official plugins are available:
+**Production**: [geohazard-engine.vercel.app](https://geohazard-engine.vercel.app)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 문서
 
-## React Compiler
+| 문서 | 설명 |
+|------|------|
+| [docs/design.md](./docs/design.md) | UI 레이아웃, 컬러, 레이어 패널 |
+| [docs/features.md](./docs/features.md) | 구현된 기능, view bounds, 강수·범람 아키텍처 |
+| [docs/goals.md](./docs/goals.md) | 프로젝트 목표, 로드맵, 배포, 쓰나미·지진 설계 |
+| [docs/README.md](./docs/README.md) | 문서 목차 |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 기술 스택
 
-## Expanding the ESLint configuration
+- React 19 + Vite
+- [Cesium](https://cesium.com/) / [Resium](https://resium.reearth.io/)
+- `vite-plugin-cesium` (Production Workers/WASM 번들)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 빠른 시작
+
+```bash
+npm install
+cp .env.example .env   # VITE_CESIUM_TOKEN 입력
+npm run dev
+```
+
+[Cesium Ion](https://ion.cesium.com/)에서 토큰을 발급받아 `.env`에 설정합니다.
+
+| 스크립트 | 설명 |
+|----------|------|
+| `npm run dev` | 개발 서버 (localhost:5173) |
+| `npm run build` | Production 빌드 |
+| `npm run preview` | 빌드 결과 미리보기 |
+| `npm run lint` | ESLint |
+
+## 주요 기능
+
+- **홍수** — terrain grid + 저지대 기준 수면, 2D 파동, 하늘 반사 셰이더
+- **강수** — ParticleSystem, 강수량 → 수위 자동 상승
+- **pitch view bounds** — 카메라 각도에 맞춰 침수·강수 범위 조절
+- **OSM 건물** — 우측 레이어 패널 토글
+
+## 프로젝트 구조 (요약)
+
+```
+src/
+├── modules/flood/FloodModule.jsx
+├── components/
+│   ├── CesiumMapViewer.jsx
+│   ├── FloodVisualization.jsx
+│   └── RainSystem.jsx
+├── utils/
+│   ├── floodViewBounds.js
+│   ├── terrainHeight.js
+│   └── floodWaterMesh.js
+└── physics/WaterWaveEngine.js
+docs/
+├── design.md      # 디자인
+├── features.md    # 구현 기능
+└── goals.md       # 작업 목표
+```
+
+## 배포
+
+- `main` → Vercel Production
+- `dev` → Vercel Preview
+- 환경 변수: `VITE_CESIUM_TOKEN`
+
+상세 워크플로: [docs/goals.md](./docs/goals.md#배포브랜치)
