@@ -8,7 +8,7 @@ import {
   Math as CesiumMath,
   Transforms,
 } from 'cesium'
-import { boundsChanged, getViewFloodBounds } from '../utils/floodViewBounds'
+import { boundsChanged, addViewFloodBoundsListener, getRainEmitterPosition, getViewFloodBounds, getFloodBandStartForPitch } from '../utils/floodViewBounds'
 
 const EMITTER_ALTITUDE = 600
 
@@ -61,12 +61,16 @@ const boundsToEmitterSize = (bounds) => {
   return { widthM, depthM }
 }
 
-const applyBoundsToRain = (particleSystem, bounds) => {
+const applyBoundsToRain = (viewer, particleSystem, bounds) => {
   const { widthM, depthM } = boundsToEmitterSize(bounds)
-  const center = Cartesian3.fromDegrees(bounds.centerLon, bounds.centerLat, EMITTER_ALTITUDE)
+  const bandFrac = 1 - getFloodBandStartForPitch(viewer.camera.pitch)
+  const { lon, lat } = getRainEmitterPosition(viewer, bounds)
+  const center = Cartesian3.fromDegrees(lon, lat, EMITTER_ALTITUDE)
 
   particleSystem.modelMatrix = Transforms.eastNorthUpToFixedFrame(center)
-  particleSystem.emitter = new BoxEmitter(new Cartesian3(widthM / 2, depthM / 2, 400))
+  particleSystem.emitter = new BoxEmitter(
+    new Cartesian3(widthM / 2, depthM / 2, 120 + bandFrac * 320)
+  )
 }
 
 /** viewerRef.current 내부 객체만 갱신 (뷰어 재마운트 없음) */
@@ -107,17 +111,16 @@ export default function RainSystem({ viewerRef, intensity }) {
       updateCallback: applyGravity,
     })
 
-    applyBoundsToRain(particleSystem, bounds)
+    applyBoundsToRain(viewer, particleSystem, bounds)
     scene.primitives.add(particleSystem)
     particleSystemRef.current = particleSystem
     applyRainIntensity(particleSystem, intensityRef.current)
 
-    const removeCameraListener = viewer.camera.moveEnd.addEventListener(() => {
-      const nextBounds = getViewFloodBounds(viewer)
+    const removeCameraListener = addViewFloodBoundsListener(viewer, (nextBounds) => {
       if (!boundsChanged(boundsRef.current, nextBounds)) return
 
       boundsRef.current = nextBounds
-      applyBoundsToRain(particleSystem, nextBounds)
+      applyBoundsToRain(viewer, particleSystem, nextBounds)
       scene.requestRender()
     })
 

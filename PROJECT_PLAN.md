@@ -40,7 +40,13 @@
 
 - [x] UI 컬러 테마 (`--color-bg/primary/danger/text`)
 
-- [x] Cesium canvas 레이아웃 (`useMapLayout`, `ResizeObserver`)
+- [x] 지형 그리드 클램핑 + 저지대 기준 홍수 채움 (`terrainHeight.js`, `floodWaterMesh.js`)
+
+- [x] OSM 건물 기본 ON (`sceneLayers.js`)
+
+- [x] Vercel Production 배포 + `dev` 브랜치 Preview
+
+- [x] `CollapsibleSection`, `MapStatusBar`, 강남역 flyTo
 
 
 
@@ -113,13 +119,19 @@
 
 |------|------|------|
 
-| 렌더링 API | `Primitive` + 동적 `Geometry` | 파동 물리 결과를 매 프레임 mesh에 반영 |
+| 렌더링 API | `Primitive` + 동적 `Geometry` | terrain grid 정점 + 파동; 저지대 기준 수면 |
 
-| 수면 | `WaterWaveEngine` → `buildWaterSurfaceGeometry` | 정점 높이 = 수위 + 파동 변위 |
+| 수면 | `WaterWaveEngine` + `createWaterSurfaceCache` | 평면 수면 + 법선 방향 파동; 침수 구역만 mesh |
 
-| 부피 | `PolygonGeometry` extruded body | 수면 아래 반투명 하늘색 부피 |
+| 부피 | terrain grid extrusion body | 지형~수면 사이; 건조 셀 skip |
 
-| 머티리얼 | `FloodPhysicsWater` (Fabric Material) | 하늘색 + 3단계 태양 glint + 프레넬 하늘 반사 |
+| 지형 | `sampleTerrainHeightGrid` → `refineTerrainHeightGrid` | 16×16 즉시 → 56×56 async → `sampleTerrainMostDetailed` |
+
+| 침수 기준 | `getFloodBaselineHeight` (grid min) | 슬라이더 = 저지대 대비 깊이(m) |
+
+| 머티리얼 | `FloodPhysicsWater` (Fabric Material) | 하늘색 + glint + 프레넬 반사 |
+
+| 성능 | `requestAnimationFrame` 수면 갱신 | postUpdate는 물리만; 2프레임마다 mesh |
 
 | ~~Entity polygon~~ | 사용하지 않음 | UV·MaterialProperty 한계, 렌더 오류 이력 |
 
@@ -139,7 +151,9 @@
 
 | `src/utils/floodWaterMaterial.js` | `FloodPhysicsWater` 셰이더 (하늘색·반사) |
 
-| `src/components/FloodVisualization.jsx` | `postUpdate` 물리 루프, `rainIntensity` 연동 |
+| `src/utils/terrainHeight.js` | terrain grid 샘플, 저지대 baseline, async/refine |
+
+| `src/components/FloodVisualization.jsx` | 물리 루프, 카메라 bounds 연동, rAF 수면 |
 
 | `src/components/CesiumMapViewer.jsx` | Viewer 마운트, 카메라·조명 초기화 |
 
@@ -149,19 +163,15 @@
 
 
 
-1. **수위 > 0**: `WaterWaveEngine` 시작, 부피 Primitive + 동적 수면 Primitive 생성
+1. **수위 > 0**: terrain grid 샘플 → 저지대 baseline + depth → body/surface Primitive
 
-2. **매 프레임 (`postUpdate`)**:
+2. **매 프레임 (`postUpdate`)**: `WaterWaveEngine.step`, 수위 변경 시 body/cache 재생성
 
-   - 파동 1스텝 (`step`) — `timeScale 0.32`, 감쇠·stiffness 튜닝
+3. **수면 갱신 (`requestAnimationFrame`)**: cache + 파동 → Primitive (2프레임 간격)
 
-   - 수위 변경 → `addDisturbance` 충격
+4. **카메라 moveEnd**: view bounds 변경 → grid 재샘플
 
-   - 강수량 > 0 → `addRainImpacts` (5프레임마다)
-
-   - 수면 mesh 재생성 (정점 normal → glint)
-
-3. **수위 = 0**: 시뮬레이션 중지, Primitive 제거 (뷰어·카메라 유지)
+5. **수위 = 0**: Primitive 제거 (viewer·카메라 유지)
 
 
 
@@ -219,16 +229,192 @@
 
    - [x] 좌/우 사이드바 UI + Cesium canvas 레이아웃
 
-   - [ ] 수위 시뮬레이션 정밀도·범위 튜닝, 지형 클램핑 개선
+   - [x] 수위 시뮬레이션 정밀도·범위 튜닝, 지형 클램핑 (terrain grid + 저지대 기준 홍수 채움)
 
-   - [ ] 성능 최적화 (매 프레임 mesh 재생성 → buffer update 검토)
+   - [x] 성능 최적화 1차 (수면 캐시, rAF 분리, 비동기 지형 샘플링)
+
+   - [ ] 성능 최적화 2차 (매 프레임 Primitive 재생성 → buffer update 검토)
 
 2. **모듈화 정리**:
 
    - 모든 재난 컴포넌트를 `src/modules/` 하위로 구조화
 
-3. **다음 재난 모듈**:
+3. **다음 재난 모듈** (우선순위):
 
-   - 지진(Earthquake) 파동 효과 추가
+   - [ ] **쓰나미(Tsunami)** — 진원 전파 + 해안 침수 + 건물 하부 침수 연출 (→ §5-2)
+
+   - [ ] **지진(Earthquake)** — 카메라 쉐이크 + 건물 흔들림/손상 표현
+
+4. **배포·브랜치**:
+
+   - Production: `main` → [geohazard-engine.vercel.app](https://geohazard-engine.vercel.app) (Vercel + GitHub 연동)
+
+   - 개발: `dev` 브랜치 → Vercel Preview
+
+   - 빌드: `vite-plugin-cesium` (Cesium 정적 에셋 포함)
+
+   - 환경 변수: `VITE_CESIUM_TOKEN` (Vercel Environment Variables)
+
+
+
+## 5. Cesium 재난 표현 — 가능 범위와 한계
+
+
+
+Cesium은 **지구·지형·3D 객체 위에 재난 상황을 시각화**하는 엔진이다. CFD·구조 해석 같은 **정밀 물리 엔진은 아니며**, 계산 결과 또는 단순화 모델을 **3D로 보여주는 플랫폼**으로 이해한다.
+
+
+
+### 5-1. Cesium으로 표현 가능한 재난 (난이도)
+
+
+
+| 재난 | 주요 Cesium 수단 | 난이도 | 비고 |
+
+|------|------------------|--------|------|
+
+| 홍수·침수 | Primitive 수면, terrain grid, ParticleSystem(비) | ★★☆ | **현재 구현** |
+
+| 쓰나미 | 홍수 확장 + 시간 전파 wave front + run-up | ★★★ | §5-2 설계 |
+
+| 폭우·눈·안개 | ParticleSystem | ★☆☆ | 강수 일부 구현 |
+
+| 지진 | Camera shake, 3D Tiles 변형/클리핑, CZML | ★★☆ | Roadmap |
+
+| 산불·화산 | ParticleSystem(연기/재), Polygon extrusion | ★★★ | — |
+
+| 태풍·폭풍 해일 | 강수 + 바람 벡터 + storm surge 수위 | ★★★ | — |
+
+| 산사태 | 경사면 파티클/경로, 침식 Polygon | ★★★ | — |
+
+| 대기·화학 확산 | heatmap imagery, plume 파티클/격자 | ★★★ | — |
+
+
+
+### 5-2. 쓰나미 모듈 설계 (예정)
+
+
+
+**목표**: 특정 진원에서 발생한 거대 수파가 해안·내륙으로 밀려와 건물을 **침수·휩쓸 듯** 보이게 하는 시나리오 애니메이션.
+
+
+
+**현실적 범위**:
+
+- ✅ 진원 위치·규모(M) UI, 시간축 재생
+
+- ✅ 원형/방향성 **wave front** 전파 (단순 2D 전파 모델)
+
+- ✅ 해안 **run-up** (경사 + terrain grid 기반 수위 상승)
+
+- ✅ OSM 건물 **하부 침수** (수위 vs 건물 바닥 높이)
+
+- ✅ camera shake, splash 파티클, cinematic flyTo
+
+- ⚠️ 건물 **물리 붕괴** — 3D Tiles는 부수기 API 없음 → 침수색/클리핑/별도 collapse 모델로 **연출**
+
+- ❌ 영화급 CFD 유체, 건물 파편 물리 — Cesium 밖 또는 수작업 에셋
+
+
+
+**기존 홍수 엔진 재사용**:
+
+
+
+| 기존 | 쓰나미 확장 |
+
+|------|-------------|
+
+| `terrainHeight.js` (grid, min baseline) | run-up, 해안 침수 판정 |
+
+| `floodWaterMesh.js` (수면 Primitive) | `waterHeight(x,y,t)` 시간 함수 |
+
+| `WaterWaveEngine` | crest 통과 시 국소 파동 |
+
+| `FloodVisualization` | `TsunamiVisualization` — 타임라인 postUpdate |
+
+| OSM Buildings layer | Classification / 층별 침수 shader |
+
+
+
+**구현 단계 (제안)**:
+
+
+
+1. **Phase 1** — 진원 + 반경 확장 ring 수위 (`t`에 따라 `waterSurface` 상승), 기존 저지대 채움 재사용
+
+2. **Phase 2** — 방향성 전파, 해안선 run-up 보정
+
+3. **Phase 3** — 건물 하부 침수, camera shake, UI 시나리오 타임라인
+
+4. **Phase 4** (선택) — splash/debris 파티클, 특정 건물 collapse tileset
+
+
+
+**모듈 구조 (안)**:
+
+
+
+```
+src/modules/tsunami/
+  TsunamiModule.jsx
+  TsunamiVisualization.jsx
+  useTsunamiTimeline.js
+src/physics/TsunamiWaveModel.js   # distance/time → wave height
+```
+
+
+
+### 5-3. 지형(Terrain)과 지하 — Cesium이 아는 것 / 모르는 것
+
+
+
+**Terrain이란**: World Terrain = **지표면 DEM 메쉬**(표면 껍데기). 속이 채워진 3D 지질 모델이 **아님**.
+
+
+
+| 질문 | 가능? | 설명 |
+
+|------|-------|------|
+
+| 이 좌표 **지표면 고도**는? | ✅ | `globe.getHeight`, `sampleTerrainMostDetailed` |
+
+| **저지대 기준** 침수 깊이? | ✅ | `min(terrain grid) + depth` (현재 방식) |
+
+| 땅을 **파서** 지층 깊이를 안다? | ❌ | 지질·시추 데이터 없으면 불가 |
+
+| **시각적으로** 굴착·단면? | ✅ | Clipping Plane — **표면 메쉬를 잘라 안 보이게** 할 뿐, 지하 데이터 자동 생성 아님 |
+
+
+
+**Clipping vs 실제 굴착**: terrain 타일을 수정하는 게 아니라 **렌더링 절단**. 단면 아래는 빈 공간이거나 **별도로 넣은** 지질/BIM 모델.
+
+
+
+### 5-4. Cesium 빌딩 블록 (재난 공통)
+
+
+
+| API | 용도 |
+
+|-----|------|
+
+| `ParticleSystem` | 비, 연기, 재, splash |
+
+| `Primitive` + 동적 `Geometry` | 침수·쓰나미 수면 |
+
+| `3D Tileset` | OSM 건물, 포인트클라우드 |
+
+| `ImageryLayer` | heatmap, 위험도 지도 |
+
+| `ClippingPlane` / `Classification` | 굴착 단면, 건물 침수 |
+
+| Custom `Material` / PostProcess | 물, 불, 카메라 효과 |
+
+| `CZML` | 시간축 시나리오 |
+
+
+
+**원칙**: 정밀 물리는 **외부 계산 → Cesium 시각화**. GeoHazard Engine은 **교육·체험용 단순화 모델 + 3D 연출**에 집중.
 
 

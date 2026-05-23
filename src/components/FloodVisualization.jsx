@@ -7,7 +7,7 @@ import {
   createWaterSurfacePrimitiveFromCache,
 } from '../utils/floodWaterMesh'
 import { createFloodSurfaceMaterial } from '../utils/floodWaterMaterial'
-import { boundsChanged, getViewFloodBounds } from '../utils/floodViewBounds'
+import { boundsChanged, addViewFloodBoundsListener, getViewFloodBounds } from '../utils/floodViewBounds'
 import {
   refineTerrainHeightGrid,
   sampleTerrainHeightGrid,
@@ -200,18 +200,19 @@ const startSimulation = (
   requestFullTerrainSample(viewer, simRef, sim, waterLevelRef)
   requestTerrainRefine(viewer, simRef, sim, waterLevelRef)
 
-  const syncBoundsFromView = () => {
-    const nextBounds = getViewFloodBounds(viewer)
-    if (!boundsChanged(sim.bounds, nextBounds)) return
+  sim.removeCameraListener = addViewFloodBoundsListener(
+    viewer,
+    (nextBounds) => {
+      if (!boundsChanged(sim.bounds, nextBounds)) return
 
-    boundsRef.current = nextBounds
-    resetWaveEngine(sim, waterLevelRef.current)
-    rebuildFloodMeshes(viewer, sim, waterLevelRef.current, nextBounds)
-    requestFullTerrainSample(viewer, simRef, sim, waterLevelRef)
-    requestTerrainRefine(viewer, simRef, sim, waterLevelRef)
-  }
-
-  sim.removeCameraListener = viewer.camera.moveEnd.addEventListener(syncBoundsFromView)
+      boundsRef.current = nextBounds
+      resetWaveEngine(sim, waterLevelRef.current)
+      rebuildFloodMeshes(viewer, sim, waterLevelRef.current, nextBounds)
+      requestFullTerrainSample(viewer, simRef, sim, waterLevelRef)
+      requestTerrainRefine(viewer, simRef, sim, waterLevelRef)
+    },
+    { debounceMs: 200 }
+  )
 
   sim.removeListener = viewer.scene.postUpdate.addEventListener(() => {
     try {
