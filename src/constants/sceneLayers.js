@@ -6,7 +6,7 @@ export const SCENE_LAYER_DEFS = [
     id: 'osmBuildings',
     label: 'OSM 건물',
     description: 'OpenStreetMap 3D Buildings (Cesium Ion)',
-    defaultVisible: false,
+    defaultVisible: true,
   },
 ]
 
