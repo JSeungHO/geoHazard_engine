@@ -1,14 +1,16 @@
-# GeoHazard Engine
-지구의 다양한 재난(홍수, 지진, 화산 등)을 시뮬레이션하기 위한 모듈형 3D 엔진입니다.
+# React + Vite
 
-## 프로젝트 철학
-- **모듈형 설계**: 새로운 재난 유형을 쉽게 추가할 수 있는 독립적 구조.
-- **Cesium.js 기반**: 고정밀 지리 정보 데이터 위에서 시각화.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 개발 로드맵
-- [ ] **Phase 1: 홍수 시뮬레이션** (비 효과 및 수위 범람 엔진)
-- [ ] **Phase 2: 재난 제어 UI** (강수량, 수위 등 변수 조절)
-- [ ] **Phase 3: 확장 모듈** (지진/쓰나미 모듈 인터페이스 구축)
+Currently, two official plugins are available:
 
-## 기술 스택
-- React, Cesium.js, Tailwind CSS
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
