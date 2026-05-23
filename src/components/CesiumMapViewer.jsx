@@ -28,8 +28,16 @@ function CesiumMapViewer({ viewerRef, onViewerReady }) {
     if (!viewer || viewer.isDestroyed?.()) return null
 
     viewerRef.current = viewer
-    viewer.scene.globe.depthTestAgainstTerrain = true
-    viewer.scene.globe.enableLighting = true
+    const scene = viewer.scene
+    scene.globe.depthTestAgainstTerrain = true
+    scene.globe.enableLighting = true
+    scene.globe.dynamicAtmosphereLighting = true
+    scene.globe.showGroundAtmosphere = true
+    scene.skyAtmosphere.show = true
+    scene.sun.show = true
+    scene.sun.glowFactor = 1.15
+    scene.light.intensity = 2.0
+    scene.fog.enabled = false
     return viewer
   }, [viewerRef])
 
@@ -66,6 +74,13 @@ function CesiumMapViewer({ viewerRef, onViewerReady }) {
       full
       ref={resiumRef}
       terrain={Terrain.fromWorldTerrain({ requestVertexNormals: true })}
+      infoBox={false}
+      selectionIndicator={false}
+      geocoder={false}
+      homeButton={false}
+      sceneModePicker={false}
+      navigationHelpButton={false}
+      baseLayerPicker={false}
     >
       <CameraFlyTo
         once

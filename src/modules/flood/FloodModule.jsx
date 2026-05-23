@@ -30,7 +30,11 @@ export default function FloodModule() {
       {isViewerReady && (
         <>
           <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
-          <FloodVisualization viewerRef={viewerRef} waterLevel={waterLevel} />
+          <FloodVisualization
+            viewerRef={viewerRef}
+            waterLevel={waterLevel}
+            rainIntensity={rainIntensity}
+          />
         </>
       )}
     </div>

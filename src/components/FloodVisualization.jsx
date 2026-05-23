@@ -1,38 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { WaterWaveEngine } from '../physics/WaterWaveEngine'
 import {
-  Cartesian3,
-  Color,
-  CallbackProperty,
-  HeightReference,
-  JulianDate,
-  PolygonHierarchy,
-} from 'cesium'
-import { GANGNAM_LAT, GANGNAM_LON } from '../constants/gangnam'
-import { FloodWaterMaterialProperty } from '../utils/floodWaterMaterial'
-
-const FLOOD_ENTITY_ID = 'gangnam-flood-zone'
-const FLOOD_HALF_SIZE_DEG = 0.005
-
-const createFloodHierarchy = () =>
-  new PolygonHierarchy(
-    Cartesian3.fromDegreesArray([
-      GANGNAM_LON - FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LAT - FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LON + FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LAT - FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LON + FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LAT + FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LON - FLOOD_HALF_SIZE_DEG,
-      GANGNAM_LAT + FLOOD_HALF_SIZE_DEG,
-    ])
-  )
-
-const createAnimatedOutlineColor = () =>
-  new CallbackProperty((time) => {
-    const seconds = JulianDate.toDate(time ?? JulianDate.now()).getTime() / 1000
-    const pulse = 0.6 + 0.3 * Math.sin(seconds * 3.2)
-    return Color.CYAN.withAlpha(pulse)
-  }, false)
+  createFloodBodyMaterial,
+  createFloodBodyPrimitive,
+  createWaterSurfacePrimitive,
+} from '../utils/floodWaterMesh'
+import { createFloodSurfaceMaterial } from '../utils/floodWaterMaterial'
 
 const getViewer = (viewerRef) => {
   const viewer = viewerRef.current
@@ -40,66 +13,116 @@ const getViewer = (viewerRef) => {
   return viewer
 }
 
-/** viewerRef.current의 entity만 갱신 (뷰어·카메라 재마운트 없음) */
-export default function FloodVisualization({ viewerRef, waterLevel }) {
-  const entityRef = useRef(null)
-  const waterMaterialRef = useRef(null)
+const removePrimitive = (viewer, primitive) => {
+  if (primitive && !viewer.isDestroyed?.()) {
+    viewer.scene.primitives.remove(primitive)
+  }
+}
+
+const stopSimulation = (viewer, simRef) => {
+  const sim = simRef.current
+  if (!sim || !viewer) return
+
+  sim.removeListener?.()
+  removePrimitive(viewer, sim.surface)
+  removePrimitive(viewer, sim.body)
+  simRef.current = null
+}
+
+const startSimulation = (viewer, initialLevel, simRef, waterLevelRef, rainIntensityRef) => {
+  stopSimulation(viewer, simRef)
+
+  const engine = new WaterWaveEngine(56)
+  engine.addDisturbance(0.5, 0.5, 0.28, Math.min(initialLevel * 0.04, 1.2))
+
+  const surfaceMaterial = createFloodSurfaceMaterial()
+  const bodyMaterial = createFloodBodyMaterial()
+
+  const sim = {
+    engine,
+    surfaceMaterial,
+    bodyMaterial,
+    baseLevel: initialLevel,
+    surface: null,
+    body: createFloodBodyPrimitive(initialLevel, bodyMaterial),
+    removeListener: null,
+    frameCount: 0,
+    lastFrameMs: performance.now(),
+  }
+
+  viewer.scene.primitives.add(sim.body)
+  sim.surface = createWaterSurfacePrimitive(engine, initialLevel, surfaceMaterial)
+  viewer.scene.primitives.add(sim.surface)
+
+  sim.removeListener = viewer.scene.postUpdate.addEventListener(() => {
+    try {
+      const level = waterLevelRef.current
+      const rain = rainIntensityRef.current
+
+      if (level <= 0) return
+
+      const now = performance.now()
+      const deltaSeconds = Math.min((now - sim.lastFrameMs) / 1000, 0.05)
+      sim.lastFrameMs = now
+
+      if (sim.baseLevel !== level) {
+        const delta = level - sim.baseLevel
+        engine.addDisturbance(0.5, 0.5, 0.32, delta * 0.03)
+        removePrimitive(viewer, sim.body)
+        sim.body = createFloodBodyPrimitive(level, bodyMaterial)
+        viewer.scene.primitives.add(sim.body)
+        sim.baseLevel = level
+      }
+
+      engine.step(deltaSeconds)
+
+      sim.frameCount += 1
+      if (rain > 0 && sim.frameCount % 5 === 0) {
+        engine.addRainImpacts(rain, 0.03)
+      }
+
+      removePrimitive(viewer, sim.surface)
+      sim.surface = createWaterSurfacePrimitive(engine, level, surfaceMaterial)
+      viewer.scene.primitives.add(sim.surface)
+    } catch (error) {
+      console.error('[FloodVisualization] simulation step failed:', error)
+    }
+  })
+
+  simRef.current = sim
+}
+
+/**
+ * viewerRef + WaterWaveEngine 기반 물리 수면.
+ * postUpdate마다 파동 1스텝 → 수면 mesh 재생성 (정점 높이 = 수위 + 파동).
+ */
+export default function FloodVisualization({ viewerRef, waterLevel, rainIntensity = 0 }) {
+  const simRef = useRef(null)
+  const waterLevelRef = useRef(waterLevel)
+  const rainIntensityRef = useRef(rainIntensity)
+  const isSimulationActive = waterLevel > 0
+
+  useEffect(() => {
+    waterLevelRef.current = waterLevel
+  }, [waterLevel])
+
+  useEffect(() => {
+    rainIntensityRef.current = rainIntensity
+  }, [rainIntensity])
 
   useEffect(() => {
     const viewer = getViewer(viewerRef)
-    if (!viewer) return
+    if (!viewer) return undefined
 
-    if (!waterMaterialRef.current) {
-      waterMaterialRef.current = new FloodWaterMaterialProperty()
+    if (!isSimulationActive) {
+      stopSimulation(viewer, simRef)
+      return undefined
     }
 
-    let entity = viewer.entities.getById(FLOOD_ENTITY_ID)
-    if (!entity) {
-      entity = viewer.entities.add({
-        id: FLOOD_ENTITY_ID,
-        show: false,
-        polygon: {
-          hierarchy: createFloodHierarchy(),
-          height: 0,
-          heightReference: HeightReference.CLAMP_TO_GROUND,
-          extrudedHeight: 1,
-          extrudedHeightReference: HeightReference.RELATIVE_TO_GROUND,
-          material: waterMaterialRef.current,
-          outline: true,
-          outlineColor: createAnimatedOutlineColor(),
-          outlineWidth: 2,
-        },
-      })
-    } else {
-      entity.polygon.material = waterMaterialRef.current
-    }
+    startSimulation(viewer, waterLevelRef.current, simRef, waterLevelRef, rainIntensityRef)
 
-    entityRef.current = entity
-
-    return () => {
-      if (!viewer.isDestroyed?.()) {
-        const existing = viewer.entities.getById(FLOOD_ENTITY_ID)
-        if (existing) {
-          viewer.entities.remove(existing)
-        }
-      }
-      entityRef.current = null
-      waterMaterialRef.current = null
-    }
-  }, [viewerRef])
-
-  useEffect(() => {
-    const entity = entityRef.current
-    if (!entity) return
-
-    if (waterLevel <= 0) {
-      entity.show = false
-      return
-    }
-
-    entity.show = true
-    entity.polygon.extrudedHeight = waterLevel
-  }, [waterLevel])
+    return () => stopSimulation(viewer, simRef)
+  }, [viewerRef, isSimulationActive])
 
   return null
 }

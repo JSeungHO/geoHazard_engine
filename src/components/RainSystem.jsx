@@ -49,7 +49,10 @@ const getViewer = (viewerRef) => {
 export default function RainSystem({ viewerRef, intensity }) {
   const particleSystemRef = useRef(null)
   const intensityRef = useRef(intensity)
-  intensityRef.current = intensity
+
+  useEffect(() => {
+    intensityRef.current = intensity
+  }, [intensity])
 
   useEffect(() => {
     const viewer = getViewer(viewerRef)
@@ -57,6 +60,7 @@ export default function RainSystem({ viewerRef, intensity }) {
 
     const scene = viewer.scene
     const position = Cartesian3.fromDegrees(GANGNAM_LON, GANGNAM_LAT, EMITTER_ALTITUDE)
+    const initialIntensity = intensityRef.current
 
     const particleSystem = new ParticleSystem({
       image: createRainStreakImage(),
@@ -70,7 +74,7 @@ export default function RainSystem({ viewerRef, intensity }) {
       speed: 30,
       speedIsRandomized: true,
       lifetime: 60.0,
-      emissionRate: emissionRateFromIntensity(intensityRef.current),
+      emissionRate: emissionRateFromIntensity(initialIntensity),
       emitter: new BoxEmitter(new Cartesian3(1200, 1200, 600)),
       modelMatrix: Matrix4.fromTranslationQuaternionRotationScale(
         position,
@@ -82,7 +86,7 @@ export default function RainSystem({ viewerRef, intensity }) {
       updateCallback: applyGravity,
     })
 
-    particleSystem.show = intensityRef.current > 0
+    particleSystem.show = initialIntensity > 0
     scene.primitives.add(particleSystem)
     particleSystemRef.current = particleSystem
 
