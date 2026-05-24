@@ -60,9 +60,17 @@ export const DEFAULT_EARTHQUAKE_OPTIONS = {
   maxPropagationKm: 800,
 }
 
-/** 진앙 기본 조망 (한반도 전체가 보이는 높이) */
+/** 지진 탭 기본 조망 — 진앙(경주) 중심, 한반도 전체가 보이는 고도·각도 */
 export const EARTHQUAKE_DEFAULT_VIEW = {
-  lat: 36.5,
-  lon: 127.8,
-  height: 1_200_000,
+  lat: 36.0,
+  lon: 128.4,
+  cameraHeight: 820_000,
+  cameraOrientation: {
+    heading: 0,
+    pitch: -1.05,
+    roll: 0,
+  },
 }
+
+/** idle 조망 range (m) — maxPropagation 대비 약간 줌인 */
+export const EARTHQUAKE_IDLE_VIEW_RANGE_FACTOR = 0.72

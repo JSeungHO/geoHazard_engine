@@ -24,6 +24,7 @@ import {
   DEFAULT_EPICENTER,
   DEFAULT_EARTHQUAKE_OPTIONS,
   EARTHQUAKE_DEFAULT_VIEW,
+  EARTHQUAKE_IDLE_VIEW_RANGE_FACTOR,
 } from './constants/earthquakePresets'
 import { EARTHQUAKE_IMPACT_CITIES } from './constants/earthquakeImpactCities'
 import { EarthquakeWaveModel } from '../../physics/EarthquakeWaveModel'
@@ -32,31 +33,33 @@ import './EarthquakeModule.css'
 
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN
 
-/** 진앙 기준 한반도 전체 조망 카메라 */
-const flyToEpicenterView = (viewer, epicenter, maxPropagationKm) => {
+/** 진앙 look-at — idle·프리셋 선택 시 (한반도 + 진앙 마커) */
+const flyToIdleView = (viewer, epicenter, maxPropagationKm, duration = 1.8) => {
   if (!viewer || viewer.isDestroyed?.()) return
   const target = Cartesian3.fromDegrees(epicenter.lon, epicenter.lat, 0)
-  const rangeM = Math.max(maxPropagationKm * 1000 * 1.5, 800_000)
+  const rangeM = Math.max(maxPropagationKm * 1000 * EARTHQUAKE_IDLE_VIEW_RANGE_FACTOR, 620_000)
   viewer.camera.flyToBoundingSphere(new BoundingSphere(target, 50), {
-    duration: 2.2,
+    duration,
     offset: new HeadingPitchRange(
       CesiumMath.toRadians(0),
-      CesiumMath.toRadians(-65),
+      CesiumMath.toRadians(-58),
       rangeM,
     ),
   })
 }
 
-/** 한반도 전체가 보이는 초기 뷰 */
-const flyToDefaultView = (viewer) => {
+/** 시뮬 시작 시 — 전파 ring 전체가 보이도록 약간 줌아웃 */
+const flyToEpicenterView = (viewer, epicenter, maxPropagationKm) => {
   if (!viewer || viewer.isDestroyed?.()) return
-  viewer.camera.flyTo({
-    destination: Cartesian3.fromDegrees(
-      EARTHQUAKE_DEFAULT_VIEW.lon,
-      EARTHQUAKE_DEFAULT_VIEW.lat,
-      EARTHQUAKE_DEFAULT_VIEW.height,
+  const target = Cartesian3.fromDegrees(epicenter.lon, epicenter.lat, 0)
+  const rangeM = Math.max(maxPropagationKm * 1000 * 1.05, 720_000)
+  viewer.camera.flyToBoundingSphere(new BoundingSphere(target, 50), {
+    duration: 2.2,
+    offset: new HeadingPitchRange(
+      CesiumMath.toRadians(0),
+      CesiumMath.toRadians(-62),
+      rangeM,
     ),
-    duration: 1.5,
   })
 }
 
@@ -80,23 +83,31 @@ export default function EarthquakeModule() {
 
   const prevSimStateRef = useRef('idle')
   const shakeAlertTimerRef = useRef(null)
+  const layerInstancesRef = useRef({})
 
   // ── phase 계산 ──────────────────────────────────────────────────
   const phase = useMemo(() => {
     if (simState === 'idle') return 'idle'
     if (simState === 'done') return 'done'
+    if (shakeAlert) return 'shaking'
     const firstSArrival = impactSummary?.firstSArrivalMs ?? null
     const affectedCount = impactSummary?.affectedCount ?? 0
     if (affectedCount > 0) return 'swave'
     if (firstSArrival != null && elapsedMs >= firstSArrival) return 'swave'
     return 'pwave'
-  }, [simState, elapsedMs, impactSummary])
+  }, [simState, elapsedMs, impactSummary, shakeAlert])
 
   // ── totalMs ─────────────────────────────────────────────────────
   const totalMs = useMemo(() => {
     const model = new EarthquakeWaveModel({ epicenter, ...options })
     return model.getTotalDurationMs()
   }, [epicenter, options])
+
+  // ── 카메라: 탭 진입·idle 프리셋 변경 ─────────────────────────────
+  useEffect(() => {
+    if (!isViewerReady || simState !== 'idle') return
+    flyToIdleView(viewerRef.current, epicenter, options.maxPropagationKm)
+  }, [isViewerReady, simState, epicenter, options.maxPropagationKm])
 
   // ── 카메라: idle→running 전환 시 ────────────────────────────────
   useEffect(() => {
@@ -161,7 +172,7 @@ export default function EarthquakeModule() {
     setEpicenter(DEFAULT_EPICENTER)
     setOptions(DEFAULT_EARTHQUAKE_OPTIONS)
     setEpochKey((k) => k + 1)
-    flyToDefaultView(viewerRef.current)
+    flyToIdleView(viewerRef.current, DEFAULT_EPICENTER, DEFAULT_EARTHQUAKE_OPTIONS.maxPropagationKm)
   }, [])
 
   const handleSimDone = useCallback(() => {
@@ -194,7 +205,7 @@ export default function EarthquakeModule() {
   }, [])
 
   const handleFlyToOverview = useCallback(() => {
-    flyToEpicenterView(viewerRef.current, epicenter, options.maxPropagationKm)
+    flyToIdleView(viewerRef.current, epicenter, options.maxPropagationKm, 1.5)
   }, [epicenter, options.maxPropagationKm])
 
   useMapLayout(mapContainerRef, viewerRef, isViewerReady)
@@ -248,9 +259,12 @@ export default function EarthquakeModule() {
                 <SceneLayerController
                   viewerRef={viewerRef}
                   layerVisibility={layerVisibility}
+                  instancesRef={layerInstancesRef}
                 />
                 <EarthquakeVisualization
                   viewerRef={viewerRef}
+                  layerInstancesRef={layerInstancesRef}
+                  layerVisibility={layerVisibility}
                   simState={simState}
                   epicenter={epicenter}
                   options={options}

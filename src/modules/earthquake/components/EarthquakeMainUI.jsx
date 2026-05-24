@@ -20,6 +20,18 @@ const fmtKm = (m) => (m >= 1000 ? `${(m / 1000).toFixed(0)} km` : `${Math.round(
 
 const fmtSec = (ms) => `${(ms / 1000).toFixed(0)}s`
 
+const fmtArea = (km2) => {
+  if (km2 >= 1_000_000) return `${(km2 / 1_000_000).toFixed(2)}M km²`
+  if (km2 >= 1000) return `${(km2 / 1000).toFixed(1)}k km²`
+  return `${Math.round(km2)} km²`
+}
+
+const fmtPopulation = (n) => {
+  if (n >= 1_000_000) return `약 ${(n / 1_000_000).toFixed(1)}M명`
+  if (n >= 10_000) return `약 ${Math.round(n / 10_000)}만명`
+  return `약 ${Math.round(n).toLocaleString('ko-KR')}명`
+}
+
 const magnitudeHint = (m) => {
   if (m < 5.0) return 'M 4~4.9 — 소규모·일부 지역 약한 흔들림'
   if (m < 6.0) return 'M 5~5.9 — 중규모·건물 피해 가능'
@@ -213,7 +225,27 @@ function ImpactPanel({ impactSummary, elapsedMs }) {
           </span>
           <span className="earthquake-main-ui__stat-label">최대 진도</span>
         </div>
+        <div className="earthquake-main-ui__stat">
+          <span className="earthquake-main-ui__stat-value">
+            {impactSummary.sWaveRadiusKm > 0 ? fmtArea(impactSummary.estimatedAreaKm2) : '—'}
+          </span>
+          <span className="earthquake-main-ui__stat-label">추정 면적</span>
+        </div>
+        <div className="earthquake-main-ui__stat">
+          <span className="earthquake-main-ui__stat-value">
+            {impactSummary.estimatedAffectedPopulation > 0
+              ? fmtPopulation(impactSummary.estimatedAffectedPopulation)
+              : '—'}
+          </span>
+          <span className="earthquake-main-ui__stat-label">추정 인구</span>
+        </div>
       </div>
+
+      {impactSummary.strongShakeCount > 0 && (
+        <p className="earthquake-main-ui__hint earthquake-main-ui__hint--impact">
+          중진 이상(MMI VI+) {impactSummary.strongShakeCount}개 도시 · OSM 건물 손상색 표시
+        </p>
+      )}
 
       {reached.length > 0 && (
         <ul className="earthquake-main-ui__city-list">

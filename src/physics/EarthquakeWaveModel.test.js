@@ -5,6 +5,8 @@ import {
   getMMILabel,
   getMMIEmoji,
   getShakeParams,
+  getMMIExposureFactor,
+  estimateAffectedPopulation,
   P_WAVE_SPEED,
   S_WAVE_SPEED,
 } from './EarthquakeWaveModel'
@@ -186,6 +188,20 @@ describe('getImpactSummary', () => {
     const summary = model.getImpactSummary(1000, cities)
     expect(summary.pWaveRadiusKm).toBeCloseTo(summary.pWaveRadiusM / 1000, 5)
   })
+
+  it('estimatedAreaKm2 = π × S파 반경²', () => {
+    const summary = model.getImpactSummary(5000, cities)
+    expect(summary.estimatedAreaKm2).toBeCloseTo(
+      Math.PI * summary.sWaveRadiusKm ** 2,
+      5,
+    )
+  })
+
+  it('elapsed=0 → 추정 인구·면적 0', () => {
+    const summary = model.getImpactSummary(0, cities)
+    expect(summary.estimatedAffectedPopulation).toBe(0)
+    expect(summary.estimatedAreaKm2).toBe(0)
+  })
 })
 
 // ─── getTotalDurationMs ──────────────────────────────────────────
@@ -218,6 +234,27 @@ describe('getMMIEmoji', () => {
   it('MMI 4~5 → 🟡', () => expect(getMMIEmoji(5)).toBe('🟡'))
   it('MMI 6~7 → 🟠', () => expect(getMMIEmoji(6)).toBe('🟠'))
   it('MMI 8+ → 🔴', () => expect(getMMIEmoji(9)).toBe('🔴'))
+})
+
+describe('getMMIExposureFactor / estimateAffectedPopulation', () => {
+  it('MMI 7+ → 가중치 1.0', () => {
+    expect(getMMIExposureFactor(7)).toBe(1.0)
+  })
+
+  it('S파 미도달 도시는 인구 집계 제외', () => {
+    const pop = estimateAffectedPopulation([
+      { sWaveReached: false, mmi: 8, population: 1_000_000 },
+      { sWaveReached: true, mmi: 7, population: 500_000 },
+    ])
+    expect(pop).toBe(500_000)
+  })
+
+  it('MMI에 따라 인구 가중', () => {
+    const pop = estimateAffectedPopulation([
+      { sWaveReached: true, mmi: 4, population: 1_000_000 },
+    ])
+    expect(pop).toBe(200_000)
+  })
 })
 
 describe('getShakeParams', () => {

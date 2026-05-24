@@ -33,7 +33,7 @@
 - [x] 쓰나미 딥블루 머티리얼 (`createTsunamiSurfaceMaterial`)
 
 ### 아키텍처 · 인프라
-- [x] `ModuleShell` + `registry.js` — 홍수/쓰나미/지진 탭 라우터 (쓰나미 활성, 지진 비활성)
+- [x] `ModuleShell` + `registry.js` — 홍수/지진 탭 라우터 (쓰나미 코드 보존·탭 미노출)
 - [x] `SimulationErrorBoundary` — Cesium 렌더링 오류 격리 + 재시도
 - [x] `locations/gangnam.js` — 좌표·카메라·bounds 단일 소스
 - [x] `FloodVisualization.fixedBounds` — 쓰나미 광역 카메라 시 침수 범위 고정
@@ -219,14 +219,25 @@ rAF (동적 interval: 2~6프레임, 파동 에너지 기반)
 ```js
 MODULE_REGISTRY = [
   { id: 'flood',      available: true,  component: FloodModule },
-  { id: 'earthquake', available: false, component: null },  // 준비 중
+  { id: 'earthquake', available: true, component: EarthquakeModule },
 ]
 // 쓰나미: MODULE_REGISTRY 미등록 (⏸ 보류, src/modules/tsunami/ 코드만 보존)
 ```
 
 `ModuleShell` 탭 UI가 레지스트리를 렌더링. `available: false` 항목은 비활성 표시.
 
-> **재난별 지리적 위치**: 홍수 = 강남역, 쓰나미 = 동해·일본해구 프리셋 + 사용자 지정, 지진 = 추후 단층대 프리셋.
+> **재난별 지리적 위치**: 홍수 = 강남역, 쓰나미 = 동해·일본해구 프리셋, 지진 = 단층대·역사 지진 프리셋 5종 + 지도 클릭.
+
+### 지진 모듈 (`EarthquakeModule`) — Phase 1~3 ✅
+
+상세: [earthquake-status.md](./earthquake-status.md)
+
+- [x] P/S파 ring, 도시 MMI 마커, 카메라 쉐이크, 타임라인·스크러빙
+- [x] MMI ImageryLayer overlay (`earthquakeMMILayer.js`)
+- [x] 피해 통계 — 추정 면적·인구, 12개 도시 인구 데이터
+- [x] OSM 건물 손상색 + CustomShader 흔들림 (`earthquakeBuildingEffects.js`)
+- [x] `qa-earthquake.mjs` — Playwright 브라우저 QA 스크립트
+- [ ] §13 브라우저 QA 수동 검증
 
 ---
 

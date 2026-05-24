@@ -62,6 +62,24 @@ export function getMMILabel(mmi) {
   return labels[idx] ?? 'XII'
 }
 
+/** MMI 기반 노출 인구 가중치 (교육용 근사) */
+export function getMMIExposureFactor(mmi) {
+  if (mmi >= 7) return 1.0
+  if (mmi >= 6) return 0.75
+  if (mmi >= 5) return 0.45
+  if (mmi >= 4) return 0.2
+  return 0.05
+}
+
+/** S파 도달 도시 배열 → 추정 영향 인구 */
+export function estimateAffectedPopulation(cities) {
+  return cities.reduce((sum, city) => {
+    if (!city.sWaveReached) return sum
+    const pop = city.population ?? 0
+    return sum + pop * getMMIExposureFactor(city.mmi)
+  }, 0)
+}
+
 /** MMI 기반 카메라 쉐이크 강도·지속 시간 테이블 */
 export function getShakeParams(mmi) {
   if (mmi >= 8) return { intensity: 1.0, durationMs: 5_000 }
@@ -238,6 +256,8 @@ export class EarthquakeWaveModel {
     const maxMMI = reachedCities.length > 0
       ? Math.max(...reachedCities.map((c) => c.mmi))
       : 0
+    const strongShakeCount = reachedCities.filter((c) => c.mmi >= 6).length
+    const sRadiusKm = sRadius / 1000
 
     const pArrivals = cityResults.map((c) => c.pArrivalMs).filter((ms) => ms != null)
     const sArrivals = cityResults.map((c) => c.sArrivalMs).filter((ms) => ms != null)
@@ -246,12 +266,15 @@ export class EarthquakeWaveModel {
       pWaveRadiusM: pRadius,
       pWaveRadiusKm: pRadius / 1000,
       sWaveRadiusM: sRadius,
-      sWaveRadiusKm: sRadius / 1000,
+      sWaveRadiusKm: sRadiusKm,
       cities: cityResults,
       affectedCount: reachedCities.length,
       totalCities: cities.length,
+      strongShakeCount,
       maxMMI,
       maxMMILabel: maxMMI > 0 ? getMMILabel(maxMMI) : '—',
+      estimatedAreaKm2: Math.PI * sRadiusKm ** 2,
+      estimatedAffectedPopulation: estimateAffectedPopulation(cityResults),
       firstPArrivalMs: pArrivals.length > 0 ? Math.min(...pArrivals) : null,
       firstSArrivalMs: sArrivals.length > 0 ? Math.min(...sArrivals) : null,
     }

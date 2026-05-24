@@ -18,8 +18,10 @@ import {
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
 } from 'cesium'
-import { EarthquakeWaveModel, getShakeParams } from '../../../physics/EarthquakeWaveModel'
+import { EarthquakeWaveModel, getMMILabel, getShakeParams } from '../../../physics/EarthquakeWaveModel'
 import { startCameraShakeFromParams } from '../utils/cameraShake'
+import { syncMMILayer, clearMMILayer } from '../utils/earthquakeMMILayer'
+import { syncBuildingEffects, clearBuildingEffects } from '../utils/earthquakeBuildingEffects'
 
 const EPICENTER_ENTITY_ID = 'eq-epicenter'
 const PWAVE_RING_ID = 'eq-pwave-ring'
@@ -194,6 +196,8 @@ function mmiToColor(mmi) {
 
 export default function EarthquakeVisualization({
   viewerRef,
+  layerInstancesRef,
+  layerVisibility,
   simState,
   epicenter,
   options,
@@ -221,12 +225,49 @@ export default function EarthquakeVisualization({
   const citiesRef = useRef(cities)
   const shakeStopRef = useRef(null)
   const shakeFiredRef = useRef(false)
+  const mmiCacheRef = useRef({})
+  const buildingCacheRef = useRef({})
+  const layerVisibilityRef = useRef(layerVisibility)
 
   // ref 동기화
   useEffect(() => { simStateRef.current = simState }, [simState])
   useEffect(() => { isPickModeRef.current = isPickMode }, [isPickMode])
   useEffect(() => { epicenterRef.current = epicenter }, [epicenter])
   useEffect(() => { citiesRef.current = cities }, [cities])
+  useEffect(() => { layerVisibilityRef.current = layerVisibility }, [layerVisibility])
+
+  // OSM 레이어 토글 시 건물 효과 동기화
+  useEffect(() => {
+    const tileset = layerInstancesRef?.current?.osmBuildings
+    const model = modelRef.current
+    if (!tileset || !model || simStateRef.current === 'idle') return
+
+    const summary = model.getImpactSummary(elapsedMsRef.current, citiesRef.current)
+    syncBuildingLayer(summary, elapsedMsRef.current, simStateRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layerVisibility?.osmBuildings])
+
+  const syncBuildingLayer = (summary, elapsed, state) => {
+    const tileset = layerInstancesRef?.current?.osmBuildings
+    if (!tileset) return
+
+    if (state === 'idle') {
+      clearBuildingEffects(tileset, buildingCacheRef.current)
+      return
+    }
+
+    syncBuildingEffects(tileset, {
+      epicenter,
+      sWaveRadiusKm: summary?.sWaveRadiusKm ?? 0,
+      sWaveRadiusM: summary?.sWaveRadiusM ?? 0,
+      magnitude: options.magnitude,
+      depthKm: options.depthKm,
+      elapsedMs: elapsed,
+      maxMMI: summary?.maxMMI ?? 0,
+      simState: state,
+      layerVisible: layerVisibilityRef.current?.osmBuildings !== false,
+    }, buildingCacheRef.current)
+  }
 
   // ── 지도 클릭으로 진앙 설정 ────────────────────────────────────
   useEffect(() => {
@@ -297,6 +338,8 @@ export default function EarthquakeVisualization({
       elapsedMsRef.current = 0
       lastSummaryMsRef.current = -1
       shakeFiredRef.current = false
+      clearMMILayer(viewer, mmiCacheRef.current)
+      syncBuildingLayer(null, 0, 'idle')
       onImpactSummaryChange?.(null)
       onStatsChange?.({ elapsedMs: 0, pRadiusM: 0, sRadiusM: 0 })
     }
@@ -311,12 +354,22 @@ export default function EarthquakeVisualization({
 
     if (simState === 'paused') {
       pausedElapsedRef.current = elapsedMsRef.current
+      const summary = modelRef.current.getImpactSummary(
+        elapsedMsRef.current,
+        citiesRef.current,
+      )
+      syncBuildingLayer(summary, elapsedMsRef.current, 'paused')
       stopRaf()
       prevSimStateRef.current = 'paused'
       return undefined
     }
 
     if (simState === 'done') {
+      const summary = modelRef.current.getImpactSummary(
+        elapsedMsRef.current,
+        citiesRef.current,
+      )
+      syncBuildingLayer(summary, elapsedMsRef.current, 'done')
       stopRaf()
       prevSimStateRef.current = 'done'
       return undefined
@@ -360,6 +413,14 @@ export default function EarthquakeVisualization({
         lastSummaryMsRef.current = elapsed
         const summary = model.getImpactSummary(elapsed, citiesRef.current)
         syncCityEntities(viewer, summary)
+        syncMMILayer(viewer, model, {
+          elapsedMs: elapsed,
+          affectedCount: summary.affectedCount,
+          sRadiusM: summary.sWaveRadiusM,
+          epicenter,
+          maxPropagationKm: options.maxPropagationKm,
+        }, mmiCacheRef.current)
+        syncBuildingLayer(summary, elapsed, simStateRef.current)
         onImpactSummaryChange?.(summary)
         onStatsChange?.({
           elapsedMs: elapsed,
@@ -380,7 +441,7 @@ export default function EarthquakeVisualization({
               const params = getShakeParams(mmi)
               stopShake()
               shakeStopRef.current = startCameraShakeFromParams(viewer, params)
-              onCameraShake?.({ mmi, mmiLabel: summary.cities[0]?.mmiLabel ?? '' })
+              onCameraShake?.({ mmi, mmiLabel: getMMILabel(mmi) })
             }
           }
         }
@@ -397,9 +458,17 @@ export default function EarthquakeVisualization({
     rafIdRef.current = requestAnimationFrame(tick)
     prevSimStateRef.current = 'running'
 
-    return () => { stopRaf() }
+    return () => {
+      stopRaf()
+      if (!viewer.isDestroyed?.()) {
+        clearMMILayer(viewer, mmiCacheRef.current)
+        const tileset = layerInstancesRef?.current?.osmBuildings
+        if (tileset) clearBuildingEffects(tileset, buildingCacheRef.current)
+      }
+    }
   }, [
     viewerRef,
+    layerInstancesRef,
     simState,
     epicenter,
     options,
@@ -431,6 +500,14 @@ export default function EarthquakeVisualization({
 
     const summary = model.getImpactSummary(seekMs, citiesRef.current)
     syncCityEntities(viewer, summary)
+    syncMMILayer(viewer, model, {
+      elapsedMs: seekMs,
+      affectedCount: summary.affectedCount,
+      sRadiusM: summary.sWaveRadiusM,
+      epicenter,
+      maxPropagationKm: options.maxPropagationKm,
+    }, mmiCacheRef.current)
+    syncBuildingLayer(summary, seekMs, simStateRef.current)
     onImpactSummaryChange?.(summary)
     onStatsChange?.({
       elapsedMs: seekMs,

@@ -136,17 +136,35 @@ earthquake-main-ui__hint           ← 규모 힌트 텍스트 (회색)
 │  │ 245 km  │  │ 143 km  │             │
 │  └──────────┘  └──────────┘             │
 │  ┌──────────┐  ┌──────────┐             │
-│  │ 영향 도시│  │ 최대 진도│             │  ← 2칸 그리드
+│  │ 영향 도시│  │ 최대 진도│             │
 │  │   7 / 12 │  │  MMI VII │             │
 │  └──────────┘  └──────────┘             │
-│                                         │
+│  ┌──────────┐  ┌──────────┐             │
+│  │ 추정 면적│  │ 추정 인구│             │  ← Phase 2 추가
+│  │ 64k km² │  │ 약 8.2M명│             │
+│  └──────────┘  └──────────┘             │
+│  중진 이상(MMI VI+) 3개 도시 · OSM 건물 손상색 표시
 │  [🟡 경주   MMI VII  P 4s  S 7s  ]      │  ← 도시별 리스트
 │  [🟠 포항   MMI VI   P 5s  S 8s  ]
 │  [⚪ 서울   MMI III  P 22s S 38s ]
 └─────────────────────────────────────────┘
 ```
 
-**4칸 그리드 값**:
+**6칸 그리드 값** (Phase 2):
+| 칸 | 내용 | idle 시 |
+|----|------|---------|
+| P파 반경 | `pWaveRadiusKm` | `—` |
+| S파 반경 | `sWaveRadiusKm` | `—` |
+| 영향 도시 | S파 도달 / 전체 | `—` |
+| 최대 진도 | S파 도달 도시 중 max MMI | `—` |
+| 추정 면적 | `π × sWaveRadiusKm²` | `—` |
+| 추정 인구 | 도시 인구 × MMI 노출 가중치 합 | `—` |
+
+**지도 시각 (Phase 2~3)**:
+- MMI overlay: `earthquakeMMILayer.js` — S파 도달 영역 컬러맵
+- OSM 건물: `earthquakeBuildingEffects.js` — 손상색 + running 중 vertex 흔들림 (레이어 ON 필요)
+
+**4칸 그리드 값** (Phase 1, superseded):
 | 칸 | 내용 | idle 시 |
 |----|------|---------|
 | P파 반경 | `getRingRadius(elapsed)` km | `—` |
@@ -374,7 +392,9 @@ src/modules/earthquake/
 │   ├── earthquakePresets.js          ← 5개 프리셋 + DEFAULT_OPTIONS
 │   └── earthquakeImpactCities.js     ← 12개 주요 도시
 └── utils/
-    └── cameraShake.js                ← postUpdate 기반 쉐이크
+    ├── cameraShake.js                ← postUpdate 기반 쉐이크
+    ├── earthquakeMMILayer.js         ← Phase 2 MMI overlay
+    └── earthquakeBuildingEffects.js  ← Phase 3 OSM 손상·흔들림
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 > 작성일: 2026-05-24  
 > 대상 브랜치: `dev`  
-> 상태: **❌ 미착수** (registry에 비활성 등록만)  
+> 상태: **Phase 3 완료** · 브라우저 QA §13 대기  
 > 참조: [goals.md](./goals.md), [features.md](./features.md), [tsunami-phase1.md](./tsunami-phase1.md)
 
 ---
@@ -155,7 +155,7 @@ export const EPICENTER_PRESETS = [
     id: 'yangsan_fault',
     label: '양산단층 (가상)',
     lat: 35.50,
-    lon: 129.15,
+지지    lon: 129.15,
     depthKm: 12,
     magnitude: 6.5,
     description: '한반도 최대 활단층 가상 시나리오',
@@ -230,6 +230,7 @@ src/
     │   └── earthquakeImpactCities.js    ← 피해 대상 도시 좌표
     └── utils/
         ├── earthquakeMMILayer.js        ← 진도 등진선 Cesium overlay
+        ├── earthquakeBuildingEffects.js ← OSM 건물 손상색 + CustomShader 흔들림
         ├── cameraShake.js               ← 카메라 흔들림 애니메이션
         └── earthquakeMMILayer.test.js
 ```
@@ -377,7 +378,7 @@ export function syncMMILayer(viewer, model, options = {}) {
 | 상태 변화 시만 갱신 | ✅ | 도달 도시 수 변경 시 트리거 |
 | 미리 계산된 lookup table | ✅ | 기동 시 1회 계산, 이후 LUT 참조 |
 
-> **초기 구현**: overlay 없이 도시 마커 MMI 라벨만으로 시작. Phase 2에서 캔버스 overlay 추가.
+> **초기 구현**: overlay 없이 도시 마커 MMI 라벨만으로 시작. **Phase 2 (2026-05-24)**: `earthquakeMMILayer.js` — S파 도달 영역 캔버스 overlay, 50 km bucket 갱신.
 
 ---
 
@@ -402,9 +403,9 @@ export function syncMMILayer(viewer, model, options = {}) {
 
 | Phase | 내용 | 난이도 | 상태 |
 |-------|------|--------|------|
-| **1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 마커 | ★★☆ | ❌ 미착수 |
-| **2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | ★★★ | ❌ |
-| **3** | OSM 건물 흔들림·손상 (3D Tileset shader / 색상 변경) | ★★★ | ❌ |
+| **1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 마커 | ★★☆ | ✅ 완료 (QA §13 대기) |
+| **2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | ★★★ | ✅ 완료 |
+| **3** | OSM 건물 흔들림·손상 (3D Tileset shader / 색상 변경) | ★★★ | ✅ 완료 |
 | **4** (선택) | 여진 시퀀스, 지표 균열 라인, 액상화 영역 overlay | ★★★ | ❌ 장기 |
 
 ### Phase 1 구현 체크리스트
@@ -427,6 +428,32 @@ export function syncMMILayer(viewer, model, options = {}) {
 **GMPE 보정 (2026-05-24)**: 스펙 원안 C5=3.23, C6=1.51이 한반도 거리 스케일(50~300km)에서
 전부 MMI=1로 수렴하는 문제 발견 → USGS ShakeMap Worden et al. 2012 기반으로 C5=7.58, C6=0.955 적용.
 검증: 경주(M5.8) 기준 부산(~67km)→MMI 4, 포항(M5.4) 시내(~5km)→MMI 7.
+
+### Phase 2 구현 체크리스트
+
+> 완료일: 2026-05-24
+
+```
+[x] earthquakeMMILayer.js — S파 도달 영역 MMI ImageryLayer
+[x] earthquakeMMILayer.test.js
+[x] 규모(M)·깊이 슬라이더 — EarthquakeMainUI (idle 잠금)
+[x] 추정 면적 πr² · 추정 인구 (MMI 가중치)
+[x] earthquakeImpactCities.js — 도시별 population 필드
+[x] getMMIExposureFactor / estimateAffectedPopulation
+```
+
+### Phase 3 구현 체크리스트
+
+> 완료일: 2026-05-24
+
+```
+[x] earthquakeBuildingEffects.js — Cesium3DTileStyle 손상색
+[x] CustomShader vertex 흔들림 (running + MMI V+)
+[x] SceneLayerController.instancesRef — OSM tileset 공유
+[x] EarthquakeVisualization 연동 (idle/reset clear)
+[x] earthquakeBuildingEffects.test.js
+[ ] OSM 건물 ON 상태 브라우저 QA (§13)
+```
 
 ---
 

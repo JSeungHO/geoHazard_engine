@@ -105,15 +105,15 @@ src/modules/tsunami/
 src/physics/  TsunamiWaveModel.js
 ```
 
-### 📌 이후 — 지진 모듈
+### 🔄 진행 중 — 지진 모듈
 
 상세: [earthquake-plan.md](./earthquake-plan.md)
 
 | Phase | 내용 | 비고 |
 |-------|------|------|
 | **Phase 1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 MMI 마커 | ✅ 완료 (2026-05-24) |
-| **Phase 2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | |
-| **Phase 3** | OSM 건물 흔들림·손상 (3D Tileset shader) | |
+| **Phase 2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | ✅ 완료 (2026-05-24) |
+| **Phase 3** | OSM 건물 흔들림·손상 (3D Tileset shader) | ✅ 완료 (2026-05-24) |
 | **Phase 4** (선택) | 여진 시퀀스, 지표 균열, 액상화 overlay | 장기 |
 
 ### 📌 다음 — 위치 시스템 확장

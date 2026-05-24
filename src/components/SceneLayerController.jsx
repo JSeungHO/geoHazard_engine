@@ -12,8 +12,9 @@ const getViewer = (viewerRef) => {
  * viewerRef + 레이어 가시성 state → Cesium 객체 로드/표시.
  * 레이어 추가 시 sceneLayers.js + sceneLayerRuntime.js 만 확장.
  */
-export default function SceneLayerController({ viewerRef, layerVisibility }) {
-  const instancesRef = useRef({})
+export default function SceneLayerController({ viewerRef, layerVisibility, instancesRef: externalInstancesRef }) {
+  const internalInstancesRef = useRef({})
+  const layerInstancesRef = externalInstancesRef ?? internalInstancesRef
   const loadingRef = useRef(new Set())
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function SceneLayerController({ viewerRef, layerVisibility }) {
         if (!runtime) continue
 
         const visible = layerVisibility[layer.id]
-        const existing = instancesRef.current[layer.id]
+        const existing = layerInstancesRef.current[layer.id]
 
         if (existing) {
           runtime.setVisible(existing, visible)
@@ -46,7 +47,7 @@ export default function SceneLayerController({ viewerRef, layerVisibility }) {
             continue
           }
 
-          instancesRef.current[layer.id] = instance
+          layerInstancesRef.current[layer.id] = instance
           runtime.setVisible(instance, visible)
         } catch (error) {
           console.error(`[SceneLayerController] ${layer.id} load failed:`, error)
@@ -73,12 +74,12 @@ export default function SceneLayerController({ viewerRef, layerVisibility }) {
       if (!viewer) return
 
       SCENE_LAYER_DEFS.forEach((layer) => {
-        const instance = instancesRef.current[layer.id]
+        const instance = layerInstancesRef.current[layer.id]
         if (!instance) return
 
         const runtime = SCENE_LAYER_RUNTIME[layer.id]
         runtime?.destroy(viewer, instance)
-        delete instancesRef.current[layer.id]
+        delete layerInstancesRef.current[layer.id]
       })
       loadingRef.current.clear()
     }

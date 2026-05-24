@@ -195,7 +195,12 @@
   color: var(--color-text-muted);
 }
 
-/* ── 4칸 통계 그리드 ── */
+.earthquake-main-ui__hint--impact {
+  margin: -4px 0 10px;
+  color: #fb923c;
+}
+
+/* ── 6칸 통계 그리드 ── */
 
 .earthquake-main-ui__stats {
   display: grid;

@@ -18,7 +18,7 @@
 |------|------|------|
 | 홍수·침수 (`FloodModule`) | ✅ 완성 | WaterWaveEngine + terrain grid 클램핑 |
 | 쓰나미 (`TsunamiModule`) | 🟡 Phase 2 진행 중 | run-up wedge 튜닝 중 |
-| 지진 (`EarthquakeModule`) | ❌ 미착수 | registry에 비활성 등록만 |
+| 지진 (`EarthquakeModule`) | ✅ Phase 1~3 완료 | MMI overlay, 피해 통계, OSM 건물 손상 — QA §13 대기 |
 
 ---
 

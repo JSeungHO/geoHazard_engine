@@ -14,8 +14,9 @@
 | [쓰나미 모듈 진행 현황](./tsunami-status.md) | **현재 구현 상태, 이슈, 로드맵 대비 진행률** |
 | [연안 surge 시각화 기획](./coastal-surge-plan.md) | GeoServer vs 셰이더 방식 비교 — "바다→육지 물 유입" 구현 방향 |
 | [연안 surge 셰이더 기획서](./coastal-surge-shader-plan.md) | 셰이더 방식 상세 설계 — uniform 목록, GLSL 로직, 구현 순서 5단계 |
-| [지진 모듈 기획서](./earthquake-plan.md) | P파·S파 ring, 카메라 쉐이크, MMI 진도 overlay, Phase 1~4 로드맵 |
+| [지진 모듈 기획서](./earthquake-plan.md) | P파·S파 ring, 카메라 쉐이크, MMI overlay, Phase 1~4 로드맵 |
 | [지진 모듈 UI 기획서](./earthquake-ui.md) | 사이드바 섹션·타임라인·스크러빙·CSS 클래스 명세 |
+| [지진 모듈 진행 현황](./earthquake-status.md) | **Phase 1~3 구현 상태, QA, 알려진 제약** |
 
 | [세션 인계 문서](./session-handoff.md) | **다음 세션 시작점** — 현재 상태·미완료 QA·다음 작업 요약 |
 
