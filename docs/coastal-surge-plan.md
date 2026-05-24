@@ -1,8 +1,10 @@
 # 연안 surge 시각화 — 기획서
 
+> ⚠️ **상태: 참고·대안 (2026-05-24)** — 본 기획의 Cesium 셰이더/wedge 방식은 **WebGL 3D 파도 통합 전** 프로토타입 대안. 최종 쓰나미 시각은 별도 WebGL 파도 프로젝트에서 담당.
+>
 > 작성일: 2026-05-24  
 > 목적: "바다에서 육지로 물이 들어오는" 시각 표현 방향 결정  
-> 관련: [tsunami-status.md](./tsunami-status.md) §6 알려진 한계
+> 관련: [tsunami-status.md](./tsunami-status.md) §2.3, §6 알려진 한계
 
 ---
 

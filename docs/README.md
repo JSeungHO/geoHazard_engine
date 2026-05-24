@@ -11,7 +11,7 @@
 | [성능 2차 기획서](./perf-phase2.md) | P-1~P-5 Surface/Body 최적화 기획 (완료) |
 | [성능 3차 기획서](./perf-phase3.md) | P3-1~P3-6 잔여 병목·건물 통합·WebWorker |
 | [쓰나미 Phase 1 기획서](./tsunami-phase1.md) | 연안 쓰나미 모듈 설계 (Phase 1~2, 방향 전환 반영) |
-| [쓰나미 모듈 진행 현황](./tsunami-status.md) | **현재 구현 상태, 이슈, 로드맵 대비 진행률** |
+| [쓰나미 모듈 진행 현황](./tsunami-status.md) | **⏸ 보류** — WebGL 3D 파도 통합 전 프로토타입 상태 |
 | [연안 surge 시각화 기획](./coastal-surge-plan.md) | GeoServer vs 셰이더 방식 비교 — "바다→육지 물 유입" 구현 방향 |
 | [연안 surge 셰이더 기획서](./coastal-surge-shader-plan.md) | 셰이더 방식 상세 설계 — uniform 목록, GLSL 로직, 구현 순서 5단계 |
 | [지진 모듈 기획서](./earthquake-plan.md) | P파·S파 ring, 카메라 쉐이크, MMI overlay, Phase 1~4 로드맵 |
@@ -38,12 +38,12 @@
 1. [성능 2차 기획서](./perf-phase2.md) — P-1~P-5 상세
 2. [구현 기능 §렌더 루프](./features.md) — 현재 FloodVisualization 구조
 
-### 쓰나미·지진 모듈 착수
+### 쓰나미·지진 모듈
 
-1. [쓰나미 모듈 진행 현황](./tsunami-status.md) — **현재 상태·이슈·다음 작업**
-2. [작업 목표 §쓰나미](./goals.md) — Phase 1~4 계획
-3. [지진 모듈 기획서](./earthquake-plan.md) — **Phase 1 착수점**, P파·S파·쉐이크 설계
-4. [구현 기능 §모듈 라우터](./features.md) — registry.js 확장 방법
+1. [지진 모듈 진행 현황](./earthquake-status.md) — Phase 1~4 완료 · QA PASS
+2. [지진 모듈 QA 보고서](./earthquake-qa.md)
+3. [쓰나미 모듈 진행 현황](./tsunami-status.md) — **⏸ WebGL 파도 통합 후 재개**
+4. [작업 목표 §쓰나미](./goals.md) — 착수 조건·통합 체크리스트
 
 ### 이슈 추적
 

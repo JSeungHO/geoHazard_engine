@@ -17,7 +17,7 @@
 | 모듈 | 상태 | 비고 |
 |------|------|------|
 | 홍수·침수 (`FloodModule`) | ✅ 완성 | WaterWaveEngine + terrain grid 클램핑 |
-| 쓰나미 (`TsunamiModule`) | 🟡 Phase 2 진행 중 | run-up wedge 튜닝 중 |
+| 쓰나미 (`TsunamiModule`) | ⏸ 보류 | WebGL 3D 파도 완료 후 통합 예정. 코드는 프로토타입 보존 |
 | 지진 (`EarthquakeModule`) | ✅ Phase 1~4 완료 · QA PASS | P/S파·MMI·OSM·여진·균열·액상화 전 기능 동작 확인 |
 
 ---
@@ -57,55 +57,36 @@ Tests  35 passed (35)  —  7 files
 
 ## 4. 다음에 해야 할 것 (우선순위 순)
 
-### ✅ 완료 — 지진 모듈 브라우저 QA (2026-05-24)
+### ✅ 완료 — 지진 모듈 (Phase 1~4 + QA, 2026-05-24)
 
 `node qa-earthquake-full.mjs` — **PASS 27 / WARN 1 / FAIL 0**  
-WARN: `estimateLiquefactionAreaKm2` 32×32 샘플 부족으로 액상화 면적 UI 텍스트 누락 (Cesium overlay는 정상)  
 상세: [earthquake-qa.md](./earthquake-qa.md)
 
-### 🔴 최우선 — 쓰나미 브라우저 QA (미완료)
+### 🎯 현재 집중 — 홍수·지진 제품 polish
 
-dev 서버(`http://localhost:5173`)에서 쓰나미 탭 QA가 **아직 진행되지 않았다.**  
-아래 체크리스트를 먼저 확인하고, 이상 항목을 기록한 뒤 셰이더 작업에 착수할 것.
+| 우선 | 항목 |
+|------|------|
+| 1 | 배포([Vercel](https://geohazard-engine.vercel.app)) 체험·교육용 고지 문구 |
+| 2 | 지진 권장 시나리오(경주 M5.8 등)·온보딩 갱신 |
+| 3 | 홍수 시각·UX QA, perf-phase3 ([goals.md](./goals.md)) |
+| 4 | 지진 WARN — 액상화 면적 텍스트 수정 여부 결정 |
 
-```
-[ ] 시작 → ring 진원에서 확장, 진원 화면 중앙
-[ ] ring 확장 중 shockwave 펄스 애니메이션
-[ ] 포항 등 연안 도달 → 마커 색 변경 + 파고 라벨
-[ ] run-up wedge가 바다에서 시작해 육지 방향으로 확장
-[ ] 피해 범위 패널 숫자 갱신
-[ ] wedge가 단색 평면으로 보임 (셰이더 미적용 현재 상태 확인용)
-[ ] 일시정지 / 재개 / 초기화 정상 동작
-[ ] 스크러빙 슬라이더 → ring·wedge 즉시 반영
-[ ] 홍수 탭 전환 후 쓰나미 탭 재진입 → 잔여 객체 없음
-[ ] 서해 프리셋 → 서해안 도시 도달 확인
-[ ] 지도에서 선택 → 클릭 진원 이동 확인
-```
+### ⏸ 보류 — 쓰나미 모듈
 
-### 🟡 다음 — 셰이더 구현 (coastal-surge-shader-plan.md)
+**착수 조건**: 별도 **WebGL 3D 파도 애니메이션** 프로젝트 완료 → Cesium 통합 가능 시 GeoHazard 적용.
 
-기획서: `docs/coastal-surge-shader-plan.md`
+- UI 탭 미노출 유지 (`MODULE_REGISTRY` 미등록)
+- `src/modules/tsunami/` — Phase 1 프로토타입 보존 (`TsunamiWaveModel`, UI 패턴)
+- 기존 surge 셰이더 기획([coastal-surge-shader-plan.md](./coastal-surge-shader-plan.md))은 **WebGL 미적용 시 대안**으로 보관
+- 상세: [tsunami-status.md §2.3](./tsunami-status.md)
 
-구현 5단계:
-
-| Step | 파일 | 내용 |
-|------|------|------|
-| 1 | `src/utils/floodWaterMaterial.js` | `TsunamiSurgeMaterial` Fabric 셰이더 등록 |
-| 2 | `src/modules/tsunami/utils/tsunamiRunupSites.js` | `buildSurgeFan` 반환값에 `surgeMask` 추가 |
-| 3 | `src/modules/tsunami/utils/tsunamiRunupPrimitives.js` | `PerInstanceColorAppearance` → `MaterialAppearance` 교체 |
-| 4 | `src/modules/tsunami/constants/coastalImpactPoints.js` | 포항·강릉·울산 shorePoint 수동 보정 |
-| 5 | — | 브라우저 QA — foamWidth / depthFade / feather 튜닝 |
-
-셰이더 핵심 로직 3개:
-1. **마스크** — `seaUV → inlandUV` 방향 축으로 surge 범위 내 fragment만 표시
-2. **깊이 그라디언트** — 바다 쪽 짙고 불투명, 육지 front 쪽으로 투명
-3. **foam 라인** — front 경계 흰색 띠가 progress와 함께 전진
+~~쓰나미 브라우저 QA·Fabric 셰이더 5단계~~ → WebGL 파도 통합 후 재개
 
 ### 🔵 이후
 
-- Git 커밋 (`tsunami-status.md §8` 참고 — 전체 쓰나미 모듈 미커밋 상태)
-- Phase 3a: OSM 건물 침수 shader (Classification)
-- ~~지진 모듈 착수~~ ✅ Phase 1~4 + QA 완료 (2026-05-24)
+- `locations/` 확장 (강남 / 연안 / 단층대)
+- 모바일 반응형 (1000px 차단 해제)
+- 쓰나미 탭 재노출 (WebGL 통합 완료 후)
 
 ---
 
@@ -135,10 +116,9 @@ src/
 
 | # | 증상 | 위치 | 우선순위 |
 |---|------|------|----------|
-| 1 | wedge가 단색 평면 — 바다→육지 방향감 없음 | `tsunamiRunupPrimitives.js` | 🔴 셰이더 Step 1~3 |
-| 2 | shorePoint가 도시 중심 고정 오프셋 — 실제 해안선과 어긋날 수 있음 | `coastalImpactPoints.js` | 🟡 셰이더 Step 4 |
-| 3 | 바다 구간 run-up overlay 가시성 낮음 (`GroundPrimitive`는 지형 드레이핑) | `tsunamiRunupPrimitives.js` | 🟡 셰이더 후 검토 |
-| 4 | Git 미커밋 — 쓰나미 모듈 전체 untracked | — | 🟡 QA 완료 후 |
+| 1 | wedge 단색 평면 | `tsunamiRunupPrimitives.js` | ⏸ WebGL 파도로 대체 예정 |
+| 2 | shorePoint 고정 오프셋 | `coastalImpactPoints.js` | 🟡 WebGL 통합 시 재검토 |
+| 3 | GroundPrimitive run-up 가시성 | `tsunamiRunupPrimitives.js` | ⏸ WebGL 파도로 대체 예정 |
 
 ---
 
@@ -148,7 +128,7 @@ src/
 |------|------|
 | [tsunami-status.md](./tsunami-status.md) | **현재 상태** — 구현 현황, 이슈, Git 상태 |
 | [tsunami-phase1.md](./tsunami-phase1.md) | 설계 원칙, API, 컴포넌트 구조, 하지 말아야 할 것 |
-| [coastal-surge-shader-plan.md](./coastal-surge-shader-plan.md) | **다음 작업** — 셰이더 5단계 상세 기획 |
+| [coastal-surge-shader-plan.md](./coastal-surge-shader-plan.md) | flat wedge용 Fabric 셰이더 (**대안·레거시**, WebGL 파도 우선) |
 | [coastal-surge-plan.md](./coastal-surge-plan.md) | GeoServer vs 셰이더 방식 선택 근거 |
 | [earthquake-qa.md](./earthquake-qa.md) | **지진 QA 결과** — PASS 27/WARN 1/FAIL 0 |
 | [earthquake-status.md](./earthquake-status.md) | 지진 모듈 현황 (Phase 1~4 완료) |
@@ -174,4 +154,5 @@ npm run build             # 프로덕션 빌드 확인
 | 날짜 | 내용 |
 |------|------|
 | 2026-05-24 | 초판 — 세션 인계용 문서 |
+| 2026-05-24 | 쓰나미 WebGL 3D 파도 통합 전략 반영, 우선순위 → 홍수·지진 polish |
 | 2026-05-24 | 지진 모듈 Phase 4 완료 및 브라우저 QA 통과 반영 |

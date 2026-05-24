@@ -1,5 +1,7 @@
 # 연안 surge 셰이더 기획서
 
+> ⚠️ **상태: 대안·레거시 (2026-05-24)** — 쓰나미 Phase 2는 **별도 WebGL 3D 파도 애니메이션** 통합을 우선한다. 본 문서는 WebGL 미적용 시 flat wedge 개선용 참고 자료.
+>
 > 작성일: 2026-05-24  
 > 전제 문서: [coastal-surge-plan.md](./coastal-surge-plan.md) §4 (셰이더 방식 채택)  
 > 현재 구현 상태: [tsunami-status.md](./tsunami-status.md)

@@ -1,10 +1,10 @@
 # GeoHazard Engine — 쓰나미 모듈 기획서
 
 > 작성일: 2026-05-24  
-> 최종 갱신: 2026-05-23  
+> 최종 갱신: 2026-05-24  
 > 대상 브랜치: `dev`  
-> 상태: **Phase 1 완료** · **Phase 2 부분 완료** (연안 run-up)  
-> 참조: [tsunami-status.md](./tsunami-status.md) (현재 진행 현황), [goals.md](./goals.md), [features.md](./features.md)
+> 상태: **⏸ 보류** — Phase 1 프로토타입 완료 · Phase 2+는 **WebGL 3D 파도 통합 후** 착수  
+> 참조: [tsunami-status.md](./tsunami-status.md), [goals.md](./goals.md), [features.md](./features.md)
 
 ---
 
@@ -13,7 +13,7 @@
 | 항목 | 내용 |
 |------|------|
 | 목표 | 진원에서 파면(ring)이 확장되고, **한국 연안 참조 도시**에 도달하면 **파고·침수 범위(run-up)** 가 점진적으로 나타나는 교육용 쓰나미 시뮬레이션 |
-| Phase | **1** 완료 (진원·ring·UI·카메라·스크러빙) · **2** 진행 중 (방향성 run-up) |
+| Phase | **1** 완료 (프로토타입) · **2+** WebGL 3D 파도 통합 후 |
 | 재사용 | `CesiumMapViewer`, `SceneLayersPanel`, `MapStatusBar`, `SimulationErrorBoundary`, 모듈 레이아웃 패턴 |
 | 신규 | `TsunamiWaveModel`, 연안 impact point, run-up wedge geometry, `GroundPrimitive` overlay |
 

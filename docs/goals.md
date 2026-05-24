@@ -50,7 +50,7 @@
 
 ## 현재 로드맵
 
-> **집중 (2026-05-24)**: 쓰나미 탭 **미노출** (`MODULE_REGISTRY`에서 제거) — 홍수·침수 모듈 완성도 우선.
+> **집중 (2026-05-24)**: 배포 탭은 **홍수·지진**. 쓰나미는 **별도 WebGL 3D 파도 애니메이션** 완료·통합 가능 시점까지 **보류** (`MODULE_REGISTRY` 미등록).
 
 ### 🎯 진행 중 — 홍수·침수 모듈 완성도
 
@@ -74,36 +74,37 @@
 | P-4 | body 상단 캡 삼각형 제거 (`omitTopCap`) |
 | P-5 | 파동 에너지 기반 동적 update interval (2~6프레임) |
 
-### ⏸ 보류 — 쓰나미 모듈 (Phase 1 완료 · Phase 2 미완)
+### ⏸ 보류 — 쓰나미 모듈 (WebGL 3D 파도 완료 후 착수)
 
-연안 쓰나미 시뮬레이션 (강남 침수 트리거 아님). **UI 탭 비활성** — run-up 시각화 미완.  
-상세: [tsunami-phase1.md](./tsunami-phase1.md) · [tsunami-status.md](./tsunami-status.md)
+연안 쓰나미 시뮬레이션. **UI 탭 비활성** — `src/modules/tsunami/` 코드는 프로토타입으로 보존.  
+**착수 조건**: 차후 개발 예정인 **WebGL 3D 파도 애니메이션**을 별도 프로젝트에서 완성하고, Cesium/React에 **통합 가능한 API·성능**까지 검증된 뒤 GeoHazard에 적용.
+
+상세: [tsunami-status.md](./tsunami-status.md) · 설계 참고: [tsunami-phase1.md](./tsunami-phase1.md)
 
 | Phase | 내용 | 예상 난이도 | 상태 |
 |-------|------|-------------|------|
-| **Phase 1** | 진원 UI + ring, 타임라인, 스크러빙, 진원 중심 카메라 | ★★☆ | ✅ 완료 |
-| **Phase 2** | 방향성 전파, 해안 run-up (region surge wedge) | ★★★ | 🟡 부분 완료 |
-| **Phase 3a** | OSM 건물 하부 침수 (Classification / shader) | ★★★ | 🔵 이후 |
-| **Phase 3b** | camera shake, UI 시나리오 타임라인 | ★★☆ | 🔵 이후 |
+| **Phase 1** | 진원 UI + ring, 타임라인, 스크러빙, 진원 중심 카메라 | ★★☆ | ✅ 완료 (프로토타입) |
+| **Phase 2** | 방향성 전파, 해안 run-up | ★★★ | ⏸ **WebGL 파도로 대체 예정** |
+| **Phase 3a** | OSM 건물 하부 침수 (Classification / shader) | ★★★ | 🔵 WebGL 통합 후 |
+| **Phase 3b** | camera shake, UI 시나리오 타임라인 | ★★☆ | 🔵 WebGL 통합 후 |
 | **Phase 4** (선택) | splash/debris, collapse tileset | ★★★ | 🔵 장기 |
 
-**구현 내용 (현재)**:
-- `TsunamiWaveModel` — ring·도달·파고 ramp·coastal spread
-- `TsunamiVisualization` — ring/shockwave Entity + 연안 마커 + `GroundPrimitive` run-up
+**현재 코드 (프로토타입·재사용 후보)**:
+- `TsunamiWaveModel` — ring·도달·파고 ramp·coastal spread (**물리·타임라인은 통합 시 재사용 가능**)
+- `TsunamiVisualization` — ring/shockwave Entity + 연안 마커 + `GroundPrimitive` run-up wedge
 - `coastalImpactPoints` — 연안 참조 도시 11곳
-- `buildSurgeFan` — region 기반 바다→육지 surge wedge
-- `SimTimeline` + `ScrubBar` — traveling / impacting 단계, 과거 시간 스크러빙
-- 시작 카메라 — `flyToBoundingSphere`로 진원 화면 중앙
+- UI — `SimTimeline` + `ScrubBar` (지진 모듈에서 패턴 재사용 완료)
 
-모듈 구조:
-```
-src/modules/tsunami/
-  TsunamiModule.jsx
-  components/ TsunamiVisualization.jsx, TsunamiMainUI.jsx
-  constants/  tsunamiPresets.js, coastalImpactPoints.js, coastalSurgeLayout.js
-  utils/      tsunamiRunupSites.js, tsunamiRunupPrimitives.js
-src/physics/  TsunamiWaveModel.js
-```
+**보류 중인 기존 기획 (참고용·대안)**:
+- [coastal-surge-plan.md](./coastal-surge-plan.md) — GeoServer vs Cesium 셰이더 비교
+- [coastal-surge-shader-plan.md](./coastal-surge-shader-plan.md) — flat wedge용 Fabric 셰이더 (WebGL 파도 미적용 시 대안)
+
+**WebGL 통합 시 기획 체크리스트** (별도 프로젝트에서 확정):
+1. 렌더링 방식 — Cesium CustomPrimitive / overlay canvas / PostProcess
+2. 좌표계 — WGS84 ↔ 로컬 tangent plane
+3. 시뮬 입력 — `epicenter`, `elapsedMs`, `waveSpeed` 등 `TsunamiWaveModel` 필드와 매핑
+4. 성능 예산 — 연안 site 수, 목표 FPS
+5. 통합 API — 예: `createTsunamiWaveLayer({ viewer, getState })`
 
 ### ✅ 완료 — 지진 모듈
 
@@ -139,7 +140,7 @@ src/physics/  TsunamiWaveModel.js
 |------|-----------|--------|------|
 | 홍수·침수 | Primitive 수면, terrain grid, ParticleSystem | ★★☆ | **✅ 완성** |
 | 폭우 | ParticleSystem | ★☆☆ | ✅ (홍수 내 포함) |
-| 쓰나미 | 홍수 확장 + wave front | ★★★ | **⏸ 보류** (탭 숨김) |
+| 쓰나미 | WebGL 3D 파도 + wave front | ★★★ | **⏸ 보류** (WebGL 완료 후 통합) |
 | 지진 | Camera shake, 3D Tiles 변형, 여진·균열·액상화 | ★★☆ | **✅ Phase 1~4 · QA PASS** |
 | 산불·화산 | ParticleSystem, Polygon extrusion | ★★★ | 🔵 장기 |
 | 태풍·폭풍 해일 | 강수 + storm surge | ★★★ | 🔵 장기 |

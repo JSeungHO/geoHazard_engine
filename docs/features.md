@@ -242,7 +242,10 @@ MODULE_REGISTRY = [
 
 ---
 
-## 쓰나미 모듈 (`TsunamiModule.jsx`)
+## 쓰나미 모듈 (`TsunamiModule.jsx`) — ⏸ 보류
+
+> **재개 조건**: 별도 **WebGL 3D 파도 애니메이션** 완료 → Cesium 통합 가능 시 적용.  
+> `MODULE_REGISTRY` 미등록 · 코드는 프로토타입 보존. 상세: [tsunami-status.md](./tsunami-status.md)
 
 ### 구성 요소
 

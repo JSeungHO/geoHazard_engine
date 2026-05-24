@@ -1,6 +1,8 @@
 # 쓰나미 모듈 — 현재 상황 및 진행 현황
 
-> **상태: ⏸ 보류 (2026-05-24)** — UI 탭 **미노출** (`MODULE_REGISTRY`에서 제거). 홍수 모듈 우선. 코드는 `src/modules/tsunami/`에 보존.
+> **상태: ⏸ 보류 (2026-05-24)** — UI 탭 **미노출** (`MODULE_REGISTRY` 미등록).  
+> **재개 조건**: 별도 프로젝트 **WebGL 3D 파도 애니메이션** 개발 완료 → Cesium 통합 가능 시 GeoHazard에 적용.  
+> 코드는 `src/modules/tsunami/`에 **프로토타입**으로 보존.
 
 > 작성일: 2026-05-23  
 > 대상: `src/modules/tsunami/` 및 관련 물리·렌더 코드  
@@ -21,7 +23,7 @@
 | 연안 도시 마커 + 파고 라벨 | ✅ 동작 |
 | 연안 run-up 침수 overlay | 🟡 동작 (튜닝 중) |
 | 단위 테스트 | ✅ 35개 통과 |
-| Git 커밋 | ❌ **미커밋** (로컬 작업 중) |
+| Git 커밋 | ✅ main/dev 포함 (프로토타입 보존) |
 
 ---
 
@@ -41,9 +43,21 @@
 | 시각 목표 | 도심 범람 ❌ → **바다→육지 방향 surge + 파면 ring** |
 | UI 초점 | 수위 m ❌ → **파고 m, 피해 반경 km, 영향 연안 수** |
 
+### 2.3 WebGL 3D 파도 전략 (2026-05-24)
+
+Phase 2 run-up wedge + Fabric 셰이더(`coastal-surge-shader-plan.md`)로 시각 품질을 올리는 대신, **별도 WebGL 3D 파도 애니메이션** 프로젝트를 먼저 완성한 뒤 GeoHazard에 통합한다.
+
+| 구분 | 내용 |
+|------|------|
+| 보류 사유 | flat wedge·GroundPrimitive로는 교육용 "바다→육지 파도" 연출 한계 |
+| 착수 조건 | WebGL 파도가 Cesium viewer 위에 붙을 수 있는 **API·좌표계·성능** 검증 완료 |
+| 재사용 예정 | `TsunamiWaveModel`, UI/타임라인, `coastalImpactPoints`, ring Entity |
+| 교체 예정 | run-up wedge geometry, surge 셰이더, `tsunamiRunupPrimitives` |
+| 참고 문서 | [coastal-surge-plan.md](./coastal-surge-plan.md), [coastal-surge-shader-plan.md](./coastal-surge-shader-plan.md) — **대안/레거시** |
+
 ---
 
-## 3. 아키텍처 (현재)
+## 3. 아키텍처 (현재·프로토타입)
 
 ```
 src/
@@ -177,21 +191,9 @@ npm run build       # 성공
 
 ---
 
-## 8. 파일별 Git 상태 (2026-05-23)
+## 8. 파일별 Git 상태
 
-**신규 (untracked)**
-
-- `src/modules/tsunami/` (전체)
-- `src/physics/TsunamiWaveModel.js`
-- `src/physics/TsunamiWaveModel.test.js`
-- `docs/tsunami-phase1.md`
-
-**수정 (modified, 커밋 대기)**
-
-- `src/utils/floodWaterMaterial.js` — 쓰나미 색조 톤다운
-- `src/utils/floodWaterMesh.js` — FloodSurgeMask 타입 추가
-- `src/modules/registry.js` — tsunami `available: true`
-- `docs/goals.md`, `docs/features.md`, `docs/README.md` 등
+쓰나미 모듈 코드는 repo에 포함되어 있으나 **UI 탭은 미노출**. GeoHazard 측 추가 개발은 WebGL 파도 통합까지 보류.
 
 ---
 
@@ -202,21 +204,23 @@ npm run build       # 성공
 | Phase | 기획 내용 | 현재 |
 |-------|-----------|------|
 | **Phase 1** | 진원 UI + ring + 타임라인 + 카메라 | ✅ **완료** |
-| **Phase 2** | 방향성 전파, 해안 run-up | 🟡 **부분 완료** — run-up wedge·region 방향 구현, 해안선 정밀화·수면 표현 남음 |
-| **Phase 3a** | OSM 건물 침수 shader | ❌ 미착수 |
-| **Phase 3b** | camera shake, UI 타임라인 | ❌ 미착수 |
+| **Phase 2** | 방향성 전파, 해안 run-up | ⏸ **WebGL 3D 파도로 대체 예정** |
+| **Phase 3a** | OSM 건물 침수 shader | ❌ WebGL 통합 후 |
+| **Phase 3b** | camera shake, UI 타임라인 | ❌ WebGL 통합 후 |
 | **Phase 4** | splash/debris | ❌ 미착수 |
 
 ---
 
 ## 10. 다음 권장 작업 (우선순위)
 
-1. **브라우저 QA** — 동해 프리셋 실행 후 포항·울산 wedge가 **바다→육지**로 보이는지 확인
-2. **해안선 정밀화** — OpenStreetMap coastline 또는 수동 shore anchor per city
-3. **문서 동기화** — `tsunami-phase1.md` §방향 전환 반영, `features.md` 쓰나미 섹션 갱신
-4. **Git 커밋** — 쓰나미 모듈 1차 묶음 커밋
-5. **Phase 2 마무리** — 바다 구간 수면 tint, spread=0 근처 thin wedge 연출
-6. **Phase 3a** — OSM 건물 Classification 침수 (선택)
+> **GeoHazard 측에서는 쓰나미 개발을 진행하지 않는다.** 아래는 WebGL 파도 프로젝트 완료 **후** 통합 시 참고.
+
+1. **WebGL 파도 프로젝트** — 3D 파도 mesh/셰이더, Cesium 통합 API 스펙 확정
+2. **통합 POC** — `TsunamiWaveModel` elapsedMs·진원과 WebGL 레이어 동기화
+3. **탭 재노출** — `MODULE_REGISTRY` 등록 + 브라우저 QA
+4. **Phase 3+** — OSM 건물 침수, camera shake 등 (통합 안정 후)
+
+**당분간 GeoHazard 집중**: 홍수·지진 polish, 배포 검증, 교육 UX ([goals.md](./goals.md))
 
 ---
 
@@ -236,4 +240,5 @@ npm run dev        # http://localhost:5173
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-05-24 | WebGL 3D 파도 완료 후 통합 전략 반영 — GeoHazard 측 쓰나미 개발 보류 |
 | 2026-05-23 | 초판 — Phase 1 완료, run-up 튜닝·GroundPrimitive 수정·region 기반 surge 반영 |
