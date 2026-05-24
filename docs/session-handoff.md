@@ -105,7 +105,7 @@ dev 서버(`http://localhost:5173`)에서 쓰나미 탭 QA가 **아직 진행되
 
 - Git 커밋 (`tsunami-status.md §8` 참고 — 전체 쓰나미 모듈 미커밋 상태)
 - Phase 3a: OSM 건물 침수 shader (Classification)
-- 지진 모듈 착수
+- ~~지진 모듈 착수~~ ✅ Phase 1~4 + QA 완료 (2026-05-24)
 
 ---
 

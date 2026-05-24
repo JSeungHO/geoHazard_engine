@@ -105,9 +105,9 @@ src/modules/tsunami/
 src/physics/  TsunamiWaveModel.js
 ```
 
-### 🔄 진행 중 — 지진 모듈
+### ✅ 완료 — 지진 모듈
 
-상세: [earthquake-plan.md](./earthquake-plan.md)
+상세: [earthquake-plan.md](./earthquake-plan.md) · QA: [earthquake-qa.md](./earthquake-qa.md)
 
 | Phase | 내용 | 비고 |
 |-------|------|------|
@@ -140,7 +140,7 @@ src/physics/  TsunamiWaveModel.js
 | 홍수·침수 | Primitive 수면, terrain grid, ParticleSystem | ★★☆ | **✅ 완성** |
 | 폭우 | ParticleSystem | ★☆☆ | ✅ (홍수 내 포함) |
 | 쓰나미 | 홍수 확장 + wave front | ★★★ | **⏸ 보류** (탭 숨김) |
-| 지진 | Camera shake, 3D Tiles 변형, 여진·균열·액상화 | ★★☆ | **✅ Phase 1~4** (QA §13 대기) |
+| 지진 | Camera shake, 3D Tiles 변형, 여진·균열·액상화 | ★★☆ | **✅ Phase 1~4 · QA PASS** |
 | 산불·화산 | ParticleSystem, Polygon extrusion | ★★★ | 🔵 장기 |
 | 태풍·폭풍 해일 | 강수 + storm surge | ★★★ | 🔵 장기 |
 

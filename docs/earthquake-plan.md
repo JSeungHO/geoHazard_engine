@@ -405,7 +405,7 @@ export function syncMMILayer(viewer, model, options = {}) {
 
 | Phase | 내용 | 난이도 | 상태 |
 |-------|------|--------|------|
-| **1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 마커 | ★★☆ | ✅ 완료 (QA §13 대기) |
+| **1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 마커 | ★★☆ | ✅ 완료 (2026-05-24) |
 | **2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | ★★★ | ✅ 완료 |
 | **3** | OSM 건물 흔들림·손상 (3D Tileset shader / 색상 변경) | ★★★ | ✅ 완료 |
 | **4** (선택) | 여진 시퀀스, 지표 균열 라인, 액상화 영역 overlay | ★★★ | ✅ 완료 (2026-05-24) |
@@ -545,3 +545,5 @@ export const DONGHAE_OFFSHORE = { lat: 37.50, lon: 131.50 }
 | [features.md](./features.md) | 전체 파일 구조, 모듈 라우터 |
 | [tsunami-phase1.md](./tsunami-phase1.md) | 설계 패턴 참고 (ring, 스크러빙, 카메라) |
 | [tsunami-status.md](./tsunami-status.md) | 쓰나미 현재 상태 |
+| [earthquake-status.md](./earthquake-status.md) | 지진 현재 상태 |
+| [earthquake-qa.md](./earthquake-qa.md) | 브라우저 QA 결과 (PASS 27/WARN 1/FAIL 0) |
