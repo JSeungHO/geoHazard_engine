@@ -195,9 +195,28 @@
   color: var(--color-text-muted);
 }
 
+.earthquake-main-ui__hint--liquefaction {
+  margin: -4px 0 10px;
+  color: #c4a035;
+}
+
 .earthquake-main-ui__hint--impact {
   margin: -4px 0 10px;
   color: #fb923c;
+}
+
+.earthquake-main-ui__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.earthquake-main-ui__toggle input {
+  accent-color: #f97316;
 }
 
 /* ── 6칸 통계 그리드 ── */

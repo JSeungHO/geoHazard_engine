@@ -22,8 +22,17 @@ import { EarthquakeWaveModel, getMMILabel, getShakeParams } from '../../../physi
 import { startCameraShakeFromParams } from '../utils/cameraShake'
 import { syncMMILayer, clearMMILayer } from '../utils/earthquakeMMILayer'
 import { syncBuildingEffects, clearBuildingEffects } from '../utils/earthquakeBuildingEffects'
+import { syncCrackLines, clearCrackLines } from '../utils/earthquakeCrackLines'
+import {
+  syncLiquefactionLayer,
+  clearLiquefactionLayer,
+  estimateLiquefactionAreaKm2,
+} from '../utils/earthquakeLiquefactionLayer'
+import { computeMMIBounds } from '../utils/earthquakeMMILayer'
+import { resolveSimulationEvent } from '../constants/earthquakeAftershocks'
 
 const EPICENTER_ENTITY_ID = 'eq-epicenter'
+const AFTERSHOCK_ENTITY_ID = 'eq-aftershock-active'
 const PWAVE_RING_ID = 'eq-pwave-ring'
 const SWAVE_RING_ID = 'eq-swave-ring'
 const CITY_PREFIX = 'eq-city-'
@@ -56,6 +65,43 @@ const removeCityMarkers = (viewer) => {
 }
 
 // ─── Entity 생성 ─────────────────────────────────────────────────
+
+function createAftershockEntity(viewer, epicenter, label) {
+  removeById(viewer, AFTERSHOCK_ENTITY_ID)
+  viewer.entities.add({
+    id: AFTERSHOCK_ENTITY_ID,
+    position: positionProp(epicenter.lon, epicenter.lat),
+    point: {
+      pixelSize: 11,
+      color: Color.fromCssColorString('#FF9500'),
+      outlineColor: Color.WHITE,
+      outlineWidth: 2,
+    },
+    label: {
+      text: label ?? '여진',
+      font: 'bold 11px sans-serif',
+      pixelOffset: new Cartesian2(0, -22),
+      fillColor: Color.fromCssColorString('#FF9500'),
+      outlineColor: Color.fromCssColorString('#1A1A2E'),
+      outlineWidth: 2,
+      style: LabelStyle.FILL_AND_OUTLINE,
+    },
+  })
+}
+
+function removeAftershockEntity(viewer) {
+  removeById(viewer, AFTERSHOCK_ENTITY_ID)
+}
+
+function modelFromEvent(event) {
+  return new EarthquakeWaveModel({
+    epicenter: event.epicenter,
+    depthKm: event.depthKm,
+    magnitude: event.magnitude,
+    timeScale: event.timeScale,
+    maxPropagationKm: event.maxPropagationKm,
+  })
+}
 
 function createEpicenterEntity(viewer, epicenter) {
   removeById(viewer, EPICENTER_ENTITY_ID)
@@ -203,14 +249,22 @@ export default function EarthquakeVisualization({
   options,
   cities,
   seekMs,
+  aftershockPlan = [],
+  mainDurationMs = 0,
+  totalSimMs = 0,
   isPickMode = false,
   onEpicenterChange,
   onImpactSummaryChange,
   onSimDone,
   onStatsChange,
   onCameraShake,
+  onAftershockChange,
 }) {
   const modelRef = useRef(null)
+  const activeEventRef = useRef(null)
+  const aftershockPlanRef = useRef(aftershockPlan)
+  const mainDurationMsRef = useRef(mainDurationMs)
+  const totalSimMsRef = useRef(totalSimMs)
   const startTimestampRef = useRef(null)
   const pausedElapsedRef = useRef(0)
   const elapsedMsRef = useRef(0)
@@ -227,9 +281,15 @@ export default function EarthquakeVisualization({
   const shakeFiredRef = useRef(false)
   const mmiCacheRef = useRef({})
   const buildingCacheRef = useRef({})
+  const crackCacheRef = useRef({})
+  const liqCacheRef = useRef({})
   const layerVisibilityRef = useRef(layerVisibility)
+  const ringEpicenterRef = useRef(epicenter)
 
   // ref 동기화
+  useEffect(() => { aftershockPlanRef.current = aftershockPlan }, [aftershockPlan])
+  useEffect(() => { mainDurationMsRef.current = mainDurationMs }, [mainDurationMs])
+  useEffect(() => { totalSimMsRef.current = totalSimMs }, [totalSimMs])
   useEffect(() => { simStateRef.current = simState }, [simState])
   useEffect(() => { isPickModeRef.current = isPickMode }, [isPickMode])
   useEffect(() => { epicenterRef.current = epicenter }, [epicenter])
@@ -247,7 +307,7 @@ export default function EarthquakeVisualization({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layerVisibility?.osmBuildings])
 
-  const syncBuildingLayer = (summary, elapsed, state) => {
+  const syncBuildingLayer = (summary, elapsed, state, eventEpicenter) => {
     const tileset = layerInstancesRef?.current?.osmBuildings
     if (!tileset) return
 
@@ -257,16 +317,102 @@ export default function EarthquakeVisualization({
     }
 
     syncBuildingEffects(tileset, {
-      epicenter,
+      epicenter: eventEpicenter ?? epicenter,
       sWaveRadiusKm: summary?.sWaveRadiusKm ?? 0,
       sWaveRadiusM: summary?.sWaveRadiusM ?? 0,
-      magnitude: options.magnitude,
+      magnitude: activeEventRef.current?.magnitude ?? options.magnitude,
       depthKm: options.depthKm,
       elapsedMs: elapsed,
       maxMMI: summary?.maxMMI ?? 0,
       simState: state,
       layerVisible: layerVisibilityRef.current?.osmBuildings !== false,
     }, buildingCacheRef.current)
+  }
+
+  const syncPhase4Effects = (viewer, model, event, summary, eventElapsed) => {
+    if (!viewer) return
+
+    if (event.type === 'aftershock') {
+      createAftershockEntity(viewer, event.epicenter, event.aftershock?.label)
+      onAftershockChange?.(event.aftershock)
+      clearCrackLines(viewer, crackCacheRef.current)
+      clearLiquefactionLayer(viewer, liqCacheRef.current)
+      return
+    }
+
+    removeAftershockEntity(viewer)
+    onAftershockChange?.(null)
+
+    syncCrackLines(viewer, event.epicenter, {
+      maxMMI: summary.maxMMI,
+      sRadiusM: summary.sWaveRadiusM,
+      type: event.type,
+    }, crackCacheRef.current)
+
+    syncLiquefactionLayer(viewer, model, {
+      elapsedMs: eventElapsed,
+      sRadiusM: summary.sWaveRadiusM,
+      maxMMI: summary.maxMMI,
+      epicenter: event.epicenter,
+      maxPropagationKm: event.maxPropagationKm,
+    }, liqCacheRef.current)
+  }
+
+  const augmentSummary = (summary, model, event, eventElapsed) => {
+    const bounds = computeMMIBounds(event.epicenter, event.maxPropagationKm)
+    const liquefactionAreaKm2 = event.type === 'main' && summary.maxMMI >= 6
+      ? estimateLiquefactionAreaKm2(model, eventElapsed, bounds)
+      : 0
+
+    return {
+      ...summary,
+      eventType: event.type,
+      aftershockLabel: event.aftershock?.label ?? null,
+      liquefactionAreaKm2,
+    }
+  }
+
+  const applySimulationFrame = (viewer, globalElapsed, state) => {
+    const event = resolveSimulationEvent(
+      globalElapsed,
+      epicenterRef.current,
+      options,
+      aftershockPlanRef.current,
+      mainDurationMsRef.current,
+    )
+    activeEventRef.current = event
+
+    if (event.type === 'complete' || globalElapsed >= totalSimMsRef.current) {
+      return { done: true, event, summary: null, eventElapsed: 0 }
+    }
+
+    const model = modelFromEvent(event)
+    modelRef.current = model
+    const eventElapsed = event.eventElapsedMs
+    ringEpicenterRef.current = event.epicenter
+
+    pRadiusRef.current = model.getPWaveRadius(eventElapsed)
+    sRadiusRef.current = model.getSWaveRadius(eventElapsed)
+
+    const summary = augmentSummary(
+      model.getImpactSummary(eventElapsed, citiesRef.current),
+      model,
+      event,
+      eventElapsed,
+    )
+
+    syncCityEntities(viewer, summary)
+    syncMMILayer(viewer, model, {
+      elapsedMs: eventElapsed,
+      affectedCount: summary.affectedCount,
+      sRadiusM: summary.sWaveRadiusM,
+      epicenter: event.epicenter,
+      maxPropagationKm: event.maxPropagationKm,
+    }, mmiCacheRef.current)
+    syncBuildingLayer(summary, eventElapsed, state, event.epicenter)
+    syncPhase4Effects(viewer, model, event, summary, eventElapsed)
+
+    return { done: false, event, summary, eventElapsed, model }
   }
 
   // ── 지도 클릭으로 진앙 설정 ────────────────────────────────────
@@ -330,9 +476,13 @@ export default function EarthquakeVisualization({
       stopShake()
       removeWaveRings(viewer)
       removeCityMarkers(viewer)
+      removeAftershockEntity(viewer)
+      clearCrackLines(viewer, crackCacheRef.current)
+      clearLiquefactionLayer(viewer, liqCacheRef.current)
       pRadiusRef.current = 0
       sRadiusRef.current = 0
       modelRef.current = null
+      activeEventRef.current = null
       startTimestampRef.current = null
       pausedElapsedRef.current = 0
       elapsedMsRef.current = 0
@@ -340,6 +490,7 @@ export default function EarthquakeVisualization({
       shakeFiredRef.current = false
       clearMMILayer(viewer, mmiCacheRef.current)
       syncBuildingLayer(null, 0, 'idle')
+      onAftershockChange?.(null)
       onImpactSummaryChange?.(null)
       onStatsChange?.({ elapsedMs: 0, pRadiusM: 0, sRadiusM: 0 })
     }
@@ -350,26 +501,25 @@ export default function EarthquakeVisualization({
       return undefined
     }
 
-    modelRef.current = new EarthquakeWaveModel({ epicenter, ...options })
-
     if (simState === 'paused') {
       pausedElapsedRef.current = elapsedMsRef.current
-      const summary = modelRef.current.getImpactSummary(
-        elapsedMsRef.current,
-        citiesRef.current,
-      )
-      syncBuildingLayer(summary, elapsedMsRef.current, 'paused')
+      const frame = applySimulationFrame(viewer, elapsedMsRef.current, 'paused')
+      if (frame.summary) {
+        onImpactSummaryChange?.(frame.summary)
+        onStatsChange?.({
+          elapsedMs: elapsedMsRef.current,
+          pRadiusM: frame.summary.pWaveRadiusM,
+          sRadiusM: frame.summary.sWaveRadiusM,
+        })
+      }
       stopRaf()
       prevSimStateRef.current = 'paused'
       return undefined
     }
 
     if (simState === 'done') {
-      const summary = modelRef.current.getImpactSummary(
-        elapsedMsRef.current,
-        citiesRef.current,
-      )
-      syncBuildingLayer(summary, elapsedMsRef.current, 'done')
+      const frame = applySimulationFrame(viewer, elapsedMsRef.current, 'done')
+      if (frame.summary) syncBuildingLayer(frame.summary, elapsedMsRef.current, 'done', frame.event?.epicenter)
       stopRaf()
       prevSimStateRef.current = 'done'
       return undefined
@@ -388,12 +538,10 @@ export default function EarthquakeVisualization({
     createPWaveRing(viewer, epicenter, pRadiusRef)
     createSWaveRing(viewer, epicenter, sRadiusRef)
     startTimestampRef.current = null
+    let lastEventType = 'main'
 
     const tick = (timestamp) => {
       if (simStateRef.current !== 'running') return
-
-      const model = modelRef.current
-      if (!model) return
 
       if (startTimestampRef.current == null) {
         startTimestampRef.current = timestamp
@@ -401,9 +549,6 @@ export default function EarthquakeVisualization({
 
       const elapsed = pausedElapsedRef.current + (timestamp - startTimestampRef.current)
       elapsedMsRef.current = elapsed
-
-      pRadiusRef.current = model.getPWaveRadius(elapsed)
-      sRadiusRef.current = model.getSWaveRadius(elapsed)
       viewer.scene.requestRender()
 
       if (
@@ -411,16 +556,20 @@ export default function EarthquakeVisualization({
         || lastSummaryMsRef.current < 0
       ) {
         lastSummaryMsRef.current = elapsed
-        const summary = model.getImpactSummary(elapsed, citiesRef.current)
-        syncCityEntities(viewer, summary)
-        syncMMILayer(viewer, model, {
-          elapsedMs: elapsed,
-          affectedCount: summary.affectedCount,
-          sRadiusM: summary.sWaveRadiusM,
-          epicenter,
-          maxPropagationKm: options.maxPropagationKm,
-        }, mmiCacheRef.current)
-        syncBuildingLayer(summary, elapsed, simStateRef.current)
+        const frame = applySimulationFrame(viewer, elapsed, 'running')
+
+        if (frame.event.type !== lastEventType) {
+          createPWaveRing(viewer, frame.event.epicenter, pRadiusRef)
+          createSWaveRing(viewer, frame.event.epicenter, sRadiusRef)
+          lastEventType = frame.event.type
+        }
+
+        if (frame.done) {
+          onSimDone?.()
+          return
+        }
+
+        const { summary, model, eventElapsed } = frame
         onImpactSummaryChange?.(summary)
         onStatsChange?.({
           elapsedMs: elapsed,
@@ -428,14 +577,14 @@ export default function EarthquakeVisualization({
           sRadiusM: summary.sWaveRadiusM,
         })
 
-        // S파 카메라 위치 도달 → 쉐이크 (1회)
-        if (!shakeFiredRef.current) {
+        // S파 카메라 도달 → 쉐이크 (본진 1회)
+        if (!shakeFiredRef.current && frame.event.type === 'main') {
           const cam = viewer.camera.positionCartographic
-          if (cam) {
+          if (cam && model) {
             const camLat = CesiumMath.toDegrees(cam.latitude)
             const camLon = CesiumMath.toDegrees(cam.longitude)
             const sArr = model.getSWaveArrivalMs(camLat, camLon)
-            if (Number.isFinite(sArr) && elapsed >= sArr) {
+            if (Number.isFinite(sArr) && eventElapsed >= sArr) {
               shakeFiredRef.current = true
               const mmi = model.getMMI(camLat, camLon)
               const params = getShakeParams(mmi)
@@ -444,11 +593,6 @@ export default function EarthquakeVisualization({
               onCameraShake?.({ mmi, mmiLabel: getMMILabel(mmi) })
             }
           }
-        }
-
-        if (model.isSimulationComplete(elapsed)) {
-          onSimDone?.()
-          return
         }
       }
 
@@ -462,6 +606,9 @@ export default function EarthquakeVisualization({
       stopRaf()
       if (!viewer.isDestroyed?.()) {
         clearMMILayer(viewer, mmiCacheRef.current)
+        clearCrackLines(viewer, crackCacheRef.current)
+        clearLiquefactionLayer(viewer, liqCacheRef.current)
+        removeAftershockEntity(viewer)
         const tileset = layerInstancesRef?.current?.osmBuildings
         if (tileset) clearBuildingEffects(tileset, buildingCacheRef.current)
       }
@@ -476,43 +623,30 @@ export default function EarthquakeVisualization({
     onSimDone,
     onStatsChange,
     onCameraShake,
+    onAftershockChange,
   ])
 
   // ── 스크러빙 ───────────────────────────────────────────────────
   useEffect(() => {
     if (seekMs == null) return
     const viewer = getViewer(viewerRef)
-    const model = modelRef.current
-    if (!viewer || !model) return
-
-    if (!viewer.entities.getById(PWAVE_RING_ID)) {
-      createPWaveRing(viewer, epicenter, pRadiusRef)
-    }
-    if (!viewer.entities.getById(SWAVE_RING_ID)) {
-      createSWaveRing(viewer, epicenter, sRadiusRef)
-    }
+    if (!viewer) return
 
     pausedElapsedRef.current = seekMs
     elapsedMsRef.current = seekMs
-    pRadiusRef.current = model.getPWaveRadius(seekMs)
-    sRadiusRef.current = model.getSWaveRadius(seekMs)
     lastSummaryMsRef.current = seekMs
 
-    const summary = model.getImpactSummary(seekMs, citiesRef.current)
-    syncCityEntities(viewer, summary)
-    syncMMILayer(viewer, model, {
-      elapsedMs: seekMs,
-      affectedCount: summary.affectedCount,
-      sRadiusM: summary.sWaveRadiusM,
-      epicenter,
-      maxPropagationKm: options.maxPropagationKm,
-    }, mmiCacheRef.current)
-    syncBuildingLayer(summary, seekMs, simStateRef.current)
-    onImpactSummaryChange?.(summary)
+    const frame = applySimulationFrame(viewer, seekMs, 'paused')
+    if (frame.done || !frame.summary) return
+
+    createPWaveRing(viewer, frame.event.epicenter, pRadiusRef)
+    createSWaveRing(viewer, frame.event.epicenter, sRadiusRef)
+
+    onImpactSummaryChange?.(frame.summary)
     onStatsChange?.({
       elapsedMs: seekMs,
-      pRadiusM: summary.pWaveRadiusM,
-      sRadiusM: summary.sWaveRadiusM,
+      pRadiusM: frame.summary.pWaveRadiusM,
+      sRadiusM: frame.summary.sWaveRadiusM,
     })
     viewer.scene.requestRender()
   // eslint-disable-next-line react-hooks/exhaustive-deps

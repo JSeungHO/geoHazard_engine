@@ -228,7 +228,7 @@ MODULE_REGISTRY = [
 
 > **재난별 지리적 위치**: 홍수 = 강남역, 쓰나미 = 동해·일본해구 프리셋, 지진 = 단층대·역사 지진 프리셋 5종 + 지도 클릭.
 
-### 지진 모듈 (`EarthquakeModule`) — Phase 1~3 ✅
+### 지진 모듈 (`EarthquakeModule`) — Phase 1~4 ✅
 
 상세: [earthquake-status.md](./earthquake-status.md)
 
@@ -236,6 +236,7 @@ MODULE_REGISTRY = [
 - [x] MMI ImageryLayer overlay (`earthquakeMMILayer.js`)
 - [x] 피해 통계 — 추정 면적·인구, 12개 도시 인구 데이터
 - [x] OSM 건물 손상색 + CustomShader 흔들림 (`earthquakeBuildingEffects.js`)
+- [x] 여진 시퀀스 (`earthquakeAftershocks.js`), 지표 균열, 액상화 overlay
 - [x] `qa-earthquake.mjs` — Playwright 브라우저 QA 스크립트
 - [ ] §13 브라우저 QA 수동 검증
 

@@ -58,6 +58,7 @@ export const DEFAULT_EARTHQUAKE_OPTIONS = {
   magnitude: 5.8,
   timeScale: 50,
   maxPropagationKm: 800,
+  aftershocksEnabled: true,
 }
 
 /** 지진 탭 기본 조망 — 진앙(경주) 중심, 한반도 전체가 보이는 고도·각도 */

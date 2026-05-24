@@ -114,7 +114,7 @@ src/physics/  TsunamiWaveModel.js
 | **Phase 1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 MMI 마커 | ✅ 완료 (2026-05-24) |
 | **Phase 2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | ✅ 완료 (2026-05-24) |
 | **Phase 3** | OSM 건물 흔들림·손상 (3D Tileset shader) | ✅ 완료 (2026-05-24) |
-| **Phase 4** (선택) | 여진 시퀀스, 지표 균열, 액상화 overlay | 장기 |
+| **Phase 4** (선택) | 여진 시퀀스, 지표 균열, 액상화 overlay | ✅ 완료 (2026-05-24) |
 
 ### 📌 다음 — 위치 시스템 확장
 
@@ -140,7 +140,7 @@ src/physics/  TsunamiWaveModel.js
 | 홍수·침수 | Primitive 수면, terrain grid, ParticleSystem | ★★☆ | **✅ 완성** |
 | 폭우 | ParticleSystem | ★☆☆ | ✅ (홍수 내 포함) |
 | 쓰나미 | 홍수 확장 + wave front | ★★★ | **⏸ 보류** (탭 숨김) |
-| 지진 | Camera shake, 3D Tiles 변형 | ★★☆ | 📌 이후 |
+| 지진 | Camera shake, 3D Tiles 변형, 여진·균열·액상화 | ★★☆ | **✅ Phase 1~4** (QA §13 대기) |
 | 산불·화산 | ParticleSystem, Polygon extrusion | ★★★ | 🔵 장기 |
 | 태풍·폭풍 해일 | 강수 + storm surge | ★★★ | 🔵 장기 |
 

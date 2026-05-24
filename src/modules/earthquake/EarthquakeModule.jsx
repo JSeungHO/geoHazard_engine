@@ -28,6 +28,11 @@ import {
 } from './constants/earthquakePresets'
 import { EARTHQUAKE_IMPACT_CITIES } from './constants/earthquakeImpactCities'
 import { EarthquakeWaveModel } from '../../physics/EarthquakeWaveModel'
+import {
+  buildAftershockPlan,
+  getTotalSimulationMs,
+  resolveSimulationEvent,
+} from './constants/earthquakeAftershocks'
 import useMapLayout from '../flood/hooks/useMapLayout'
 import './EarthquakeModule.css'
 
@@ -80,6 +85,7 @@ export default function EarthquakeModule() {
   const [seekMs, setSeekMs] = useState(null)
   const [isPickMode, setIsPickMode] = useState(false)
   const [shakeAlert, setShakeAlert] = useState(null)
+  const [activeAftershock, setActiveAftershock] = useState(null)
 
   const prevSimStateRef = useRef('idle')
   const shakeAlertTimerRef = useRef(null)
@@ -89,19 +95,31 @@ export default function EarthquakeModule() {
   const phase = useMemo(() => {
     if (simState === 'idle') return 'idle'
     if (simState === 'done') return 'done'
+    if (activeAftershock) return 'aftershock'
     if (shakeAlert) return 'shaking'
     const firstSArrival = impactSummary?.firstSArrivalMs ?? null
     const affectedCount = impactSummary?.affectedCount ?? 0
+    if (impactSummary?.liquefactionAreaKm2 > 0) return 'liquefaction'
     if (affectedCount > 0) return 'swave'
     if (firstSArrival != null && elapsedMs >= firstSArrival) return 'swave'
     return 'pwave'
-  }, [simState, elapsedMs, impactSummary, shakeAlert])
+  }, [simState, elapsedMs, impactSummary, shakeAlert, activeAftershock])
 
-  // ── totalMs ─────────────────────────────────────────────────────
-  const totalMs = useMemo(() => {
+  const mainDurationMs = useMemo(() => {
     const model = new EarthquakeWaveModel({ epicenter, ...options })
     return model.getTotalDurationMs()
   }, [epicenter, options])
+
+  const aftershockPlan = useMemo(
+    () => buildAftershockPlan(epicenter, options, mainDurationMs),
+    [epicenter, options, mainDurationMs],
+  )
+
+  // ── totalMs ─────────────────────────────────────────────────────
+  const totalMs = useMemo(
+    () => getTotalSimulationMs(mainDurationMs, aftershockPlan),
+    [mainDurationMs, aftershockPlan],
+  )
 
   // ── 카메라: 탭 진입·idle 프리셋 변경 ─────────────────────────────
   useEffect(() => {
@@ -169,6 +187,7 @@ export default function EarthquakeModule() {
     setSeekMs(null)
     setIsPickMode(false)
     setShakeAlert(null)
+    setActiveAftershock(null)
     setEpicenter(DEFAULT_EPICENTER)
     setOptions(DEFAULT_EARTHQUAKE_OPTIONS)
     setEpochKey((k) => k + 1)
@@ -213,11 +232,12 @@ export default function EarthquakeModule() {
   // MapStatusBar pill 텍스트
   const statusLabel = useMemo(() => {
     if (simState === 'idle') return '지진 대기'
+    if (activeAftershock) return `🟠 ${activeAftershock.label}`
     if (shakeAlert) return '🔴 흔들림 감지'
     if (simState === 'running') return '⚫ 지진파 전파 중'
     if (simState === 'paused') return '일시정지'
     return '전파 완료'
-  }, [simState, shakeAlert])
+  }, [simState, shakeAlert, activeAftershock])
 
   return (
     <div className="earthquake-module">
@@ -233,6 +253,8 @@ export default function EarthquakeModule() {
         totalMs={totalMs}
         isPickMode={isPickMode}
         shakeAlert={shakeAlert}
+        aftershockPlan={aftershockPlan}
+        activeAftershock={activeAftershock}
         onEpicenterChange={handleEpicenterChange}
         onOptionsChange={handleOptionsChange}
         onPickEpicenter={handlePickEpicenter}
@@ -271,6 +293,10 @@ export default function EarthquakeModule() {
                   cities={EARTHQUAKE_IMPACT_CITIES}
                   seekMs={seekMs}
                   isPickMode={isPickMode}
+                  aftershockPlan={aftershockPlan}
+                  mainDurationMs={mainDurationMs}
+                  totalSimMs={totalMs}
+                  onAftershockChange={setActiveAftershock}
                   onEpicenterChange={handleEpicenterChange}
                   onImpactSummaryChange={handleImpactSummaryChange}
                   onSimDone={handleSimDone}

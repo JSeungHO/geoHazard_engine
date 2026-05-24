@@ -122,6 +122,8 @@ function EarthquakeSimTimeline({
   firstSArrivalMs,
   maxPropagationKm,
   shakeAlert,
+  aftershockPlan = [],
+  activeAftershock,
 }) {
   const pPct = firstPArrivalMs != null && firstPArrivalMs > 0
     ? Math.min((elapsedMs / firstPArrivalMs) * 100, 100)
@@ -137,6 +139,8 @@ function EarthquakeSimTimeline({
   const isPwave = phase === 'pwave'
   const isSwave = phase === 'swave' || phase === 'shaking'
   const isDone = phase === 'done'
+  const isAftershock = phase === 'aftershock'
+  const isLiquefaction = phase === 'liquefaction' || (impactSummary?.liquefactionAreaKm2 ?? 0) > 0
   const sReached = isSwave || isDone
 
   return (
@@ -182,6 +186,28 @@ function EarthquakeSimTimeline({
         label="전파 완료"
         sub={isDone ? `최대 ${maxPropagationKm} km` : '전파 범위 확장 중'}
       />
+
+      <TimelineStep
+        status={isDone && !isAftershock ? 'done' : isLiquefaction ? 'active' : isDone ? 'done' : 'pending'}
+        label="지표 균열·액상화"
+        sub={
+          isLiquefaction
+            ? `액상화 위험 ${fmtArea(impactSummary?.liquefactionAreaKm2 ?? 0)}`
+            : 'MMI VI+ 연안·하구'
+        }
+      />
+
+      {aftershockPlan.length > 0 && (
+        <TimelineStep
+          status={isAftershock ? 'active' : isDone ? 'done' : 'pending'}
+          label="여진 시퀀스"
+          sub={
+            isAftershock && activeAftershock
+              ? `${activeAftershock.label} M ${activeAftershock.magnitude.toFixed(1)}`
+              : `${aftershockPlan.length}회 예상`
+          }
+        />
+      )}
 
       {shakeAlert && (
         <div className="earthquake-main-ui__shake-alert">
@@ -241,6 +267,12 @@ function ImpactPanel({ impactSummary, elapsedMs }) {
         </div>
       </div>
 
+      {impactSummary.liquefactionAreaKm2 > 0 && (
+        <p className="earthquake-main-ui__hint earthquake-main-ui__hint--liquefaction">
+          🟤 액상화 위험 구역 {fmtArea(impactSummary.liquefactionAreaKm2)} (연안·하구 저지대)
+        </p>
+      )}
+
       {impactSummary.strongShakeCount > 0 && (
         <p className="earthquake-main-ui__hint earthquake-main-ui__hint--impact">
           중진 이상(MMI VI+) {impactSummary.strongShakeCount}개 도시 · OSM 건물 손상색 표시
@@ -294,6 +326,8 @@ export default function EarthquakeMainUI({
   totalMs,
   isPickMode,
   shakeAlert,
+  aftershockPlan = [],
+  activeAftershock,
   onEpicenterChange,
   onOptionsChange,
   onPickEpicenter,
@@ -399,6 +433,16 @@ export default function EarthquakeMainUI({
               <span>1 km</span><span>60 km</span>
             </span>
           </label>
+
+          <label className="earthquake-main-ui__toggle">
+            <input
+              type="checkbox"
+              checked={options.aftershocksEnabled !== false}
+              disabled={controlsLocked}
+              onChange={(e) => onOptionsChange('aftershocksEnabled', e.target.checked)}
+            />
+            <span>여진 시퀀스 포함 (Phase 4)</span>
+          </label>
         </CollapsibleSection>
 
         {/* 섹션 3: 피해 범위 */}
@@ -438,6 +482,8 @@ export default function EarthquakeMainUI({
                 firstSArrivalMs={firstSArrivalMs}
                 maxPropagationKm={options.maxPropagationKm}
                 shakeAlert={shakeAlert}
+                aftershockPlan={aftershockPlan}
+                activeAftershock={activeAftershock}
               />
               <ScrubBar
                 elapsedMs={elapsedMs}

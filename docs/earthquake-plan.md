@@ -390,7 +390,9 @@ export function syncMMILayer(viewer, model, options = {}) {
 | P파 전파 | `pwave` | P파 ring 확산, 도시 미도달 |
 | S파 전파 | `swave` | 양 ring 확산, P파 도달 도시 라벨 표시 |
 | 흔들림 | `shaking` | S파 도달 도시 진도 라벨, 카메라 쉐이크 |
-| 완료 | `done` | 최대 전파 도달, 전체 피해 요약 |
+| 균열·액상화 | `liquefaction` | 본진 MMI VI+ 시 지표 균열 polyline + 액상화 ImageryLayer |
+| 여진 | `aftershock` | 본진 종료 후 순차 여진 (ring·마커 재중심, 균열/액상화 OFF) |
+| 완료 | `done` | 전체 시퀀스 종료, 피해 요약 |
 
 **ScrubBar 마커**:
 - P파 도착 시각 (각 도시)
@@ -406,7 +408,7 @@ export function syncMMILayer(viewer, model, options = {}) {
 | **1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 마커 | ★★☆ | ✅ 완료 (QA §13 대기) |
 | **2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | ★★★ | ✅ 완료 |
 | **3** | OSM 건물 흔들림·손상 (3D Tileset shader / 색상 변경) | ★★★ | ✅ 완료 |
-| **4** (선택) | 여진 시퀀스, 지표 균열 라인, 액상화 영역 overlay | ★★★ | ❌ 장기 |
+| **4** (선택) | 여진 시퀀스, 지표 균열 라인, 액상화 영역 overlay | ★★★ | ✅ 완료 (2026-05-24) |
 
 ### Phase 1 구현 체크리스트
 
@@ -453,6 +455,22 @@ export function syncMMILayer(viewer, model, options = {}) {
 [x] EarthquakeVisualization 연동 (idle/reset clear)
 [x] earthquakeBuildingEffects.test.js
 [ ] OSM 건물 ON 상태 브라우저 QA (§13)
+```
+
+### Phase 4 구현 체크리스트
+
+> 완료일: 2026-05-24
+
+```
+[x] earthquakeAftershocks.js — 여진 계획·타임라인 resolveSimulationEvent
+[x] earthquakeAftershocks.test.js
+[x] earthquakeCrackLines.js — MMI VI+ 방사형 균열 polyline
+[x] earthquakeLiquefactionLayer.js — 연안·하구 저지대 액상화 ImageryLayer
+[x] earthquakePhase4.test.js — 균열·액상화 휴리스틱
+[x] EarthquakeModule — aftershockPlan, totalMs 연장, activeAftershock 상태
+[x] EarthquakeVisualization — applySimulationFrame, syncPhase4Effects
+[x] EarthquakeMainUI — 여진 토글, 타임라인 균열·액상화·여진 단계
+[ ] 브라우저 QA — 여진 ring 전환, 균열·액상화 표시 (§13)
 ```
 
 ---
