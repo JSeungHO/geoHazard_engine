@@ -100,8 +100,9 @@ export async function refineTerrainHeightGrid(viewer, bounds, resolution) {
 export async function refineTerrainWithBuildings(viewer, bounds, resolution) {
   if (!viewer || viewer.isDestroyed?.()) return null
 
-  const sampleHeight = viewer.scene?.sampleHeightMostDetailed
-  if (typeof sampleHeight !== 'function') {
+  const scene = viewer.scene
+  const sampleHeight = scene?.sampleHeightMostDetailed
+  if (typeof sampleHeight !== 'function' || !scene?.sampleHeightSupported) {
     return refineTerrainHeightGrid(viewer, bounds, resolution)
   }
 
@@ -116,7 +117,11 @@ export async function refineTerrainWithBuildings(viewer, bounds, resolution) {
   }
 
   try {
-    const sampled = await sampleHeight.call(viewer.scene, cartographics, [])
+    const sampled = await sampleHeight.call(scene, cartographics, [])
+    if (!Array.isArray(sampled) || sampled.length !== cartographics.length) {
+      return refineTerrainHeightGrid(viewer, bounds, resolution)
+    }
+
     const heights = new Float32Array(resolution * resolution)
 
     for (let i = 0; i < sampled.length; i++) {

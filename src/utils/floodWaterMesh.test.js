@@ -25,4 +25,13 @@ describe('buildFloodBodyGeometry', () => {
     expect(geometry).not.toBeNull()
     expect(geometry.indices.length).toBeGreaterThan(0)
   })
+
+  it('handles fully flooded 28x28 body grid (집중호우 수위)', () => {
+    const bounds = getLocationDefaultFloodBounds()
+    const terrainGrid = makeTerrainGrid(28, 10)
+
+    const geometry = buildFloodBodyGeometry(bounds, terrainGrid, 3.5)
+    expect(geometry).not.toBeNull()
+    expect(geometry.indices.length).toBeGreaterThan(0)
+  })
 })

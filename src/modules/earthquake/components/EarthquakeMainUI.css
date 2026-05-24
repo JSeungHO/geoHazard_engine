@@ -1,0 +1,505 @@
+/* ══════════════════════════════════════════
+   EarthquakeMainUI — 사이드바 레이아웃
+   지진 컬러: 주황·적색 계열
+══════════════════════════════════════════ */
+
+.earthquake-main-ui {
+  position: relative;
+  z-index: 1000;
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── 헤더 ── */
+
+.earthquake-main-ui__header {
+  flex-shrink: 0;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(
+    180deg,
+    rgba(180, 60, 20, 0.15) 0%,
+    transparent 100%
+  );
+}
+
+.earthquake-main-ui__header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.earthquake-main-ui__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.earthquake-main-ui__subtitle {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.earthquake-main-ui__reset {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.earthquake-main-ui__reset:hover {
+  color: var(--color-text);
+  border-color: #c0400a;
+  background: rgba(180, 60, 20, 0.08);
+}
+
+/* ── 콘텐츠 ── */
+
+.earthquake-main-ui__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+/* ── 프리셋 그리드 (2×3) ── */
+
+.earthquake-main-ui__preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.earthquake-main-ui__preset {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.earthquake-main-ui__preset:hover:not(:disabled) {
+  border-color: #c0400a;
+  color: var(--color-text);
+  background: rgba(180, 60, 20, 0.08);
+}
+.earthquake-main-ui__preset--active {
+  border-color: #c0400a;
+  background: rgba(180, 60, 20, 0.16);
+  color: #f97316;
+}
+.earthquake-main-ui__preset:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── 좌표·속성 표시 ── */
+
+.earthquake-main-ui__coords,
+.earthquake-main-ui__attrs {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ── 지도 선택 버튼 ── */
+
+.earthquake-main-ui__pick {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px dashed #c0400a;
+  border-radius: 8px;
+  background: rgba(180, 60, 20, 0.06);
+  color: #f97316;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.earthquake-main-ui__pick:hover:not(:disabled) {
+  background: rgba(180, 60, 20, 0.12);
+}
+.earthquake-main-ui__pick--active {
+  border-style: solid;
+  background: rgba(180, 60, 20, 0.18);
+  color: #fff;
+}
+.earthquake-main-ui__pick:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── 슬라이더 필드 ── */
+
+.earthquake-main-ui__field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.earthquake-main-ui__field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.earthquake-main-ui__field-label strong {
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.earthquake-main-ui__field input[type='range'] {
+  width: 100%;
+  accent-color: #c0400a;
+}
+
+.earthquake-main-ui__range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.earthquake-main-ui__hint {
+  margin: 4px 0 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* ── 4칸 통계 그리드 ── */
+
+.earthquake-main-ui__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.earthquake-main-ui__stat {
+  padding: 10px;
+  border: 1px solid rgba(180, 60, 20, 0.25);
+  border-radius: 8px;
+  background: rgba(50, 15, 5, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.earthquake-main-ui__stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f97316;
+  font-variant-numeric: tabular-nums;
+}
+
+.earthquake-main-ui__stat-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── 도시 리스트 ── */
+
+.earthquake-main-ui__city-list {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.earthquake-main-ui__city-list--pending {
+  opacity: 0.65;
+}
+
+.earthquake-main-ui__city-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto auto;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(180, 60, 20, 0.12);
+  font-size: 12px;
+}
+
+.earthquake-main-ui__city-emoji {
+  font-size: 13px;
+}
+
+.earthquake-main-ui__city-name {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.earthquake-main-ui__city-mmi {
+  color: #f97316;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+.earthquake-main-ui__city-time {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  min-width: 80px;
+  text-align: right;
+}
+
+.earthquake-main-ui__city-eta {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  grid-column: 3 / 5;
+}
+
+/* ── 액션 버튼 ── */
+
+.earthquake-main-ui__actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.earthquake-main-ui__action {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.earthquake-main-ui__action:hover:not(:disabled) {
+  border-color: #c0400a;
+  background: rgba(180, 60, 20, 0.08);
+}
+.earthquake-main-ui__action--primary {
+  border-color: #c0400a;
+  background: #c0400a;
+  color: #fff;
+}
+.earthquake-main-ui__action--primary:hover:not(:disabled) {
+  background: #d44a10;
+  border-color: #d44a10;
+}
+.earthquake-main-ui__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── 쉐이크 알림 ── */
+
+@keyframes eq-shake-alert-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.earthquake-main-ui__shake-alert {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  font-size: 12px;
+  font-weight: 600;
+  animation: eq-shake-alert-in 0.2s ease;
+}
+
+/* ══════════════════════════════════════════
+   EarthquakeSimTimeline
+══════════════════════════════════════════ */
+
+.eq-tl {
+  margin-top: 0;
+  padding: 14px 12px;
+  border: 1px solid rgba(180, 60, 20, 0.3);
+  border-radius: 10px;
+  background: rgba(50, 15, 5, 0.2);
+}
+
+.eq-tl__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+  gap: 6px;
+}
+
+.eq-tl__clock {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #f97316;
+  letter-spacing: 0.03em;
+}
+
+.eq-tl__radius {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-tl__radius--s {
+  color: #f97316;
+}
+
+/* ── 단계 항목 ── */
+
+.eq-tl__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.eq-tl__step:last-child {
+  padding-bottom: 0;
+}
+
+.eq-tl__dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 3px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.eq-tl__step--done .eq-tl__dot {
+  border-color: #c0400a;
+  background: #c0400a;
+  box-shadow: 0 0 6px 1px rgba(192, 64, 10, 0.5);
+}
+
+.eq-tl__step--active .eq-tl__dot {
+  border-color: #f97316;
+  background: transparent;
+  box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.45);
+  animation: eq-dot-pulse 1s ease-in-out infinite;
+}
+
+@keyframes eq-dot-pulse {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(249, 115, 22, 0.35); }
+  50%       { box-shadow: 0 0 12px 3px rgba(249, 115, 22, 0.7); }
+}
+
+.eq-tl__step--pending .eq-tl__dot {
+  border-color: var(--color-border);
+  background: transparent;
+}
+
+.eq-tl__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.eq-tl__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.eq-tl__step--pending .eq-tl__label {
+  color: var(--color-text-muted);
+}
+
+.eq-tl__sub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ── 진행 바 ── */
+
+.eq-tl__bar-track {
+  margin-top: 5px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.eq-tl__bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  transition: width 0.3s ease;
+}
+
+.eq-tl__bar-fill--pwave {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.eq-tl__bar-fill--swave {
+  background: #f97316;
+}
+
+/* ══════════════════════════════════════════
+   ScrubBar — P파·S파 마커 색상 오버라이드
+══════════════════════════════════════════ */
+
+.scrub-bar__marker--pwave {
+  background: rgba(255, 255, 255, 0.8);
+}
+.scrub-bar__marker--pwave::after {
+  border-top-color: rgba(255, 255, 255, 0.8);
+}
+
+.scrub-bar__marker--swave {
+  background: #f97316;
+}
+.scrub-bar__marker--swave::after {
+  border-top-color: #f97316;
+}
+
+.scrub-bar__label--pwave {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+}
+
+.scrub-bar__label--swave {
+  color: #f97316;
+  font-size: 10px;
+  font-weight: 600;
+}

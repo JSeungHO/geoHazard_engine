@@ -363,6 +363,7 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
   const heightAt = (i, j) => getTerrainHeightAtCell(bodyGrid, bodyRes, i, j, Infinity)
 
   const pushVertex = (lon, lat, height) => {
+    if (vertCursor >= MAX_BODY_VERTS) return -1
     const c = cartesianFromLonLatHeight(lon, lat, height, vertexScratch)
     const pi = vertCursor * 3
     _bodyPositions[pi] = c.x
@@ -372,6 +373,7 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
   }
 
   const pushTriangle = (a, b, c) => {
+    if (a < 0 || b < 0 || c < 0 || idxCursor + 3 > _bodyIndices.length) return
     idxCursor = writeBodyTriangle(_bodyIndices, idxCursor, a, b, c)
   }
 
@@ -395,6 +397,7 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
       const hUR = heightAt(i + 1, j + 1)
 
       if (Math.min(hLL, hLR, hUL, hUR) >= waterSurfaceHeight) continue
+      if (vertCursor + 8 > MAX_BODY_VERTS || idxCursor + 30 > _bodyIndices.length) break
 
       const bLL = pushVertex(ll.lon, ll.lat, hLL)
       const bLR = pushVertex(lr.lon, lr.lat, hLR)
@@ -446,7 +449,11 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
     boundingSphere: BoundingSphere.fromVertices(positionArray),
   })
 
-  return GeometryPipeline.computeNormal(geometry)
+  try {
+    return GeometryPipeline.computeNormal(geometry)
+  } catch {
+    return null
+  }
 }
 
 export function createFloodBodyPrimitive(floodDepth, material, bounds, terrainGrid, options = {}) {

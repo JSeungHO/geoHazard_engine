@@ -409,18 +409,24 @@ export function syncMMILayer(viewer, model, options = {}) {
 
 ### Phase 1 구현 체크리스트
 
+> 완료일: 2026-05-24
+
 ```
-[ ] EarthquakeWaveModel.js — P/S파 반경·도달·MMI 순수 함수
-[ ] EarthquakeWaveModel.test.js — 단위 테스트 (최소 8개)
-[ ] earthquakePresets.js — 5개 프리셋 + DEFAULT_OPTIONS
-[ ] earthquakeImpactCities.js — 12개 주요 도시
-[ ] EarthquakeModule.jsx — 상태·카메라·simState
-[ ] EarthquakeVisualization.jsx — P파·S파 ring + 도시 마커
-[ ] EarthquakeMainUI.jsx — 사이드바 UI
-[ ] cameraShake.js — postUpdate 기반 쉐이크
-[ ] registry.js earthquake available: true 변경
+[x] EarthquakeWaveModel.js — P/S파 반경·도달·MMI 순수 함수
+[x] EarthquakeWaveModel.test.js — 단위 테스트 35개 (전체 통과)
+[x] earthquakePresets.js — 5개 프리셋 + DEFAULT_OPTIONS
+[x] earthquakeImpactCities.js — 12개 주요 도시
+[x] EarthquakeModule.jsx — 상태·카메라·simState
+[x] EarthquakeVisualization.jsx — P파·S파 ring + 도시 마커 + 쉐이크
+[x] EarthquakeMainUI.jsx + .css — 사이드바 UI
+[x] cameraShake.js — postUpdate 기반 쉐이크
+[x] registry.js earthquake available: true 변경
 [ ] 브라우저 QA (아래 §13)
 ```
+
+**GMPE 보정 (2026-05-24)**: 스펙 원안 C5=3.23, C6=1.51이 한반도 거리 스케일(50~300km)에서
+전부 MMI=1로 수렴하는 문제 발견 → USGS ShakeMap Worden et al. 2012 기반으로 C5=7.58, C6=0.955 적용.
+검증: 경주(M5.8) 기준 부산(~67km)→MMI 4, 포항(M5.4) 시내(~5km)→MMI 7.
 
 ---
 

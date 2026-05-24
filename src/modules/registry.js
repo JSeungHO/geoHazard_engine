@@ -1,4 +1,5 @@
 import FloodModule from './flood/FloodModule'
+import EarthquakeModule from './earthquake/EarthquakeModule'
 
 /** @typedef {{ id: string, label: string, component: React.ComponentType | null, available: boolean, description?: string }} ModuleDef */
 
@@ -14,9 +15,9 @@ export const MODULE_REGISTRY = [
   {
     id: 'earthquake',
     label: '지진',
-    description: '준비 중',
-    component: null,
-    available: false,
+    description: '지진파 전파·진도 분포',
+    component: EarthquakeModule,
+    available: true,
   },
 ]
 
