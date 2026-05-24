@@ -96,16 +96,10 @@ export async function refineTerrainHeightGrid(viewer, bounds, resolution) {
   }
 }
 
-/** 정밀화 단계 — terrain + 3D Tiles(건물) 포함 높이 샘플 */
-export async function refineTerrainWithBuildings(viewer, bounds, resolution) {
-  if (!viewer || viewer.isDestroyed?.()) return null
+const BUILDING_SAMPLE_RES = 16
+const SAMPLE_HEIGHT_TIMEOUT_MS = 5000
 
-  const scene = viewer.scene
-  const sampleHeight = scene?.sampleHeightMostDetailed
-  if (typeof sampleHeight !== 'function' || !scene?.sampleHeightSupported) {
-    return refineTerrainHeightGrid(viewer, bounds, resolution)
-  }
-
+const buildCartographics = (bounds, resolution) => {
   const cartographics = []
   for (let j = 0; j < resolution; j++) {
     for (let i = 0; i < resolution; i++) {
@@ -115,28 +109,54 @@ export async function refineTerrainWithBuildings(viewer, bounds, resolution) {
       cartographics.push(Cartographic.fromDegrees(lon, lat))
     }
   }
+  return cartographics
+}
+
+const cartographicsToGrid = (sampled, resolution) => {
+  const heights = new Float32Array(resolution * resolution)
+  for (let i = 0; i < sampled.length; i++) {
+    const h = sampled[i]?.height
+    heights[i] = Number.isFinite(h) ? h : NaN
+  }
+  const stats = gridStats(heights)
+  if (stats.validCount === 0) return null
+  return { heights, resolution, ...stats }
+}
+
+const sampleBuildingHeights = async (scene, cartographics) => {
+  const sampleHeight = scene?.sampleHeightMostDetailed
+  if (typeof sampleHeight !== 'function' || !scene?.sampleHeightSupported) return null
+
+  const timeout = new Promise((_, reject) => {
+    window.setTimeout(() => reject(new Error('sampleHeightMostDetailed timeout')), SAMPLE_HEIGHT_TIMEOUT_MS)
+  })
+
+  const sampled = await Promise.race([
+    sampleHeight.call(scene, cartographics, []),
+    timeout,
+  ])
+
+  if (!Array.isArray(sampled) || sampled.length !== cartographics.length) return null
+  return sampled
+}
+
+/** 정밀화 단계 — terrain + 3D Tiles(건물) 포함 높이 샘플 (저해상도 + 타임아웃) */
+export async function refineTerrainWithBuildings(viewer, bounds, resolution) {
+  if (!viewer || viewer.isDestroyed?.()) return null
+
+  const scene = viewer.scene
+  const sampleRes = Math.min(resolution, BUILDING_SAMPLE_RES)
 
   try {
-    const sampled = await sampleHeight.call(scene, cartographics, [])
-    if (!Array.isArray(sampled) || sampled.length !== cartographics.length) {
-      return refineTerrainHeightGrid(viewer, bounds, resolution)
-    }
+    const sampled = await sampleBuildingHeights(scene, buildCartographics(bounds, sampleRes))
+    if (!sampled) return refineTerrainHeightGrid(viewer, bounds, resolution)
 
-    const heights = new Float32Array(resolution * resolution)
+    const lowResGrid = cartographicsToGrid(sampled, sampleRes)
+    if (!lowResGrid) return refineTerrainHeightGrid(viewer, bounds, resolution)
 
-    for (let i = 0; i < sampled.length; i++) {
-      const h = sampled[i]?.height
-      heights[i] = Number.isFinite(h) ? h : NaN
-    }
-
-    const stats = gridStats(heights)
-    if (stats.validCount === 0) return null
-
-    return {
-      heights,
-      resolution,
-      ...stats,
-    }
+    return sampleRes === resolution
+      ? lowResGrid
+      : upsampleTerrainGrid(lowResGrid, resolution)
   } catch {
     return refineTerrainHeightGrid(viewer, bounds, resolution)
   }

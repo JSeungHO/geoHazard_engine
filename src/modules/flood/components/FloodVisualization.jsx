@@ -9,7 +9,7 @@ import {
 import { createFloodSurfaceMaterial } from '../../../utils/floodWaterMaterial'
 import { boundsChanged, addViewFloodBoundsListener, getViewFloodBounds } from '../../../utils/floodViewBounds'
 import {
-  refineTerrainWithBuildings,
+  refineTerrainHeightGrid,
   sampleTerrainHeightGrid,
   sampleTerrainHeightGridAsync,
   terrainGridChanged,
@@ -197,7 +197,7 @@ const requestFullTerrainSample = (viewer, simRef, sim, waterLevelRef, terrainLoa
       viewer.scene.requestRender()
     })
     .finally(() => {
-      if (sim.terrainSampleToken === token) terrainLoad?.end()
+      terrainLoad?.end()
     })
 }
 
@@ -208,11 +208,14 @@ const resetWaveEngine = (sim, level) => {
 }
 
 const requestTerrainRefine = (viewer, simRef, sim, waterLevelRef, terrainLoad) => {
+  if (sim.terrainRefineInFlight) return
+
   const token = (sim.terrainRefineToken ?? 0) + 1
   sim.terrainRefineToken = token
+  sim.terrainRefineInFlight = true
   terrainLoad?.begin()
 
-  refineTerrainWithBuildings(viewer, sim.bounds, WAVE_RESOLUTION)
+  refineTerrainHeightGrid(viewer, sim.bounds, WAVE_RESOLUTION)
     .then((refined) => {
       if (!refined || sim.terrainRefineToken !== token) return
       if (viewer.isDestroyed?.() || simRef.current !== sim) return
@@ -228,7 +231,8 @@ const requestTerrainRefine = (viewer, simRef, sim, waterLevelRef, terrainLoad) =
       viewer.scene.requestRender()
     })
     .finally(() => {
-      if (sim.terrainRefineToken === token) terrainLoad?.end()
+      sim.terrainRefineInFlight = false
+      terrainLoad?.end()
     })
 }
 
@@ -273,6 +277,7 @@ const startSimulation = (
     surfaceCache: null,
     terrainRefineToken: 0,
     terrainSampleToken: 0,
+    terrainRefineInFlight: false,
     baseLevel: initialLevel,
     lastBodyLevel: initialLevel,
     lastBodyRebuildMs: performance.now(),
