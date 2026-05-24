@@ -77,8 +77,13 @@ export class WaterWaveEngine {
     const r = Math.max(1, radiusNorm * res)
     const r2 = r * r
 
-    for (let y = 0; y < res; y++) {
-      for (let x = 0; x < res; x++) {
+    const xMin = Math.max(0, Math.floor(cx - r))
+    const xMax = Math.min(res - 1, Math.ceil(cx + r))
+    const yMin = Math.max(0, Math.floor(cy - r))
+    const yMax = Math.min(res - 1, Math.ceil(cy + r))
+
+    for (let y = yMin; y <= yMax; y++) {
+      for (let x = xMin; x <= xMax; x++) {
         const dx = x - cx
         const dy = y - cy
         const d2 = dx * dx + dy * dy

@@ -19,18 +19,87 @@ export { FLOOD_HALF_SIZE_DEG } from './floodViewBounds'
 
 /** @typedef {import('./floodViewBounds').FloodBounds} FloodBounds */
 /** @typedef {import('./terrainHeight').TerrainHeightGrid} TerrainHeightGrid */
+/**
+ * UV(0~1) 기준 마스크 — 타원 또는 바다→육지 surge.
+ * @typedef {{ centerU?: number, centerV?: number, radiusU?: number, radiusV?: number, feather?: number }} FloodEllipseMask
+ * @typedef {{ type: 'surge', seaU: number, seaV: number, inlandU: number, inlandV: number, progress: number, crossRadius?: number, feather?: number }} FloodSurgeMask
+ */
 
 const pushTriangle = (indices, a, b, c) => {
   indices.push(a, b, c)
 }
 
+const surgeMaskWeight = (u, v, mask) => {
+  const axisU = mask.inlandU - mask.seaU
+  const axisV = mask.inlandV - mask.seaV
+  const axisLen = Math.hypot(axisU, axisV) || 1
+  const axisNormU = axisU / axisLen
+  const axisNormV = axisV / axisLen
+
+  const relU = u - mask.seaU
+  const relV = v - mask.seaV
+  const along = relU * axisNormU + relV * axisNormV
+  const perp = Math.abs(relU * (-axisNormV) + relV * axisNormU)
+
+  const front = axisLen * (mask.progress ?? 1)
+  const crossR = mask.crossRadius ?? 0.4
+  const feather = mask.feather ?? 0.06
+
+  if (perp > crossR + feather * 0.5 || along < -feather) return 0
+  if (along > front + feather) return 0
+
+  let weight = 1
+  if (along > front - feather) weight = Math.min(weight, (front + feather - along) / (2 * feather))
+  if (along < feather) weight = Math.min(weight, (along + feather) / (2 * feather))
+  if (perp > crossR - feather) weight = Math.min(weight, (crossR + feather - perp) / (2 * feather))
+
+  return Math.max(0, weight)
+}
+
+/** @param {number} u @param {number} v @param {FloodEllipseMask | FloodSurgeMask | null | undefined} mask */
+export function floodMaskWeight(u, v, mask) {
+  if (!mask) return 1
+  if (mask.type === 'surge') return surgeMaskWeight(u, v, mask)
+
+  const centerU = mask.centerU ?? 0.5
+  const centerV = mask.centerV ?? 0.5
+  const radiusU = mask.radiusU ?? 0.5
+  const radiusV = mask.radiusV ?? 0.5
+  const du = (u - centerU) / radiusU
+  const dv = (v - centerV) / radiusV
+  const dist = Math.sqrt(du * du + dv * dv)
+  const feather = mask.feather ?? 0.06
+
+  if (dist <= 1 - feather) return 1
+  if (dist >= 1 + feather) return 0
+  return (1 + feather - dist) / (2 * feather)
+}
+
+/** @param {FloodEllipseMask | null | undefined} mask */
+const cellTouchesFloodMask = (u0, u1, v0, v1, mask) => {
+  if (!mask) return true
+  if (floodMaskWeight((u0 + u1) / 2, (v0 + v1) / 2, mask) > 0) return true
+  return (
+    floodMaskWeight(u0, v0, mask) > 0
+    || floodMaskWeight(u1, v0, mask) > 0
+    || floodMaskWeight(u0, v1, mask) > 0
+    || floodMaskWeight(u1, v1, mask) > 0
+  )
+}
+
 const cartesianFromLonLatHeight = (lon, lat, height, target) =>
   Cartesian3.fromDegrees(lon, lat, height, undefined, target)
 
-const buildFloodedSurfaceIndices = (res, terrainGrid, waterSurfaceHeight) => {
+const buildFloodedSurfaceIndices = (res, terrainGrid, waterSurfaceHeight, floodMask = null) => {
   const indices = []
   for (let j = 0; j < res - 1; j++) {
     for (let i = 0; i < res - 1; i++) {
+      const u0 = i / (res - 1)
+      const u1 = (i + 1) / (res - 1)
+      const v0 = j / (res - 1)
+      const v1 = (j + 1) / (res - 1)
+      if (!cellTouchesFloodMask(u0, u1, v0, v1, floodMask)) continue
+
       const hLL = getTerrainHeightAtCell(terrainGrid, res, i, j, Infinity)
       const hLR = getTerrainHeightAtCell(terrainGrid, res, i + 1, j, Infinity)
       const hUL = getTerrainHeightAtCell(terrainGrid, res, i, j + 1, Infinity)
@@ -48,7 +117,8 @@ const buildFloodedSurfaceIndices = (res, terrainGrid, waterSurfaceHeight) => {
 }
 
 /** 저지대 기준 수면 캐시 — 수면은 평면, 파동은 법선 방향 오프셋 */
-export function createWaterSurfaceCache(bounds, terrainGrid, floodDepthMeters, resolution) {
+export function createWaterSurfaceCache(bounds, terrainGrid, floodDepthMeters, resolution, options = {}) {
+  const { floodMask = null } = options
   const res = resolution
   const waterSurfaceHeight = getFloodWaterSurfaceHeight(terrainGrid, floodDepthMeters)
   const vertexCount = res * res
@@ -80,7 +150,7 @@ export function createWaterSurfaceCache(bounds, terrainGrid, floodDepthMeters, r
     }
   }
 
-  const indices = buildFloodedSurfaceIndices(res, terrainGrid, waterSurfaceHeight)
+  const indices = buildFloodedSurfaceIndices(res, terrainGrid, waterSurfaceHeight, floodMask)
 
   return {
     res,
@@ -139,7 +209,7 @@ export function buildWaterSurfaceGeometryFromCache(cache, waveEngine, positionBu
 }
 
 /** 물리 시뮬레이션 결과로 수면 Geometry (저지대 기준 평면 수면 + 파동) */
-export function buildWaterSurfaceGeometry(waveEngine, floodDepthMeters, bounds, terrainGrid) {
+export function buildWaterSurfaceGeometry(waveEngine, floodDepthMeters, bounds, terrainGrid, floodMask = null) {
   const res = waveEngine.resolution
   const waterSurfaceHeight = getFloodWaterSurfaceHeight(terrainGrid, floodDepthMeters)
   const vertexCount = res * res
@@ -166,7 +236,7 @@ export function buildWaterSurfaceGeometry(waveEngine, floodDepthMeters, bounds, 
     }
   }
 
-  const indices = buildFloodedSurfaceIndices(res, terrainGrid, waterSurfaceHeight)
+  const indices = buildFloodedSurfaceIndices(res, terrainGrid, waterSurfaceHeight, floodMask)
   if (indices.length === 0) return null
 
   let geometry = new Geometry({
@@ -260,10 +330,22 @@ export function downsampleTerrainGrid(fullGrid, targetRes) {
 }
 
 const BODY_GRID_RES = 28
+const MAX_BODY_CELLS = BODY_GRID_RES * BODY_GRID_RES
+const MAX_BODY_VERTS = MAX_BODY_CELLS * 8
+const MAX_BODY_TRIS = MAX_BODY_CELLS * 10
+const _bodyPositions = new Float64Array(MAX_BODY_VERTS * 3)
+const _bodyIndices = new Uint32Array(MAX_BODY_TRIS * 3)
+
+const writeBodyTriangle = (indices, cursor, a, b, c) => {
+  indices[cursor] = a
+  indices[cursor + 1] = b
+  indices[cursor + 2] = c
+  return cursor + 3
+}
 
 /** 지형 그리드 기준 침수 수체 (저지대→수면 높이, 침수 구역만) */
 export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options = {}) {
-  const { omitTopCap = false } = options
+  const { omitTopCap = false, floodMask = null } = options
   if (!terrainGrid?.heights || floodDepth <= 0) return null
 
   const waterSurfaceHeight = getFloodWaterSurfaceHeight(terrainGrid, floodDepth)
@@ -274,16 +356,23 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
       : downsampleTerrainGrid(terrainGrid, BODY_GRID_RES)
 
   const bodyRes = bodyGrid.resolution
-  const positions = []
-  const indices = []
+  let vertCursor = 0
+  let idxCursor = 0
   const vertexScratch = new Cartesian3()
 
   const heightAt = (i, j) => getTerrainHeightAtCell(bodyGrid, bodyRes, i, j, Infinity)
 
   const pushVertex = (lon, lat, height) => {
     const c = cartesianFromLonLatHeight(lon, lat, height, vertexScratch)
-    positions.push(c.x, c.y, c.z)
-    return positions.length / 3 - 1
+    const pi = vertCursor * 3
+    _bodyPositions[pi] = c.x
+    _bodyPositions[pi + 1] = c.y
+    _bodyPositions[pi + 2] = c.z
+    return vertCursor++
+  }
+
+  const pushTriangle = (a, b, c) => {
+    idxCursor = writeBodyTriangle(_bodyIndices, idxCursor, a, b, c)
   }
 
   for (let j = 0; j < bodyRes - 1; j++) {
@@ -292,6 +381,8 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
       const u1 = (i + 1) / (bodyRes - 1)
       const v0 = j / (bodyRes - 1)
       const v1 = (j + 1) / (bodyRes - 1)
+
+      if (!cellTouchesFloodMask(u0, u1, v0, v1, floodMask)) continue
 
       const ll = lonLatFromUV(bounds, u0, v0)
       const lr = lonLatFromUV(bounds, u1, v0)
@@ -315,31 +406,32 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
       const tUL = pushVertex(ul.lon, ul.lat, waterSurfaceHeight)
       const tUR = pushVertex(ur.lon, ur.lat, waterSurfaceHeight)
 
-      pushTriangle(indices, bLL, bLR, bUL)
-      pushTriangle(indices, bLR, bUR, bUL)
+      pushTriangle(bLL, bLR, bUL)
+      pushTriangle(bLR, bUR, bUL)
 
       if (!omitTopCap) {
-        pushTriangle(indices, tLL, tUL, tLR)
-        pushTriangle(indices, tLR, tUL, tUR)
+        pushTriangle(tLL, tUL, tLR)
+        pushTriangle(tLR, tUL, tUR)
       }
 
-      pushTriangle(indices, bLL, tLL, bLR)
-      pushTriangle(indices, bLR, tLL, tLR)
+      pushTriangle(bLL, tLL, bLR)
+      pushTriangle(bLR, tLL, tLR)
 
-      pushTriangle(indices, bLR, tLR, bUR)
-      pushTriangle(indices, bUR, tLR, tUR)
+      pushTriangle(bLR, tLR, bUR)
+      pushTriangle(bUR, tLR, tUR)
 
-      pushTriangle(indices, bUL, bUR, tUL)
-      pushTriangle(indices, bUR, tUR, tUL)
+      pushTriangle(bUL, bUR, tUL)
+      pushTriangle(bUR, tUR, tUL)
 
-      pushTriangle(indices, bLL, bUL, tLL)
-      pushTriangle(indices, bUL, tUL, tLL)
+      pushTriangle(bLL, bUL, tLL)
+      pushTriangle(bUL, tUL, tLL)
     }
   }
 
-  if (indices.length === 0) return null
+  if (idxCursor === 0) return null
 
-  const positionArray = new Float64Array(positions)
+  const positionArray = _bodyPositions.subarray(0, vertCursor * 3).slice()
+  const indexArray = _bodyIndices.subarray(0, idxCursor).slice()
 
   let geometry = new Geometry({
     attributes: {
@@ -349,7 +441,7 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
         values: positionArray,
       }),
     },
-    indices: new Uint32Array(indices),
+    indices: indexArray,
     primitiveType: PrimitiveType.TRIANGLES,
     boundingSphere: BoundingSphere.fromVertices(positionArray),
   })
@@ -358,8 +450,8 @@ export function buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, options 
 }
 
 export function createFloodBodyPrimitive(floodDepth, material, bounds, terrainGrid, options = {}) {
-  const { omitTopCap = true } = options
-  const geometry = buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, { omitTopCap })
+  const { omitTopCap = true, floodMask = null } = options
+  const geometry = buildFloodBodyGeometry(bounds, terrainGrid, floodDepth, { omitTopCap, floodMask })
   if (!geometry) return null
 
   return new Primitive({

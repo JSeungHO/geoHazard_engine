@@ -24,7 +24,7 @@ const getViewer = (viewerRef) => {
   return viewer
 }
 
-export default function MapStatusBar({ viewerRef, isActive = false, waterLevel = 0 }) {
+export default function MapStatusBar({ viewerRef, isActive = false, waterLevel = 0, levelLabel = '침수' }) {
   const [mouseLat, setMouseLat] = useState(null)
   const [mouseLon, setMouseLon] = useState(null)
   const [elevation, setElevation] = useState(null)
@@ -104,7 +104,7 @@ export default function MapStatusBar({ viewerRef, isActive = false, waterLevel =
       </div>
       {waterLevel > 0 && (
         <div className="map-status-bar__item map-status-bar__item--flood">
-          <span className="map-status-bar__label">침수</span>
+          <span className="map-status-bar__label">{levelLabel}</span>
           <span className="map-status-bar__value map-status-bar__value--danger">
             💧 {Number(waterLevel).toFixed(2)} m
           </span>

@@ -10,6 +10,7 @@
 | **기획·테스트 평가** (버그, UX, 로드맵 재검토) | [docs/evaluation.md](./docs/evaluation.md) |
 | **UX 구현 결과** | [docs/ux-implementation.md](./docs/ux-implementation.md) |
 | **성능 2차 기획** (P-1~P-5) | [docs/perf-phase2.md](./docs/perf-phase2.md) |
+| **쓰나미 Phase 1** | [docs/tsunami-phase1.md](./docs/tsunami-phase1.md) |
 | **프로젝트 README** (빠른 시작) | [README.md](./README.md) |
 
 전체 목차: [docs/README.md](./docs/README.md)

@@ -96,6 +96,47 @@ export async function refineTerrainHeightGrid(viewer, bounds, resolution) {
   }
 }
 
+/** 정밀화 단계 — terrain + 3D Tiles(건물) 포함 높이 샘플 */
+export async function refineTerrainWithBuildings(viewer, bounds, resolution) {
+  if (!viewer || viewer.isDestroyed?.()) return null
+
+  const sampleHeight = viewer.scene?.sampleHeightMostDetailed
+  if (typeof sampleHeight !== 'function') {
+    return refineTerrainHeightGrid(viewer, bounds, resolution)
+  }
+
+  const cartographics = []
+  for (let j = 0; j < resolution; j++) {
+    for (let i = 0; i < resolution; i++) {
+      const u = i / (resolution - 1)
+      const v = j / (resolution - 1)
+      const { lon, lat } = lonLatFromUV(bounds, u, v)
+      cartographics.push(Cartographic.fromDegrees(lon, lat))
+    }
+  }
+
+  try {
+    const sampled = await sampleHeight.call(viewer.scene, cartographics, [])
+    const heights = new Float32Array(resolution * resolution)
+
+    for (let i = 0; i < sampled.length; i++) {
+      const h = sampled[i]?.height
+      heights[i] = Number.isFinite(h) ? h : NaN
+    }
+
+    const stats = gridStats(heights)
+    if (stats.validCount === 0) return null
+
+    return {
+      heights,
+      resolution,
+      ...stats,
+    }
+  } catch {
+    return refineTerrainHeightGrid(viewer, bounds, resolution)
+  }
+}
+
 /** @param {TerrainHeightGrid | null | undefined} grid */
 export function getTerrainHeightAtCell(grid, resolution, i, j, fallback = 0) {
   if (!grid?.heights || grid.resolution !== resolution) return fallback

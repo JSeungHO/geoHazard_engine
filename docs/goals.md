@@ -7,9 +7,12 @@
 
 ## 프로젝트 목표
 
-- 현실적인 재난(홍수·쓰나미·지진) 시뮬레이션 **교육·체험 플랫폼** 구축
-- 강남역 기준 좌표 **(37.4975, 127.0267)** 지형 데이터 활용
-- 사용자가 강수량·수위 등 환경 변수를 조절하며 재난 상황을 인터랙티브하게 체험
+- **홍수·쓰나미·지진** 등 복합 재난 시뮬레이션 **교육·체험 플랫폼** 구축
+- 재난 유형마다 **적합한 위치**에서 시뮬레이션: 홍수·침수는 강남역, 쓰나미·지진은 동해·연안 지역 등
+- 사용자가 재난 진원·강도·발생 위치를 직접 조절하며 인터랙티브하게 체험
+- `locations/` 확장으로 **강남역 외 위치** 지원 — 위치는 재난 모듈 성격에 맞게 분리
+
+> **방향 전환 (2026-05-24)**: 초기에는 강남역 중심이었으나, 강남역은 *홍수에 취약한 한 장소*로 자리매김. 쓰나미·지진은 별도 지리적 위치(동해안, 단층대 등)에서 발생하는 시나리오로 발전.
 
 **원칙**: 정밀 CFD/구조 해석은 외부 계산 → Cesium 시각화. GeoHazard Engine은 **단순화 모델 + 3D 연출**에 집중.
 
@@ -47,6 +50,18 @@
 
 ## 현재 로드맵
 
+> **집중 (2026-05-24)**: 쓰나미 탭 **미노출** (`MODULE_REGISTRY`에서 제거) — 홍수·침수 모듈 완성도 우선.
+
+### 🎯 진행 중 — 홍수·침수 모듈 완성도
+
+상세: [perf-phase3.md](./perf-phase3.md) · [features.md](./features.md)
+
+| 우선 | 항목 | 기획 |
+|------|------|------|
+| 1 | 성능 3차 — body 버퍼·rain bounding box·건물 높이 통합 | [perf-phase3.md](./perf-phase3.md) |
+| 2 | 시각·UX QA — 침수 mesh, 건물·지형 정합, 카메라 각도 | — |
+| 3 | 시나리오·프리셋 다듬기 (2022 강남역 등) | — |
+
 ### ✅ 완료 — 성능 2차
 
 상세: [perf-phase2.md](./perf-phase2.md)
@@ -59,39 +74,60 @@
 | P-4 | body 상단 캡 삼각형 제거 (`omitTopCap`) |
 | P-5 | 파동 에너지 기반 동적 update interval (2~6프레임) |
 
-### 📌 다음 — 쓰나미 모듈
+### ⏸ 보류 — 쓰나미 모듈 (Phase 1 완료 · Phase 2 미완)
 
-홍수 엔진을 재사용하여 확장.
+연안 쓰나미 시뮬레이션 (강남 침수 트리거 아님). **UI 탭 비활성** — run-up 시각화 미완.  
+상세: [tsunami-phase1.md](./tsunami-phase1.md) · [tsunami-status.md](./tsunami-status.md)
 
-| Phase | 내용 | 예상 난이도 |
-|-------|------|-------------|
-| **Phase 1** | 진원 UI + 반경 확장 ring 수위, 저지대 채움 재사용 | ★★☆ |
-| **Phase 2** | 방향성 전파, 해안 run-up | ★★★ |
-| **Phase 3a** | OSM 건물 하부 침수 (Classification / shader) | ★★★ |
-| **Phase 3b** | camera shake, UI 시나리오 타임라인 | ★★☆ |
-| **Phase 4** (선택) | splash/debris, collapse tileset | ★★★ |
+| Phase | 내용 | 예상 난이도 | 상태 |
+|-------|------|-------------|------|
+| **Phase 1** | 진원 UI + ring, 타임라인, 스크러빙, 진원 중심 카메라 | ★★☆ | ✅ 완료 |
+| **Phase 2** | 방향성 전파, 해안 run-up (region surge wedge) | ★★★ | 🟡 부분 완료 |
+| **Phase 3a** | OSM 건물 하부 침수 (Classification / shader) | ★★★ | 🔵 이후 |
+| **Phase 3b** | camera shake, UI 시나리오 타임라인 | ★★☆ | 🔵 이후 |
+| **Phase 4** (선택) | splash/debris, collapse tileset | ★★★ | 🔵 장기 |
+
+**구현 내용 (현재)**:
+- `TsunamiWaveModel` — ring·도달·파고 ramp·coastal spread
+- `TsunamiVisualization` — ring/shockwave Entity + 연안 마커 + `GroundPrimitive` run-up
+- `coastalImpactPoints` — 연안 참조 도시 11곳
+- `buildSurgeFan` — region 기반 바다→육지 surge wedge
+- `SimTimeline` + `ScrubBar` — traveling / impacting 단계, 과거 시간 스크러빙
+- 시작 카메라 — `flyToBoundingSphere`로 진원 화면 중앙
 
 모듈 구조:
 ```
 src/modules/tsunami/
   TsunamiModule.jsx
-  components/
-    TsunamiVisualization.jsx
-  hooks/
-    useTsunamiTimeline.js
-src/physics/TsunamiWaveModel.js
+  components/ TsunamiVisualization.jsx, TsunamiMainUI.jsx
+  constants/  tsunamiPresets.js, coastalImpactPoints.js, coastalSurgeLayout.js
+  utils/      tsunamiRunupSites.js, tsunamiRunupPrimitives.js
+src/physics/  TsunamiWaveModel.js
 ```
 
 ### 📌 이후 — 지진 모듈
 
+상세: [earthquake-plan.md](./earthquake-plan.md)
+
 | Phase | 내용 | 비고 |
 |-------|------|------|
-| **Phase 1** | Camera shake 단독 | 쓰나미 완료 전 선행 가능 (단독 구현 빠름) |
-| **Phase 2** | 3D Tiles 건물 흔들림/손상 표현 | |
+| **Phase 1** | 진원 UI + P파·S파 ring + 카메라 쉐이크 + 도시 MMI 마커 | 쓰나미 QA 완료 후 착수 |
+| **Phase 2** | MMI 진도 등진선 overlay + 규모·깊이 슬라이더 + 피해 통계 | |
+| **Phase 3** | OSM 건물 흔들림·손상 (3D Tileset shader) | |
+| **Phase 4** (선택) | 여진 시퀀스, 지표 균열, 액상화 overlay | 장기 |
+
+### 📌 다음 — 위치 시스템 확장
+
+재난 모듈마다 지리적 특성이 다르므로 `locations/` 디렉토리를 확장:
+
+| 위치 | 용도 | 상태 |
+|------|------|------|
+| `gangnam.js` | 홍수·침수 (저지대, 지하 공간) | ✅ 완성 |
+| `east_sea.js` 또는 `coastal.js` | 쓰나미 진원 프리셋 (동해, 일본해구) | 📌 예정 |
+| `fault_zone.js` 등 | 지진 진원 프리셋 (내륙 단층) | 📌 이후 |
 
 ### 🔵 장기 — 기타
 
-- 위치 선택 기능 (강남역 외 다른 지점 지원) — `locations/` 확장
 - 모바일 반응형 레이아웃 (현재 1000px 차단 → 완전 반응형)
 - 산불·태풍·산사태 등 — 홍수/쓰나미/지진 3종 완성 후 검토
 
@@ -103,7 +139,7 @@ src/physics/TsunamiWaveModel.js
 |------|-----------|--------|------|
 | 홍수·침수 | Primitive 수면, terrain grid, ParticleSystem | ★★☆ | **✅ 완성** |
 | 폭우 | ParticleSystem | ★☆☆ | ✅ (홍수 내 포함) |
-| 쓰나미 | 홍수 확장 + wave front + run-up | ★★★ | 📌 다음 |
+| 쓰나미 | 홍수 확장 + wave front | ★★★ | **⏸ 보류** (탭 숨김) |
 | 지진 | Camera shake, 3D Tiles 변형 | ★★☆ | 📌 이후 |
 | 산불·화산 | ParticleSystem, Polygon extrusion | ★★★ | 🔵 장기 |
 | 태풍·폭풍 해일 | 강수 + storm surge | ★★★ | 🔵 장기 |

@@ -44,4 +44,12 @@ describe('WaterWaveEngine', () => {
 
     expect(Array.from(engine.heights)).toEqual(Array.from(before))
   })
+
+  it('addDisturbance with small radius only affects nearby cells', () => {
+    const engine = new WaterWaveEngine(16)
+    engine.addDisturbance(0.5, 0.5, 0.035, 1.0)
+
+    expect(engine.heights[0]).toBe(0)
+    expect(engine.heights[8 * 16 + 8]).toBeGreaterThan(0)
+  })
 })

@@ -28,12 +28,16 @@
 - [x] `MapStatusBar` — 경위도·카메라 고도·지표 고도·침수 pill
 - [x] `MobileWarning` — 1000px 미만 전체 화면 차단 오버레이
 - [x] 강남역 flyTo (`locations/gangnam.js`)
+- [x] `TsunamiModule` — 진원 프리셋·지도 클릭·파면 ring·타임라인·스크러빙
+- [x] T-1 카메라 flyTo — 시작 조망 / 강남역 도달 클로즈업
+- [x] 쓰나미 딥블루 머티리얼 (`createTsunamiSurfaceMaterial`)
 
 ### 아키텍처 · 인프라
-- [x] `ModuleShell` + `registry.js` — 홍수/쓰나미/지진 탭 라우터 (쓰나미·지진 비활성)
+- [x] `ModuleShell` + `registry.js` — 홍수/쓰나미/지진 탭 라우터 (쓰나미 활성, 지진 비활성)
 - [x] `SimulationErrorBoundary` — Cesium 렌더링 오류 격리 + 재시도
 - [x] `locations/gangnam.js` — 좌표·카메라·bounds 단일 소스
-- [x] Vitest 단위 테스트 20개 (4파일)
+- [x] `FloodVisualization.fixedBounds` — 쓰나미 광역 카메라 시 침수 범위 고정
+- [x] Vitest 단위 테스트 35개 (7파일)
 - [x] Production 빌드: `vite-plugin-cesium` (Workers/WASM)
 - [x] Vercel Production (`main`) + Preview (`dev`) 자동 배포
 
@@ -45,30 +49,39 @@
 src/
 ├── App.jsx                          ← ModuleShell + registry 연결
 ├── locations/
-│   └── gangnam.js                   ← 좌표·카메라·bounds 단일 소스
+│   └── gangnam.js                   ← 좌표·카메라·bounds 단일 소스 (홍수 기준)
 ├── modules/
 │   ├── registry.js                  ← 모듈 정의 (flood/tsunami/earthquake)
-│   └── flood/
-│       ├── FloodModule.jsx          ← viewerRef, 레이아웃, 상태 관리
+│   ├── flood/
+│   │   ├── FloodModule.jsx
+│   │   ├── components/
+│   │   │   ├── FloodVisualization.jsx   ← 물리 루프, view bounds / fixedBounds, rAF 수면
+│   │   │   ├── RainSystem.jsx
+│   │   │   ├── FloodMainUI.jsx
+│   │   │   ├── SimulationOptions.jsx
+│   │   │   ├── WaterLevelControl.jsx
+│   │   │   ├── RainControl.jsx
+│   │   │   ├── ScenarioPanel.jsx
+│   │   │   ├── WelcomeOverlay.jsx
+│   │   │   └── TerrainLoadingBadge.jsx
+│   │   ├── hooks/
+│   │   │   ├── useMapLayout.js
+│   │   │   └── useRainWaterAccumulation.js
+│   │   ├── constants/
+│   │   │   ├── simulationDefaults.js
+│   │   │   ├── simulationDefaults.test.js
+│   │   │   └── scenarios.js
+│   │   └── utils/
+│   │       └── displayUnits.js
+│   └── tsunami/
+│       ├── TsunamiModule.jsx        ← 상태·카메라·flyTo 조율
+│       ├── TsunamiModule.css
 │       ├── components/
-│       │   ├── FloodVisualization.jsx   ← 물리 루프, view bounds, rAF 수면
-│       │   ├── RainSystem.jsx           ← 강수 ParticleSystem
-│       │   ├── FloodMainUI.jsx          ← 사이드바 레이아웃
-│       │   ├── SimulationOptions.jsx    ← 프리셋 버튼 + 슬라이더
-│       │   ├── WaterLevelControl.jsx    ← 수위 슬라이더 + 저지대 힌트
-│       │   ├── RainControl.jsx          ← 강수 슬라이더 + mm/h 힌트
-│       │   ├── ScenarioPanel.jsx        ← 프리셋 시나리오 버튼
-│       │   ├── WelcomeOverlay.jsx       ← 첫 방문 온보딩
-│       │   └── TerrainLoadingBadge.jsx  ← 지형 샘플링 로딩 표시
-│       ├── hooks/
-│       │   ├── useMapLayout.js          ← Cesium canvas 리사이즈
-│       │   └── useRainWaterAccumulation.js ← 자동 상승 + drainage
-│       ├── constants/
-│       │   ├── simulationDefaults.js    ← DEFAULT_OPTIONS, WAVE_PRESETS, helpers
-│       │   ├── simulationDefaults.test.js
-│       │   └── scenarios.js             ← SCENARIOS 4종
-│       └── utils/
-│           └── displayUnits.js          ← mm/h 환산, 저지대 힌트 문자열
+│       │   ├── TsunamiVisualization.jsx ← Cesium ring 애니메이션 + 진원 클릭 선택
+│       │   ├── TsunamiMainUI.jsx        ← 사이드바: 진원·파도 설정·타임라인·스크러빙
+│       │   └── TsunamiMainUI.css
+│       └── constants/
+│           └── tsunamiPresets.js        ← 진원 프리셋, 기본 옵션
 ├── components/                       ← 공용 컴포넌트만
 │   ├── CesiumMapViewer.jsx
 │   ├── CollapsibleSection.jsx
@@ -80,12 +93,14 @@ src/
 │   └── SceneLayerController.jsx
 ├── physics/
 │   ├── WaterWaveEngine.js
-│   └── WaterWaveEngine.test.js
+│   ├── WaterWaveEngine.test.js
+│   ├── TsunamiWaveModel.js          ← 순수 JS 파면 모델 (haversine, 도달 시간, 수위)
+│   └── TsunamiWaveModel.test.js
 ├── utils/
 │   ├── floodViewBounds.js
 │   ├── floodViewBounds.test.js
 │   ├── floodWaterMesh.js
-│   ├── floodWaterMaterial.js
+│   ├── floodWaterMaterial.js        ← createFloodSurfaceMaterial / createTsunamiSurfaceMaterial
 │   ├── terrainHeight.js
 │   └── terrainHeight.test.js
 ├── scene/
@@ -203,13 +218,64 @@ rAF (동적 interval: 2~6프레임, 파동 에너지 기반)
 
 ```js
 MODULE_REGISTRY = [
-  { id: 'flood',     available: true,  component: FloodModule },
-  { id: 'tsunami',   available: false, component: null },   // 준비 중
-  { id: 'earthquake',available: false, component: null },   // 준비 중
+  { id: 'flood',      available: true,  component: FloodModule },
+  { id: 'earthquake', available: false, component: null },  // 준비 중
 ]
+// 쓰나미: MODULE_REGISTRY 미등록 (⏸ 보류, src/modules/tsunami/ 코드만 보존)
 ```
 
 `ModuleShell` 탭 UI가 레지스트리를 렌더링. `available: false` 항목은 비활성 표시.
+
+> **재난별 지리적 위치**: 홍수 = 강남역, 쓰나미 = 동해·일본해구 프리셋 + 사용자 지정, 지진 = 추후 단층대 프리셋.
+
+---
+
+## 쓰나미 모듈 (`TsunamiModule.jsx`)
+
+### 구성 요소
+
+| 컴포넌트 | 역할 |
+|----------|------|
+| `TsunamiModule` | 상태 관리, 카메라 flyTo 조율 |
+| `TsunamiVisualization` | Cesium ring 애니메이션 + 클릭 진원 선택 |
+| `TsunamiMainUI` | 사이드바 — 진원 프리셋, 파도 설정, 타임라인, 스크러빙 |
+| `TsunamiWaveModel` | 순수 JS 물리 모델 (haversine 거리, 도달 시간, 수위) |
+
+### 물리 모델 (`TsunamiWaveModel.js`)
+
+| 메서드 | 반환 | 설명 |
+|--------|------|------|
+| `getRingRadius(elapsedMs)` | m | 파면 반경 (속도 × 시간) |
+| `getArrivalMs(lat, lon)` | ms | 목표 지점 도달 시간 |
+| `getWaterLevel(elapsedMs, lat, lon)` | m | 도달 후 선형 상승, maxWaterLevel cap |
+| `distanceTo(lat, lon)` | m | haversine 거리 |
+
+### 카메라 T-1 시나리오
+
+| 이벤트 | 동작 |
+|--------|------|
+| idle → running | 진원·강남 중점 조망 (거리 × 1.6 고도, 최소 400km) |
+| traveling → flooding | 강남역 클로즈업 flyTo |
+
+### 스크러빙 (T-2)
+
+- `ScrubBar` 슬라이더 — 도달 시점 마커 포함, 0 ~ totalMs
+- `seekMs` prop → `TsunamiVisualization`이 refs 직접 점프 → `requestRender()`
+- 모델이 순함수이므로 임의 시점으로 즉시 이동 가능
+
+### `fixedBounds` (렌더링 버그 방지)
+
+쓰나미 시작 시 카메라가 400km+ 광역 조망으로 이동하면 `addViewFloodBoundsListener`가 해양 전체를 침수 범위로 잡는 문제 해결:
+- `FloodVisualization`에 `fixedBounds` prop 추가
+- 제공 시 camera listener 생략 → 침수 범위를 강남역으로 고정
+
+```jsx
+// TsunamiModule.jsx
+<FloodVisualization
+  fixedBounds={getLocationDefaultFloodBounds(GANGNAM)}
+  ...
+/>
+```
 
 ---
 
@@ -219,15 +285,19 @@ MODULE_REGISTRY = [
 |------|-----------|-----------|
 | `WaterWaveEngine.test.js` | 4 | step, disturbance, boundary damping, rain |
 | `simulationDefaults.test.js` | 3 | preset match, findActivePresetId |
-| `terrainHeight.test.js` | 5 | baseline, 수면고도, terrainGridChanged fast-path |
+| `terrainHeight.test.js` | 6 | baseline, 수면고도, terrainGridChanged |
 | `floodViewBounds.test.js` | 7 | pitch band, boundsChanged, 강남 기준 중심 |
-| **합계** | **20** | **전부 통과** |
+| `TsunamiWaveModel.test.js` | 8 | haversine, getRingRadius, getCoastalWaveHeight, getCoastalSpreadFactor, getImpactSummary, getTotalDurationMs |
+| `tsunamiRunupSites.test.js` | 5 | buildSurgeFan 꼭짓점·sea edge 고정·동해 방향, buildRunupSites |
+| `coastalSurgeLayout.test.js` | 2 | sea anchor 위치, surge mask wet/dry |
+| **합계** | **35** | **전부 통과** |
 
 ---
 
 ## 관련 문서
 
 - [기획·테스트 평가](./evaluation.md)
+- [쓰나미 Phase 1 기획서](./tsunami-phase1.md)
 - [성능 2차 기획서](./perf-phase2.md)
 - [작업 목표](./goals.md)
 - [디자인 가이드](./design.md)

@@ -9,7 +9,7 @@ import {
 import { createFloodSurfaceMaterial } from '../../../utils/floodWaterMaterial'
 import { boundsChanged, addViewFloodBoundsListener, getViewFloodBounds } from '../../../utils/floodViewBounds'
 import {
-  refineTerrainHeightGrid,
+  refineTerrainWithBuildings,
   sampleTerrainHeightGrid,
   sampleTerrainHeightGridAsync,
   terrainGridChanged,
@@ -21,13 +21,15 @@ const TERRAIN_QUICK_RES = 16
 const TERRAIN_REFINE_INTERVAL = 240
 const BODY_REBUILD_THRESHOLD = 0.3
 const BODY_REBUILD_INTERVAL_MS = 400
+const BODY_OMIT_BELOW_LEVEL = 1.0
 const SLOW_FRAME_THRESHOLD_MS = 22
 
 const getSurfaceUpdateInterval = (engine) => {
   const heights = engine.heights
+  const len = heights.length
   let sumSq = 0
-  for (let i = 0; i < heights.length; i++) sumSq += heights[i] * heights[i]
-  const surfaceEnergy = sumSq / heights.length
+  for (let i = 0; i < len; i += 4) sumSq += heights[i] * heights[i]
+  const surfaceEnergy = (sumSq * 4) / len
   if (surfaceEnergy < 0.01) return 6
   if (surfaceEnergy < 0.5) return 3
   return 2
@@ -83,7 +85,8 @@ const rebuildSurfaceCache = (sim, floodDepth) => {
     sim.bounds,
     sim.terrainGrid,
     floodDepth,
-    WAVE_RESOLUTION
+    WAVE_RESOLUTION,
+    { floodMask: sim.floodMask ?? null }
   )
 }
 
@@ -102,13 +105,36 @@ const syncSurfacePrimitive = (viewer, sim) => {
 
 const rebuildFloodBody = (viewer, sim, floodDepth, now = performance.now()) => {
   removePrimitive(viewer, sim.body)
-  sim.body = createFloodBodyPrimitive(floodDepth, sim.bodyMaterial, sim.bounds, sim.terrainGrid)
+  if (sim.omitBody || floodDepth < BODY_OMIT_BELOW_LEVEL) {
+    sim.body = null
+    sim.lastBodyLevel = floodDepth
+    sim.lastBodyRebuildMs = now
+    return
+  }
+  sim.body = createFloodBodyPrimitive(
+    floodDepth,
+    sim.bodyMaterial,
+    sim.bounds,
+    sim.terrainGrid,
+    { floodMask: sim.floodMask ?? null }
+  )
   if (sim.body) viewer.scene.primitives.add(sim.body)
   sim.lastBodyLevel = floodDepth
   sim.lastBodyRebuildMs = now
 }
 
 const syncBodyForLevel = (viewer, sim, level, now) => {
+  if (sim.omitBody) return
+
+  if (level < BODY_OMIT_BELOW_LEVEL) {
+    if (sim.body) {
+      removePrimitive(viewer, sim.body)
+      sim.body = null
+    }
+    sim.lastBodyLevel = level
+    return
+  }
+
   const deltaLevel = Math.abs(level - (sim.lastBodyLevel ?? NaN))
   const deltaTime = now - (sim.lastBodyRebuildMs ?? 0)
 
@@ -186,7 +212,7 @@ const requestTerrainRefine = (viewer, simRef, sim, waterLevelRef, terrainLoad) =
   sim.terrainRefineToken = token
   terrainLoad?.begin()
 
-  refineTerrainHeightGrid(viewer, sim.bounds, WAVE_RESOLUTION)
+  refineTerrainWithBuildings(viewer, sim.bounds, WAVE_RESOLUTION)
     .then((refined) => {
       if (!refined || sim.terrainRefineToken !== token) return
       if (viewer.isDestroyed?.() || simRef.current !== sim) return
@@ -214,21 +240,26 @@ const startSimulation = (
   rainIntensityRef,
   simulationOptionsRef,
   boundsRef,
-  onTerrainLoadingChange
+  onTerrainLoadingChange,
+  surfaceMaterialFactory = createFloodSurfaceMaterial,
+  bodyMaterialFactory = createFloodBodyMaterial,
+  fixedBounds = null,
+  floodMask = null,
+  omitBody = false
 ) => {
   stopSimulation(viewer, simRef)
   onTerrainLoadingChange?.(false)
 
   const terrainLoad = createTerrainLoadTracker(onTerrainLoadingChange)
 
-  const bounds = boundsRef.current ?? getViewFloodBounds(viewer)
+  const bounds = fixedBounds ?? boundsRef.current ?? getViewFloodBounds(viewer)
   boundsRef.current = bounds
 
   const engine = new WaterWaveEngine(WAVE_RESOLUTION)
   engine.addDisturbance(0.5, 0.5, 0.28, Math.min(initialLevel * 0.04, 1.2))
 
-  const surfaceMaterial = createFloodSurfaceMaterial()
-  const bodyMaterial = createFloodBodyMaterial()
+  const surfaceMaterial = surfaceMaterialFactory()
+  const bodyMaterial = bodyMaterialFactory()
   applySimulationOptions(engine, surfaceMaterial, simulationOptionsRef.current)
 
   const sim = {
@@ -236,6 +267,8 @@ const startSimulation = (
     surfaceMaterial,
     bodyMaterial,
     bounds,
+    floodMask,
+    omitBody,
     terrainGrid: null,
     surfaceCache: null,
     terrainRefineToken: 0,
@@ -260,19 +293,22 @@ const startSimulation = (
   requestFullTerrainSample(viewer, simRef, sim, waterLevelRef, terrainLoad)
   requestTerrainRefine(viewer, simRef, sim, waterLevelRef, terrainLoad)
 
-  sim.removeCameraListener = addViewFloodBoundsListener(
-    viewer,
-    (nextBounds) => {
-      if (!boundsChanged(sim.bounds, nextBounds)) return
+  // fixedBounds가 지정된 경우 카메라 이동에 따라 침수 범위가 바뀌지 않도록 리스너 생략
+  if (!fixedBounds) {
+    sim.removeCameraListener = addViewFloodBoundsListener(
+      viewer,
+      (nextBounds) => {
+        if (!boundsChanged(sim.bounds, nextBounds)) return
 
-      boundsRef.current = nextBounds
-      resetWaveEngine(sim, waterLevelRef.current)
-      rebuildFloodMeshes(viewer, sim, waterLevelRef.current, nextBounds)
-      requestFullTerrainSample(viewer, simRef, sim, waterLevelRef, terrainLoad)
-      requestTerrainRefine(viewer, simRef, sim, waterLevelRef, terrainLoad)
-    },
-    { debounceMs: 200 }
-  )
+        boundsRef.current = nextBounds
+        resetWaveEngine(sim, waterLevelRef.current)
+        rebuildFloodMeshes(viewer, sim, waterLevelRef.current, nextBounds)
+        requestFullTerrainSample(viewer, simRef, sim, waterLevelRef, terrainLoad)
+        requestTerrainRefine(viewer, simRef, sim, waterLevelRef, terrainLoad)
+      },
+      { debounceMs: 200 }
+    )
+  }
 
   sim.removeListener = viewer.scene.postUpdate.addEventListener(() => {
     try {
@@ -342,6 +378,9 @@ const startSimulation = (
 /**
  * viewerRef + WaterWaveEngine 기반 물리 수면.
  * 카메라 화면 범위 + 지형 그리드 클램핑.
+ *
+ * fixedBounds — 제공 시 카메라 이동에 관계없이 이 범위로 침수 영역을 고정한다.
+ * 쓰나미 모듈처럼 카메라가 광역 조망 위치로 이동해도 범위가 바뀌지 않아야 할 때 사용.
  */
 export default function FloodVisualization({
   viewerRef,
@@ -349,12 +388,49 @@ export default function FloodVisualization({
   rainIntensity = 0,
   simulationOptions,
   onTerrainLoadingChange,
+  surfaceMaterialFactory = createFloodSurfaceMaterial,
+  bodyMaterialFactory = createFloodBodyMaterial,
+  fixedBounds = null,
+  floodMask = null,
+  omitBody = false,
 }) {
   const onTerrainLoadingChangeRef = useRef(onTerrainLoadingChange)
+  const surfaceMaterialFactoryRef = useRef(surfaceMaterialFactory)
+  const bodyMaterialFactoryRef = useRef(bodyMaterialFactory)
+  const fixedBoundsRef = useRef(fixedBounds)
+  const floodMaskRef = useRef(floodMask)
+  const omitBodyRef = useRef(omitBody)
+
+  useEffect(() => {
+    fixedBoundsRef.current = fixedBounds
+  }, [fixedBounds])
+
+  useEffect(() => {
+    omitBodyRef.current = omitBody
+  }, [omitBody])
+
+  useEffect(() => {
+    floodMaskRef.current = floodMask
+
+    const viewer = getViewer(viewerRef)
+    const sim = simRef.current
+    if (!viewer || !sim || waterLevelRef.current <= 0) return
+
+    sim.floodMask = floodMask ?? null
+    rebuildSurfaceCache(sim, waterLevelRef.current)
+    rebuildFloodBody(viewer, sim, waterLevelRef.current)
+    syncSurfacePrimitive(viewer, sim)
+    viewer.scene.requestRender()
+  }, [floodMask, viewerRef])
 
   useEffect(() => {
     onTerrainLoadingChangeRef.current = onTerrainLoadingChange
   }, [onTerrainLoadingChange])
+
+  useEffect(() => {
+    surfaceMaterialFactoryRef.current = surfaceMaterialFactory
+    bodyMaterialFactoryRef.current = bodyMaterialFactory
+  }, [surfaceMaterialFactory, bodyMaterialFactory])
   const simRef = useRef(null)
   const boundsRef = useRef(null)
   const waterLevelRef = useRef(waterLevel)
@@ -386,7 +462,12 @@ export default function FloodVisualization({
       rainIntensityRef,
       simulationOptionsRef,
       boundsRef,
-      (loading) => onTerrainLoadingChangeRef.current?.(loading)
+      (loading) => onTerrainLoadingChangeRef.current?.(loading),
+      surfaceMaterialFactoryRef.current,
+      bodyMaterialFactoryRef.current,
+      fixedBoundsRef.current,
+      floodMaskRef.current,
+      omitBodyRef.current
     )
 
     return () => stopSimulation(viewer, simRef)

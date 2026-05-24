@@ -12,13 +12,6 @@ export const MODULE_REGISTRY = [
     available: true,
   },
   {
-    id: 'tsunami',
-    label: '쓰나미',
-    description: '준비 중',
-    component: null,
-    available: false,
-  },
-  {
     id: 'earthquake',
     label: '지진',
     description: '준비 중',

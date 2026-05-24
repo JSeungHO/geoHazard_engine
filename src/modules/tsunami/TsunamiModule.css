@@ -1,0 +1,44 @@
+.tsunami-module {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--color-bg);
+  isolation: isolate;
+}
+
+.tsunami-module-stage {
+  position: relative;
+  z-index: 0;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  margin-right: 280px;
+  overflow: hidden;
+}
+
+.tsunami-module-map {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.tsunami-module-map .map-status-bar {
+  padding-right: 120px;
+}
+
+.tsunami-module-map .cesium-map-viewer,
+.tsunami-module-map .cesium-viewer {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tsunami-module-map .cesium-widget,
+.tsunami-module-map .cesium-widget canvas {
+  width: 100%;
+  height: 100%;
+}

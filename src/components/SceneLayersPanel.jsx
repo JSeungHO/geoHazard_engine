@@ -23,7 +23,7 @@ function LayerToggle({ layer, visible, onChange }) {
   )
 }
 
-function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange, onFlyToGangnam }) {
+function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange, onFlyToGangnam, flyToLabel = '강남역으로 이동' }) {
   return (
     <aside
       className="scene-layers-panel"
@@ -50,7 +50,7 @@ function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange, onF
             className="scene-layers-panel__fly-btn"
             onClick={onFlyToGangnam}
           >
-            강남역으로 이동
+            {flyToLabel}
           </button>
         </section>
 
