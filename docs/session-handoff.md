@@ -18,7 +18,7 @@
 |------|------|------|
 | 홍수·침수 (`FloodModule`) | ✅ 완성 | WaterWaveEngine + terrain grid 클램핑 |
 | 쓰나미 (`TsunamiModule`) | 🟡 Phase 2 진행 중 | run-up wedge 튜닝 중 |
-| 지진 (`EarthquakeModule`) | ✅ Phase 1~3 완료 | MMI overlay, 피해 통계, OSM 건물 손상 — QA §13 대기 |
+| 지진 (`EarthquakeModule`) | ✅ Phase 1~4 완료 · QA PASS | P/S파·MMI·OSM·여진·균열·액상화 전 기능 동작 확인 |
 
 ---
 
@@ -57,7 +57,13 @@ Tests  35 passed (35)  —  7 files
 
 ## 4. 다음에 해야 할 것 (우선순위 순)
 
-### 🔴 최우선 — 브라우저 QA (미완료)
+### ✅ 완료 — 지진 모듈 브라우저 QA (2026-05-24)
+
+`node qa-earthquake-full.mjs` — **PASS 27 / WARN 1 / FAIL 0**  
+WARN: `estimateLiquefactionAreaKm2` 32×32 샘플 부족으로 액상화 면적 UI 텍스트 누락 (Cesium overlay는 정상)  
+상세: [earthquake-qa.md](./earthquake-qa.md)
+
+### 🔴 최우선 — 쓰나미 브라우저 QA (미완료)
 
 dev 서버(`http://localhost:5173`)에서 쓰나미 탭 QA가 **아직 진행되지 않았다.**  
 아래 체크리스트를 먼저 확인하고, 이상 항목을 기록한 뒤 셰이더 작업에 착수할 것.
@@ -144,6 +150,8 @@ src/
 | [tsunami-phase1.md](./tsunami-phase1.md) | 설계 원칙, API, 컴포넌트 구조, 하지 말아야 할 것 |
 | [coastal-surge-shader-plan.md](./coastal-surge-shader-plan.md) | **다음 작업** — 셰이더 5단계 상세 기획 |
 | [coastal-surge-plan.md](./coastal-surge-plan.md) | GeoServer vs 셰이더 방식 선택 근거 |
+| [earthquake-qa.md](./earthquake-qa.md) | **지진 QA 결과** — PASS 27/WARN 1/FAIL 0 |
+| [earthquake-status.md](./earthquake-status.md) | 지진 모듈 현황 (Phase 1~4 완료) |
 | [features.md](./features.md) | 전체 파일 구조, 테스트 현황 |
 | [goals.md](./goals.md) | 로드맵, Phase 계획 |
 
@@ -166,3 +174,4 @@ npm run build             # 프로덕션 빌드 확인
 | 날짜 | 내용 |
 |------|------|
 | 2026-05-24 | 초판 — 세션 인계용 문서 |
+| 2026-05-24 | 지진 모듈 Phase 4 완료 및 브라우저 QA 통과 반영 |

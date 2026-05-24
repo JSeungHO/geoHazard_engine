@@ -16,7 +16,8 @@
 | [연안 surge 셰이더 기획서](./coastal-surge-shader-plan.md) | 셰이더 방식 상세 설계 — uniform 목록, GLSL 로직, 구현 순서 5단계 |
 | [지진 모듈 기획서](./earthquake-plan.md) | P파·S파 ring, 카메라 쉐이크, MMI overlay, Phase 1~4 로드맵 |
 | [지진 모듈 UI 기획서](./earthquake-ui.md) | 사이드바 섹션·타임라인·스크러빙·CSS 클래스 명세 |
-| [지진 모듈 진행 현황](./earthquake-status.md) | **Phase 1~3 구현 상태, QA, 알려진 제약** |
+| [지진 모듈 진행 현황](./earthquake-status.md) | **Phase 1~4 구현 상태, QA 결과, 알려진 제약** |
+| [지진 모듈 QA 보고서](./earthquake-qa.md) | 브라우저 QA 결과 (PASS 27/WARN 1/FAIL 0) |
 
 | [세션 인계 문서](./session-handoff.md) | **다음 세션 시작점** — 현재 상태·미완료 QA·다음 작업 요약 |
 

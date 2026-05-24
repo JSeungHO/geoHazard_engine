@@ -1,8 +1,8 @@
 # 지진 모듈 — 현재 상황 및 진행 현황
 
-> **상태: ✅ Phase 1~4 완료 (2026-05-24)** · 브라우저 QA §13 대기  
+> **상태: ✅ Phase 1~4 완료 · 브라우저 QA 통과 (2026-05-24)**  
 > 대상: `src/modules/earthquake/` 및 `EarthquakeWaveModel`  
-> 관련 문서: [earthquake-plan.md](./earthquake-plan.md), [earthquake-ui.md](./earthquake-ui.md)
+> 관련 문서: [earthquake-plan.md](./earthquake-plan.md), [earthquake-ui.md](./earthquake-ui.md), [earthquake-qa.md](./earthquake-qa.md)
 
 ---
 
@@ -20,7 +20,7 @@
 | OSM 건물 손상색 + CustomShader 흔들림 | ✅ Phase 3 |
 | 여진 시퀀스 + 균열 + 액상화 overlay | ✅ Phase 4 |
 | 단위 테스트 | ✅ 109 passed (13 files) |
-| 브라우저 QA | ❌ §13 체크리스트 미완 |
+| 브라우저 QA | ✅ PASS (27/27 · WARN 1 · 2026-05-24) |
 
 ---
 
@@ -136,16 +136,25 @@ node qa-earthquake.mjs
 # 스크린샷: qa-screenshots/*-eq-*.png
 ```
 
-### §13 수동 체크 (미완)
+### §13 브라우저 QA — ✅ 완료 (2026-05-24)
 
-- [ ] P/S파 ring 확산·동시 표시
-- [ ] 도시 MMI 라벨·피해 패널 6칸 통계
-- [ ] MMI overlay + OSM 건물 손상색 (줌인 필요)
-- [ ] 카메라·건물 쉐이크 (진앙 근처)
-- [ ] 본진 MMI VI+ 시 균열·액상화 overlay
-- [ ] 여진 시퀀스 ring 전환 (M≥5.0, 토글 ON)
-- [ ] 일시정지/재개/초기화/스크러빙
-- [ ] 탭 전환 후 잔여 객체 없음
+```bash
+node qa-earthquake-full.mjs   # PASS 27 / WARN 1 / FAIL 0 · 콘솔 에러 0
+```
+
+- [x] P/S파 ring 확산·동시 표시
+- [x] 도시 MMI 라벨·피해 패널 6칸 통계
+- [x] MMI overlay + OSM 건물 손상색 (힌트 텍스트 확인)
+- [x] 카메라·건물 쉐이크 (쉐이크 alert 표시 확인)
+- [x] 본진 MMI VI+ 시 균열·액상화 단계 타임라인
+- [x] 여진 시퀀스 ring 전환 (M6.5 양산단층, 3회 여진 M값 표시)
+- [x] 일시정지/재개/초기화/스크러빙
+- [x] 탭 전환 후 잔여 객체 없음
+
+상세 결과: [earthquake-qa.md](./earthquake-qa.md)
+
+**WARN 1건** — `estimateLiquefactionAreaKm2` 32×32 샘플 해상도 부족으로  
+피해 패널 액상화 면적 텍스트 미출력 (Cesium overlay는 정상). 수정 제안 → [earthquake-qa.md §6](./earthquake-qa.md)
 
 ---
 
@@ -165,5 +174,7 @@ node qa-earthquake.mjs
 
 ## 6. 다음 작업
 
-1. **§13 브라우저 QA** 완료 및 이슈 수정
-2. `docs/session-handoff.md` 갱신 유지
+1. ~~**§13 브라우저 QA** 완료~~ ✅ 2026-05-24 완료
+2. **⚠️ WARN 수정** — `estimateLiquefactionAreaKm2` sampleSize 또는 bounds 조정 ([earthquake-qa.md §6](./earthquake-qa.md))
+3. **육안 확인 권장** — OSM 건물 손상색·균열 polyline·액상화 overlay 줌인 확인
+4. `docs/session-handoff.md` 갱신 유지

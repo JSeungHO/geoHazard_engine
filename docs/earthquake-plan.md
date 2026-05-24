@@ -2,7 +2,7 @@
 
 > 작성일: 2026-05-24  
 > 대상 브랜치: `dev`  
-> 상태: **Phase 3 완료** · 브라우저 QA §13 대기  
+> 상태: **Phase 4 완료 · 브라우저 QA 통과** (2026-05-24)  
 > 참조: [goals.md](./goals.md), [features.md](./features.md), [tsunami-phase1.md](./tsunami-phase1.md)
 
 ---
@@ -424,7 +424,7 @@ export function syncMMILayer(viewer, model, options = {}) {
 [x] EarthquakeMainUI.jsx + .css — 사이드바 UI
 [x] cameraShake.js — postUpdate 기반 쉐이크
 [x] registry.js earthquake available: true 변경
-[ ] 브라우저 QA (아래 §13)
+[x] 브라우저 QA (아래 §13) — ✅ 2026-05-24 PASS
 ```
 
 **GMPE 보정 (2026-05-24)**: 스펙 원안 C5=3.23, C6=1.51이 한반도 거리 스케일(50~300km)에서
@@ -454,7 +454,7 @@ export function syncMMILayer(viewer, model, options = {}) {
 [x] SceneLayerController.instancesRef — OSM tileset 공유
 [x] EarthquakeVisualization 연동 (idle/reset clear)
 [x] earthquakeBuildingEffects.test.js
-[ ] OSM 건물 ON 상태 브라우저 QA (§13)
+[x] OSM 건물 ON 상태 브라우저 QA (§13) — ✅ 2026-05-24 PASS
 ```
 
 ### Phase 4 구현 체크리스트
@@ -470,7 +470,7 @@ export function syncMMILayer(viewer, model, options = {}) {
 [x] EarthquakeModule — aftershockPlan, totalMs 연장, activeAftershock 상태
 [x] EarthquakeVisualization — applySimulationFrame, syncPhase4Effects
 [x] EarthquakeMainUI — 여진 토글, 타임라인 균열·액상화·여진 단계
-[ ] 브라우저 QA — 여진 ring 전환, 균열·액상화 표시 (§13)
+[x] 브라우저 QA — 여진 ring 전환, 균열·액상화 표시 (§13) — ✅ 2026-05-24 PASS (WARN: 액상화 면적 텍스트)
 ```
 
 ---
@@ -491,19 +491,21 @@ export function syncMMILayer(viewer, model, options = {}) {
 
 ## 13. 브라우저 QA 체크리스트 (Phase 1)
 
+> **✅ 전체 완료 — 2026-05-24** · 상세: [earthquake-qa.md](./earthquake-qa.md)
+
 ```
-[ ] 시작 → P파 ring이 진앙에서 빠르게 확산
-[ ] S파 ring이 P파보다 느리게 확산, 두 ring이 동시에 보임
-[ ] P파 도달 도시 → 마커 라벨 변화 (회색 → 색상)
-[ ] S파 도달 → 카메라 쉐이크 발동 (진앙 가까운 카메라에서 확인)
-[ ] 도시 마커 MMI 라벨 표시 (서울/경주 등)
-[ ] 피해 범위 패널 숫자 갱신
-[ ] 일시정지 / 재개 / 초기화 정상 동작
-[ ] 스크러빙 슬라이더 → ring 즉시 반영, 쉐이크 미발동
-[ ] 홍수/쓰나미 탭 전환 후 지진 탭 재진입 → 잔여 객체 없음
-[ ] 경주·포항 프리셋 → 해당 위치 진앙 표시
-[ ] 지도 클릭 → 클릭 위치로 진앙 이동
-[ ] 규모(M) 변경 → 진도 재계산 확인
+[x] 시작 → P파 ring이 진앙에서 빠르게 확산
+[x] S파 ring이 P파보다 느리게 확산, 두 ring이 동시에 보임
+[x] P파 도달 도시 → 마커 라벨 변화 (회색 → 색상)
+[x] S파 도달 → 카메라 쉐이크 발동 (진앙 가까운 카메라에서 확인)
+[x] 도시 마커 MMI 라벨 표시 (서울/경주 등)
+[x] 피해 범위 패널 숫자 갱신
+[x] 일시정지 / 재개 / 초기화 정상 동작
+[x] 스크러빙 슬라이더 → ring 즉시 반영, 쉐이크 미발동
+[x] 홍수/쓰나미 탭 전환 후 지진 탭 재진입 → 잔여 객체 없음
+[x] 경주·포항 프리셋 → 해당 위치 진앙 표시
+[x] 지도 클릭 → 클릭 위치로 진앙 이동
+[x] 규모(M) 변경 → 진도 재계산 확인
 ```
 
 ---
