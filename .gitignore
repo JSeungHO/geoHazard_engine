@@ -35,3 +35,5 @@ dist-ssr
 data/*.shp
 data/*.dbf
 data/*.shx
+data/geojson/*.geojson
+!data/geojson/.gitkeep
