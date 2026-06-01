@@ -24,6 +24,12 @@
   background: var(--color-surface-hover);
 }
 
+.scenario-btn--active {
+  border-color: var(--color-primary-border);
+  background: var(--color-surface-hover);
+  box-shadow: inset 0 0 0 1px var(--color-primary-border);
+}
+
 .scenario-btn__icon {
   font-size: 18px;
   line-height: 1;

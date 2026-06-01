@@ -1,14 +1,14 @@
 import { SCENARIOS } from '../constants/scenarios'
 import './ScenarioPanel.css'
 
-export default function ScenarioPanel({ onApply }) {
+export default function ScenarioPanel({ onApply, activeScenarioId = null }) {
   return (
     <div className="scenario-panel">
       {SCENARIOS.map((scenario) => (
         <button
           key={scenario.id}
           type="button"
-          className="scenario-btn"
+          className={`scenario-btn${activeScenarioId === scenario.id ? ' scenario-btn--active' : ''}`}
           onClick={() => onApply(scenario)}
         >
           <span className="scenario-btn__icon" aria-hidden="true">

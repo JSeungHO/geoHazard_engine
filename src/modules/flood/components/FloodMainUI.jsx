@@ -16,6 +16,7 @@ export default function FloodMainUI({
   onOptionChange,
   onPresetApply,
   onScenarioApply,
+  activeScenarioId,
   onReset,
 }) {
   return (
@@ -34,7 +35,7 @@ export default function FloodMainUI({
 
       <div className="flood-main-ui__content">
         <CollapsibleSection title="📋 시나리오" defaultOpen>
-          <ScenarioPanel onApply={onScenarioApply} />
+          <ScenarioPanel onApply={onScenarioApply} activeScenarioId={activeScenarioId} />
         </CollapsibleSection>
 
         <CollapsibleSection title="강수" defaultOpen badge={`${rainIntensity}%`}>

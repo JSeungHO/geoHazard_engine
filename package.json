@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "data:shp2geojson": "node scripts/shp-to-geojson.mjs"
+    "data:shp2geojson": "node scripts/shp-to-geojson.mjs",
+    "data:publish-flood-trace": "npm run data:shp2geojson && node scripts/copy-flood-trace-to-public.mjs"
   },
   "dependencies": {
     "cesium": "^1.141.0",

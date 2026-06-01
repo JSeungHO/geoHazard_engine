@@ -33,13 +33,21 @@ npm run data:shp2geojson -- --bbox 127.01,37.48,127.04,37.51
 
 출력: `data/geojson/<파일명>-gangnam.geojson` (또는 `-clip` / 전체)
 
+배포용 GeoJSON 갱신:
+
+```bash
+npm run data:publish-flood-trace
+```
+
+→ `public/data/seoul-flood-2022-gangnam.geojson` (앱 overlay)
+
 - 입력 좌표계: **EPSG:5179** (KGD2002 Unified, `.prj` 기준)
 - 출력 좌표계: **WGS84** (GeoJSON 표준)
 
 ## 향후 연동 (로드맵)
 
 - [x] Shapefile → GeoJSON 변환 스크립트 (`scripts/shp-to-geojson.mjs`)
-- [ ] `gangnam_2022` 프리셋과 실측 polygon 비교·overlay
+- [x] `gangnam_2022` 프리셋과 실측 polygon overlay
 - [ ] `docs/goals.md` — 홍수 모듈 polish 항목과 연계
 
 ## 출처·라이선스

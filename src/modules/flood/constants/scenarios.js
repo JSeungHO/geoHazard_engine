@@ -24,7 +24,7 @@ export const SCENARIOS = [
     id: 'gangnam_2022',
     icon: '🚇',
     label: '2022 강남역',
-    description: '실제 침수 참고값 (교육용)',
+    description: '실제 침수 참고값 (교육용) · 침수흔적 overlay',
     rain: 85,
     water: 8.5,
     autoRise: false,

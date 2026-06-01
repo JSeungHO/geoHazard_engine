@@ -6,6 +6,7 @@ import SceneLayersPanel from '../../components/SceneLayersPanel'
 import SceneLayerController from '../../components/SceneLayerController'
 import RainSystem from './components/RainSystem'
 import FloodVisualization from './components/FloodVisualization'
+import FloodTraceOverlay from './components/FloodTraceOverlay'
 import MapStatusBar from '../../components/MapStatusBar'
 import SimulationErrorBoundary from '../../components/SimulationErrorBoundary'
 import WelcomeOverlay from './components/WelcomeOverlay'
@@ -33,6 +34,7 @@ export default function FloodModule() {
   const [layerVisibility, setLayerVisibility] = useState(DEFAULT_LAYER_VISIBILITY)
   const [isTerrainLoading, setIsTerrainLoading] = useState(false)
   const [simulationEpoch, setSimulationEpoch] = useState(0)
+  const [activeScenarioId, setActiveScenarioId] = useState(null)
 
   const handleViewerReady = useCallback(() => {
     setIsViewerReady(true)
@@ -55,9 +57,13 @@ export default function FloodModule() {
   }, [])
 
   const handleScenarioApply = useCallback((scenario) => {
+    setActiveScenarioId(scenario.id)
     setRainIntensity(scenario.rain)
     setWaterLevel(scenario.water)
     setAutoWaterRise(scenario.autoRise)
+    if (scenario.id === 'gangnam_2022') {
+      flyToGangnam(viewerRef.current)
+    }
   }, [])
 
   const handleReset = useCallback(() => {
@@ -65,6 +71,7 @@ export default function FloodModule() {
     setWaterLevel(0)
     setAutoWaterRise(false)
     setSimulationOptions(DEFAULT_SIMULATION_OPTIONS)
+    setActiveScenarioId(null)
     setIsTerrainLoading(false)
     setSimulationEpoch((epoch) => epoch + 1)
   }, [])
@@ -95,6 +102,7 @@ export default function FloodModule() {
         onOptionChange={handleOptionChange}
         onPresetApply={handlePresetApply}
         onScenarioApply={handleScenarioApply}
+        activeScenarioId={activeScenarioId}
         onReset={handleReset}
       />
 
@@ -118,6 +126,10 @@ export default function FloodModule() {
                   layerVisibility={layerVisibility}
                 />
                 <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
+                <FloodTraceOverlay
+                  viewerRef={viewerRef}
+                  activeScenarioId={activeScenarioId}
+                />
                 <FloodVisualization
                   viewerRef={viewerRef}
                   waterLevel={waterLevel}
