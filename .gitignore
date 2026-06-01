@@ -27,3 +27,11 @@ dist-ssr
 .env
 .env.local
 .vercel
+
+# Editor / AI tooling
+.claude/
+
+# Local geodata binaries (see data/README.md)
+data/*.shp
+data/*.dbf
+data/*.shx
