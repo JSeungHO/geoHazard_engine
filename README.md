@@ -12,6 +12,13 @@
 
 > 교육·체험용 **단순화 모델 + 3D 연출**에 집중합니다. 정밀 CFD/구조 해석은 대상이 아닙니다.
 
+## 스크린샷
+
+| 홍수·침수 — 2022 강남역 시나리오 | 지진 — P/S파 확산 + MMI + 건물 흔들림 |
+|:---:|:---:|
+| ![홍수·침수 탭 — 강남역 침수 시나리오](./qa-screenshots/flood-gangnam-2022.png) | ![지진 탭 — P/S파 확산](./qa-screenshots/earthquake-ps-wave.gif) |
+| terrain grid 침수 + OSM 건물 + 강수 파티클 | P파·S파 ring, 도시 MMI 마커, MMI overlay, 피해 통계 |
+
 ## 문서
 
 | 문서 | 설명 |
@@ -53,12 +60,16 @@ npm run dev
 
 ### 홍수·침수 (강남역)
 
+<img src="./qa-screenshots/flood-gangnam-2022.png" width="480" align="right" alt="강남역 침수 시나리오">
+
 - terrain grid + 저지대 기준 수면, 2D 파동, 하늘 반사 셰이더
 - 강수 ParticleSystem, 강수량 → 수위 자동 상승
 - pitch view bounds — 카메라 각도에 맞춘 침수·강수 범위
 - 시나리오 프리셋 (2022 강남역 등)
 
 ### 지진 (한반도 단층·해역)
+
+<img src="./qa-screenshots/earthquake-ps-wave.gif" width="480" align="right" alt="지진 P/S파 확산">
 
 - P파·S파 ring 확산, 도시 MMI 마커, 카메라·건물 쉐이크
 - MMI ImageryLayer overlay, 피해 통계 (면적·인구 추정)
