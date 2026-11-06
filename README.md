@@ -1,5 +1,7 @@
 # GeoHazard Engine
 
+[![CI](https://github.com/JSeungHO/geoHazard_engine/actions/workflows/ci.yml/badge.svg)](https://github.com/JSeungHO/geoHazard_engine/actions/workflows/ci.yml)
+
 재난 유형별 **적합한 위치**에서 교육용 시뮬레이션을 체험하는 Cesium 3D 지도 앱입니다 (React + Vite).
 
 | 탭 | 위치·내용 | 상태 |

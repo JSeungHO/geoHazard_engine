@@ -1,7 +1,7 @@
 {
   "name": "geohazard-engine",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -38,5 +38,8 @@
     "vite": "^8.0.12",
     "vite-plugin-cesium": "^1.2.23",
     "vitest": "^4.1.7"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
