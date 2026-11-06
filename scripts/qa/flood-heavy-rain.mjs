@@ -1,10 +1,13 @@
-import { chromium } from 'playwright'
+/**
+ * 집중호우 시나리오 회귀 검사 — 지형 정밀화 배지가 사라지고 렌더링 오류가 없어야 한다.
+ * 실행: npm run qa:flood   (dev 서버 실행 중이어야 함). 실패 시 exit 1.
+ */
+import { BASE, launch, dismissWelcome } from './lib.mjs'
 
 const errors = []
 const logs = []
 
-const browser = await chromium.launch({ headless: true })
-const page = await browser.newPage()
+const { browser, page } = await launch()
 
 page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`))
 page.on('console', (msg) => {
@@ -15,8 +18,9 @@ page.on('console', (msg) => {
   }
 })
 
-await page.goto('http://localhost:5173', { waitUntil: 'load', timeout: 60000 })
+await page.goto(BASE, { waitUntil: 'load', timeout: 60000 })
 await page.waitForTimeout(8000)
+await dismissWelcome(page)
 
 const heavyRain = page.locator('button.option-row', { hasText: '집중호우' })
 await heavyRain.click()

@@ -1,7 +1,7 @@
 # 지진 모듈 — 브라우저 QA 보고서
 
 > 실행일: 2026-05-24  
-> 스크립트: `qa-earthquake-full.mjs` (Playwright · 헤드풀 · 1440×900)  
+> 스크립트: `scripts/qa/earthquake.mjs` (Playwright · 헤드풀 · 1440×900)  
 > 대상 브랜치: `dev`  
 > 참조: [earthquake-plan.md §13](./earthquake-plan.md), [earthquake-status.md](./earthquake-status.md)
 
@@ -25,7 +25,7 @@
 
 ```bash
 npm run dev                  # Vite dev 서버 (http://localhost:5173)
-node qa-earthquake-full.mjs  # Playwright QA 스크립트
+npm run qa:earthquake  # Playwright QA 스크립트
 # 결과 스크린샷: qa-screenshots/
 ```
 
@@ -194,8 +194,7 @@ const liquefactionAreaKm2 = event.type === 'main' && summary.maxMMI >= 6
 
 | 파일 | 용도 |
 |------|------|
-| [qa-earthquake-full.mjs](../qa-earthquake-full.mjs) | 전체 QA Playwright 스크립트 |
-| [qa-earthquake.mjs](../qa-earthquake.mjs) | Phase 1 §13 원본 스크립트 |
-| [qa-screenshots/](../qa-screenshots/) | 스크린샷 20장 |
+| [scripts/qa/earthquake.mjs](../scripts/qa/earthquake.mjs) | 전체 QA Playwright 스크립트 |
+| `qa-screenshots/` | 스크린샷 출력 폴더 (git 미추적, 실행 시 생성) |
 | [earthquake-plan.md](./earthquake-plan.md) | §13 체크리스트 원본 |
 | [earthquake-status.md](./earthquake-status.md) | 모듈 현황 |

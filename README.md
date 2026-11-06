@@ -16,7 +16,7 @@
 
 | 홍수·침수 — 2022 강남역 시나리오 | 지진 — P/S파 확산 + MMI + 건물 흔들림 |
 |:---:|:---:|
-| ![홍수·침수 탭 — 강남역 침수 시나리오](./qa-screenshots/flood-gangnam-2022.png) | ![지진 탭 — P/S파 확산](./qa-screenshots/earthquake-ps-wave.gif) |
+| ![홍수·침수 탭 — 강남역 침수 시나리오](./docs/images/flood-gangnam-2022.png) | ![지진 탭 — P/S파 확산](./docs/images/earthquake-ps-wave.gif) |
 | terrain grid 침수 + OSM 건물 + 강수 파티클 | P파·S파 ring, 도시 MMI 마커, MMI overlay, 피해 통계 |
 
 ## 문서
@@ -60,7 +60,7 @@ npm run dev
 
 ### 홍수·침수 (강남역)
 
-<img src="./qa-screenshots/flood-gangnam-2022.png" width="480" align="right" alt="강남역 침수 시나리오">
+<img src="./docs/images/flood-gangnam-2022.png" width="480" align="right" alt="강남역 침수 시나리오">
 
 - terrain grid + 저지대 기준 수면, 2D 파동, 하늘 반사 셰이더
 - 강수 ParticleSystem, 강수량 → 수위 자동 상승
@@ -69,7 +69,7 @@ npm run dev
 
 ### 지진 (한반도 단층·해역)
 
-<img src="./qa-screenshots/earthquake-ps-wave.gif" width="480" align="right" alt="지진 P/S파 확산">
+<img src="./docs/images/earthquake-ps-wave.gif" width="480" align="right" alt="지진 P/S파 확산">
 
 - P파·S파 ring 확산, 도시 MMI 마커, 카메라·건물 쉐이크
 - MMI ImageryLayer overlay, 피해 통계 (면적·인구 추정)
@@ -110,9 +110,14 @@ src/
 ## QA
 
 ```bash
-npm test                    # Vitest (109+ passed)
-node qa-earthquake-full.mjs # 지진 Playwright QA (dev 서버 필요)
+npm run lint            # ESLint
+npm test                # Vitest 단위 테스트
+npm run qa:earthquake   # 지진 Playwright QA (dev 서버 실행 필요)
+npm run qa:flood        # 집중호우 시나리오 회귀 검사 (dev 서버 실행 필요)
+npm run qa:readme       # README 스크린샷 재촬영 (Cesium 토큰 필요)
 ```
+
+QA 스크립트는 기본적으로 headless로 실행되며 스크린샷은 `qa-screenshots/`(git 미추적)에 저장됩니다. 창을 띄워 보려면 `HEADED=1 SLOWMO=120 npm run qa:earthquake`처럼 실행합니다. 설정은 `scripts/qa/lib.mjs`를 참고하세요.
 
 ## 배포
 

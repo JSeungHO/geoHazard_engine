@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "qa:earthquake": "node scripts/qa/earthquake.mjs",
+    "qa:flood": "node scripts/qa/flood-heavy-rain.mjs",
+    "qa:readme": "node scripts/qa/capture-readme.mjs",
     "data:shp2geojson": "node scripts/shp-to-geojson.mjs",
     "data:publish-flood-trace": "npm run data:shp2geojson && node scripts/copy-flood-trace-to-public.mjs"
   },

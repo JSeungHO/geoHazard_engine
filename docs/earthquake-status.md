@@ -132,14 +132,14 @@ npm test
 
 ```bash
 npm run dev
-node qa-earthquake.mjs
+npm run qa:earthquake
 # 스크린샷: qa-screenshots/*-eq-*.png
 ```
 
 ### §13 브라우저 QA — ✅ 완료 (2026-05-24)
 
 ```bash
-node qa-earthquake-full.mjs   # PASS 27 / WARN 1 / FAIL 0 · 콘솔 에러 0
+npm run qa:earthquake   # PASS 27 / WARN 1 / FAIL 0 · 콘솔 에러 0
 ```
 
 - [x] P/S파 ring 확산·동시 표시

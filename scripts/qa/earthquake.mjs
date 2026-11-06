@@ -1,6 +1,6 @@
 /**
  * GeoHazard Engine — 지진 QA 전체 스크립트 (Phase 1~4)
- * 실행: node qa-earthquake-full.mjs
+ * 실행: npm run qa:earthquake   (dev 서버 실행 중이어야 함)
  *
  * 커버리지:
  *  Phase 1 §13 — P/S파 ring, 카메라 쉐이크, 도시 마커, 피해 패널,
@@ -9,13 +9,8 @@
  *  Phase 4     — 여진 ring 전환, 균열·액상화 표시 (양산단층 M6.5)
  */
 
-import { chromium } from 'playwright'
-import { mkdir } from 'fs/promises'
 import { join } from 'path'
-
-const BASE = process.env.BASE ?? 'http://localhost:5173'
-const SS_DIR = './qa-screenshots'
-await mkdir(SS_DIR, { recursive: true })
+import { BASE, OUT_DIR as SS_DIR, launch, dismissWelcome } from './lib.mjs'
 
 let ssIdx = 0
 async function shot(page, label) {
@@ -31,9 +26,7 @@ function fail(id, note = '') { results.push({ id, status: '❌ FAIL', note }); c
 function warn(id, note = '') { results.push({ id, status: '⚠️  WARN', note }); console.log(`  ⚠️  #${id} WARN ${note}`) }
 
 // ─── 브라우저 기동 ───────────────────────────────────────────────
-const browser = await chromium.launch({ headless: false, slowMo: 120 })
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
-const page = await ctx.newPage()
+const { browser, page } = await launch()
 
 const consoleErrors = []
 page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()) })
@@ -45,6 +38,7 @@ page.on('pageerror', (e) => consoleErrors.push(e.message))
 console.log('\n🔷 앱 로딩...')
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(4500)
+await dismissWelcome(page)
 await shot(page, '00-initial')
 
 // ═══════════════════════════════════════════════════════════════

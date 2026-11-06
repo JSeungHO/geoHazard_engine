@@ -59,7 +59,7 @@ Tests  35 passed (35)  —  7 files
 
 ### ✅ 완료 — 지진 모듈 (Phase 1~4 + QA, 2026-05-24)
 
-`node qa-earthquake-full.mjs` — **PASS 27 / WARN 1 / FAIL 0**  
+`npm run qa:earthquake` — **PASS 27 / WARN 1 / FAIL 0**  
 상세: [earthquake-qa.md](./earthquake-qa.md)
 
 ### 🎯 현재 집중 — 홍수·지진 제품 polish

@@ -237,7 +237,7 @@ MODULE_REGISTRY = [
 - [x] 피해 통계 — 추정 면적·인구, 12개 도시 인구 데이터
 - [x] OSM 건물 손상색 + CustomShader 흔들림 (`earthquakeBuildingEffects.js`)
 - [x] 여진 시퀀스 (`earthquakeAftershocks.js`), 지표 균열, 액상화 overlay
-- [x] `qa-earthquake-full.mjs` — Playwright 전체 QA (PASS 27/WARN 1/FAIL 0)
+- [x] `scripts/qa/earthquake.mjs` — Playwright 전체 QA (PASS 27/WARN 1/FAIL 0)
 - [x] §13 브라우저 QA — [earthquake-qa.md](./earthquake-qa.md)
 
 ---

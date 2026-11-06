@@ -1,35 +1,33 @@
 /**
- * README 스크린샷·GIF 캡처 — dev 서버(npm run dev) 실행 상태에서:
- *   node qa-capture-readme.mjs
+ * README 스크린샷·GIF 캡처 — dev 서버 실행 상태에서 (Cesium Ion 토큰 필요):
+ *   npm run qa:readme
  *
- * 산출물 (qa-screenshots/):
- *   flood-gangnam-2022.png      홍수 탭 · 2022 강남역 침수 시나리오
- *   earthquake-ps-wave.png      지진 탭 · P/S파 확산 + MMI + 건물 흔들림
- *   gif-frames/eq-###.png       지진파 확산 프레임 (ffmpeg 입력)
+ * 산출물 (docs/images/):
+ *   flood-gangnam-2022.png   도시 침수 · 2022 강남역 호우 시나리오
+ *   earthquake-ps-wave.png   지진동 · P/S파 확산 + MMI
+ *   gif-frames/eq-###.png    지진파 확산 프레임 (ffmpeg 입력, git 미추적)
  *
  * GIF 합성:
- *   ffmpeg -y -framerate 10 -i qa-screenshots/gif-frames/eq-%03d.png \
- *     -vf "scale=960:-1:flags=lanczos" qa-screenshots/earthquake-wave.gif
+ *   ffmpeg -y -framerate 10 -i docs/images/gif-frames/eq-%03d.png \
+ *     -vf "scale=960:-1:flags=lanczos" docs/images/earthquake-ps-wave.gif
  */
-import { chromium } from 'playwright'
 import { mkdir, rm } from 'fs/promises'
 import { join } from 'path'
+import { BASE, launch, dismissWelcome } from './lib.mjs'
 
-const BASE = process.env.BASE ?? 'http://localhost:5173'
-const SS = './qa-screenshots'
+const SS = 'docs/images'
 const FRAMES = join(SS, 'gif-frames')
 await mkdir(SS, { recursive: true })
 await rm(FRAMES, { recursive: true, force: true })
 await mkdir(FRAMES, { recursive: true })
 
-const browser = await chromium.launch({ headless: false, slowMo: 0 })
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
-const page = await ctx.newPage()
+const { browser, page } = await launch()
 page.on('pageerror', (e) => console.log('  pageerror:', e.message))
 
 console.log('앱 로딩...')
 await page.goto(BASE, { waitUntil: 'domcontentloaded' })
 await page.waitForTimeout(6000)
+await dismissWelcome(page)
 
 // ── 홍수 탭 (기본 탭) · 2022 강남역 ─────────────────────────────
 console.log('홍수: 2022 강남역 시나리오...')
