@@ -72,7 +72,7 @@ function TimelineStep({ status, label, sub }) {
   )
 }
 
-function ImpactSummaryPanel({ impactSummary, impactPoints }) {
+function ImpactSummaryPanel({ impactSummary }) {
   if (!impactSummary) return null
 
   const affected = impactSummary.impacts.filter((item) => item.reached)
@@ -299,7 +299,7 @@ export default function TsunamiMainUI({
 
         <CollapsibleSection title="피해 범위" defaultOpen>
           {isActive ? (
-            <ImpactSummaryPanel impactSummary={impactSummary} impactPoints={impactPoints} />
+            <ImpactSummaryPanel impactSummary={impactSummary} />
           ) : (
             <p className="tsunami-main-ui__hint">
               시뮬레이션 시작 후 파면 반경·연안별 예상 파고·영향 면적이 표시됩니다.

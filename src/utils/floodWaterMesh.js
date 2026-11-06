@@ -25,10 +25,6 @@ export { FLOOD_HALF_SIZE_DEG } from './floodViewBounds'
  * @typedef {{ type: 'surge', seaU: number, seaV: number, inlandU: number, inlandV: number, progress: number, crossRadius?: number, feather?: number }} FloodSurgeMask
  */
 
-const pushTriangle = (indices, a, b, c) => {
-  indices.push(a, b, c)
-}
-
 const surgeMaskWeight = (u, v, mask) => {
   const axisU = mask.inlandU - mask.seaU
   const axisV = mask.inlandV - mask.seaV

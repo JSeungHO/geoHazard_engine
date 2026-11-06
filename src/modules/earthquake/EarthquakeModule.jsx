@@ -32,7 +32,6 @@ import { EarthquakeWaveModel } from '../../physics/EarthquakeWaveModel'
 import {
   buildAftershockPlan,
   getTotalSimulationMs,
-  resolveSimulationEvent,
 } from './constants/earthquakeAftershocks'
 import useMapLayout from '../flood/hooks/useMapLayout'
 import './EarthquakeModule.css'

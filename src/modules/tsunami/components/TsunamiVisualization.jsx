@@ -488,7 +488,7 @@ export default function TsunamiVisualization({
         || lastSummaryReportMsRef.current < 0
       ) {
         lastSummaryReportMsRef.current = elapsed
-        const summary = reportSummary(viewer, model, elapsed)
+        reportSummary(viewer, model, elapsed)
 
         if (model.isSimulationComplete(elapsed)) {
           onSimDone?.()
@@ -505,6 +505,8 @@ export default function TsunamiVisualization({
     return () => {
       stopRaf()
     }
+  // reportSummary는 매 렌더 재생성 — 의존성에 넣으면 RAF 루프가 매 렌더 재시작된다.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     viewerRef,
     simState,

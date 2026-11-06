@@ -405,6 +405,11 @@ export default function FloodVisualization({
   const fixedBoundsRef = useRef(fixedBounds)
   const floodMaskRef = useRef(floodMask)
   const omitBodyRef = useRef(omitBody)
+  const simRef = useRef(null)
+  const boundsRef = useRef(null)
+  const waterLevelRef = useRef(waterLevel)
+  const rainIntensityRef = useRef(rainIntensity)
+  const simulationOptionsRef = useRef(simulationOptions)
 
   useEffect(() => {
     fixedBoundsRef.current = fixedBounds
@@ -436,11 +441,6 @@ export default function FloodVisualization({
     surfaceMaterialFactoryRef.current = surfaceMaterialFactory
     bodyMaterialFactoryRef.current = bodyMaterialFactory
   }, [surfaceMaterialFactory, bodyMaterialFactory])
-  const simRef = useRef(null)
-  const boundsRef = useRef(null)
-  const waterLevelRef = useRef(waterLevel)
-  const rainIntensityRef = useRef(rainIntensity)
-  const simulationOptionsRef = useRef(simulationOptions)
   const isSimulationActive = waterLevel > 0
 
   useEffect(() => {

@@ -6,14 +6,12 @@
  */
 
 import {
-  ImageryLayer,
   Rectangle,
   SingleTileImageryProvider,
 } from 'cesium'
 import { haversineDistanceM } from '../../../physics/EarthquakeWaveModel'
 import { computeMMIBounds } from './earthquakeMMILayer'
 
-const LAYER_ID = 'eq-liquefaction-overlay'
 const DEFAULT_SIZE = 192
 const BUCKET_M = 50_000
 

@@ -66,24 +66,28 @@ export default function SceneLayerController({ viewerRef, layerVisibility, insta
     return () => {
       cancelled = true
     }
-  }, [viewerRef, layerVisibility])
+  }, [viewerRef, layerVisibility, layerInstancesRef])
 
   useEffect(() => {
+    // ref가 가리키는 객체는 컴포넌트 수명 동안 바뀌지 않으므로 effect 시작 시점에 고정한다.
+    const instances = layerInstancesRef.current
+    const loading = loadingRef.current
+
     return () => {
       const viewer = getViewer(viewerRef)
       if (!viewer) return
 
       SCENE_LAYER_DEFS.forEach((layer) => {
-        const instance = layerInstancesRef.current[layer.id]
+        const instance = instances[layer.id]
         if (!instance) return
 
         const runtime = SCENE_LAYER_RUNTIME[layer.id]
         runtime?.destroy(viewer, instance)
-        delete layerInstancesRef.current[layer.id]
+        delete instances[layer.id]
       })
-      loadingRef.current.clear()
+      loading.clear()
     }
-  }, [viewerRef])
+  }, [viewerRef, layerInstancesRef])
 
   return null
 }

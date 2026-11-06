@@ -7,13 +7,11 @@
  */
 
 import {
-  ImageryLayer,
   Rectangle,
   SingleTileImageryProvider,
 } from 'cesium'
 import { MMI_COLORS } from '../../../physics/EarthquakeWaveModel'
 
-const LAYER_ID = 'eq-mmi-overlay'
 const DEFAULT_SIZE = 256
 const S_RADIUS_BUCKET_M = 50_000
 

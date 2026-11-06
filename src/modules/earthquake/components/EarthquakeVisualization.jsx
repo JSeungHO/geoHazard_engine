@@ -287,16 +287,6 @@ export default function EarthquakeVisualization({
   useEffect(() => { citiesRef.current = cities }, [cities])
   useEffect(() => { layerVisibilityRef.current = layerVisibility }, [layerVisibility])
 
-  // OSM 레이어 토글 시 건물 효과 동기화
-  useEffect(() => {
-    const tileset = layerInstancesRef?.current?.osmBuildings
-    const model = modelRef.current
-    if (!tileset || !model || simStateRef.current === 'idle') return
-
-    const summary = model.getImpactSummary(elapsedMsRef.current, citiesRef.current)
-    syncBuildingLayer(summary, elapsedMsRef.current, simStateRef.current)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layerVisibility?.osmBuildings])
 
   const syncBuildingLayer = (summary, elapsed, state, eventEpicenter) => {
     const tileset = layerInstancesRef?.current?.osmBuildings
@@ -319,6 +309,17 @@ export default function EarthquakeVisualization({
       layerVisible: layerVisibilityRef.current?.osmBuildings !== false,
     }, buildingCacheRef.current)
   }
+
+  // OSM 레이어 토글 시 건물 효과 동기화
+  useEffect(() => {
+    const tileset = layerInstancesRef?.current?.osmBuildings
+    const model = modelRef.current
+    if (!tileset || !model || simStateRef.current === 'idle') return
+
+    const summary = model.getImpactSummary(elapsedMsRef.current, citiesRef.current)
+    syncBuildingLayer(summary, elapsedMsRef.current, simStateRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layerVisibility?.osmBuildings])
 
   const syncPhase4Effects = (viewer, model, event, summary, eventElapsed) => {
     if (!viewer) return
@@ -449,6 +450,13 @@ export default function EarthquakeVisualization({
   useEffect(() => {
     const viewer = getViewer(viewerRef)
     if (!viewer) return undefined
+
+    // 캐시 객체는 컴포넌트 수명 동안 동일 — cleanup에서 쓰도록 고정
+    const mmiCache = mmiCacheRef.current
+    const crackCache = crackCacheRef.current
+    const liqCache = liqCacheRef.current
+    const buildingCache = buildingCacheRef.current
+    const layerInstances = layerInstancesRef?.current
 
     const stopRaf = () => {
       if (rafIdRef.current != null) {
@@ -596,14 +604,17 @@ export default function EarthquakeVisualization({
     return () => {
       stopRaf()
       if (!viewer.isDestroyed?.()) {
-        clearMMILayer(viewer, mmiCacheRef.current)
-        clearCrackLines(viewer, crackCacheRef.current)
-        clearLiquefactionLayer(viewer, liqCacheRef.current)
+        clearMMILayer(viewer, mmiCache)
+        clearCrackLines(viewer, crackCache)
+        clearLiquefactionLayer(viewer, liqCache)
         removeAftershockEntity(viewer)
-        const tileset = layerInstancesRef?.current?.osmBuildings
-        if (tileset) clearBuildingEffects(tileset, buildingCacheRef.current)
+        const tileset = layerInstances?.osmBuildings
+        if (tileset) clearBuildingEffects(tileset, buildingCache)
       }
     }
+  // applySimulationFrame·syncBuildingLayer는 매 렌더 재생성되는 함수로, 최신 값은 ref로 읽는다.
+  // 의존성에 넣으면 매 렌더마다 RAF 루프가 재시작되므로 의도적으로 제외한다.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     viewerRef,
     layerInstancesRef,

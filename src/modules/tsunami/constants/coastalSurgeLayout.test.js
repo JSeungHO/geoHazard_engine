@@ -18,11 +18,7 @@ describe('getCoastalSurgeLayout', () => {
   })
 
   it('surge mask is wet near sea and dry far inland at early spread', () => {
-    const { bounds, mask } = getCoastalSurgeLayout(POHANG, EAST_SEA, 0.15, 8)
-    const west = bounds.west
-    const south = bounds.south
-    const east = bounds.east
-    const north = bounds.north
+    const { mask } = getCoastalSurgeLayout(POHANG, EAST_SEA, 0.15, 8)
 
     const seaWeight = floodMaskWeight(mask.seaU, mask.seaV, mask)
     const inlandWeight = floodMaskWeight(mask.inlandU, mask.inlandV, mask)
