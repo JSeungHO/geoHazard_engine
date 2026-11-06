@@ -16,6 +16,7 @@ import CesiumMapViewer from '../../components/CesiumMapViewer'
 import EarthquakeMainUI from './components/EarthquakeMainUI'
 import EarthquakeVisualization from './components/EarthquakeVisualization'
 import SceneLayersPanel from '../../components/SceneLayersPanel'
+import MmiLegend from './components/MmiLegend'
 import SceneLayerController from '../../components/SceneLayerController'
 import MapStatusBar from '../../components/MapStatusBar'
 import SimulationErrorBoundary from '../../components/SimulationErrorBoundary'
@@ -81,7 +82,6 @@ export default function EarthquakeModule() {
   const [impactSummary, setImpactSummary] = useState(null)
   const [elapsedMs, setElapsedMs] = useState(0)
   const [pRadiusM, setPRadiusM] = useState(0)
-  const [sRadiusM, setSRadiusM] = useState(0)
   const [seekMs, setSeekMs] = useState(null)
   const [isPickMode, setIsPickMode] = useState(false)
   const [shakeAlert, setShakeAlert] = useState(null)
@@ -183,7 +183,6 @@ export default function EarthquakeModule() {
     setImpactSummary(null)
     setElapsedMs(0)
     setPRadiusM(0)
-    setSRadiusM(0)
     setSeekMs(null)
     setIsPickMode(false)
     setShakeAlert(null)
@@ -202,10 +201,9 @@ export default function EarthquakeModule() {
     setImpactSummary(summary)
   }, [])
 
-  const handleStatsChange = useCallback(({ elapsedMs: e, pRadiusM: p, sRadiusM: s }) => {
+  const handleStatsChange = useCallback(({ elapsedMs: e, pRadiusM: p }) => {
     setElapsedMs(e)
     setPRadiusM(p)
-    setSRadiusM(s)
   }, [])
 
   const handleSeek = useCallback((ms) => {
@@ -229,14 +227,16 @@ export default function EarthquakeModule() {
 
   useMapLayout(mapContainerRef, viewerRef, isViewerReady)
 
-  // MapStatusBar pill 텍스트
-  const statusLabel = useMemo(() => {
-    if (simState === 'idle') return '지진 대기'
-    if (activeAftershock) return `🟠 ${activeAftershock.label}`
-    if (shakeAlert) return '🔴 흔들림 감지'
-    if (simState === 'running') return '⚫ 지진파 전파 중'
-    if (simState === 'paused') return '일시정지'
-    return '전파 완료'
+  // MapStatusBar 모듈 상태
+  const status = useMemo(() => {
+    if (simState === 'idle') return { label: '대기' }
+    if (activeAftershock) {
+      return { label: activeAftershock.label, value: `M ${activeAftershock.magnitude.toFixed(1)}`, tone: 'warning' }
+    }
+    if (shakeAlert) return { label: '흔들림 감지', value: `MMI ${shakeAlert.mmiLabel}`, tone: 'danger' }
+    if (simState === 'running') return { label: '지진파 전파 중', tone: 'accent' }
+    if (simState === 'paused') return { label: '일시정지' }
+    return { label: '전파 종료' }
   }, [simState, shakeAlert, activeAftershock])
 
   return (
@@ -249,7 +249,6 @@ export default function EarthquakeModule() {
         impactSummary={impactSummary}
         elapsedMs={elapsedMs}
         pRadiusM={pRadiusM}
-        sRadiusM={sRadiusM}
         totalMs={totalMs}
         isPickMode={isPickMode}
         shakeAlert={shakeAlert}
@@ -304,23 +303,18 @@ export default function EarthquakeModule() {
                   onCameraShake={handleCameraShake}
                 />
               </SimulationErrorBoundary>
-              <MapStatusBar
-                viewerRef={viewerRef}
-                isActive={isViewerReady}
-                waterLevel={0}
-                levelLabel={statusLabel}
+              <SceneLayersPanel
+                layerVisibility={layerVisibility}
+                onLayerVisibilityChange={handleLayerVisibilityChange}
+                onFlyTo={handleFlyToOverview}
+                flyToLabel="진앙 조망으로 이동"
               />
+              <MmiLegend />
+              <MapStatusBar viewerRef={viewerRef} isActive={isViewerReady} status={status} />
             </>
           )}
         </div>
       </div>
-
-      <SceneLayersPanel
-        layerVisibility={layerVisibility}
-        onLayerVisibilityChange={handleLayerVisibilityChange}
-        onFlyToGangnam={handleFlyToOverview}
-        flyToLabel="진앙 조망"
-      />
     </div>
   )
 }

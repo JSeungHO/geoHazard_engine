@@ -284,23 +284,25 @@ export default function TsunamiModule() {
                   onStatsChange={handleStatsChange}
                 />
               </SimulationErrorBoundary>
+              <SceneLayersPanel
+                layerVisibility={layerVisibility}
+                onLayerVisibilityChange={handleLayerVisibilityChange}
+                onFlyTo={handleFlyToOverview}
+                flyToLabel="연안 조망으로 이동"
+              />
               <MapStatusBar
                 viewerRef={viewerRef}
                 isActive={isViewerReady}
-                waterLevel={impactSummary?.maxWaveHeightM ?? 0}
-                levelLabel="최대 파고"
+                status={
+                  impactSummary?.maxWaveHeightM
+                    ? { label: '최대 파고', value: `${impactSummary.maxWaveHeightM.toFixed(2)} m`, tone: 'accent' }
+                    : null
+                }
               />
             </>
           )}
         </div>
       </div>
-
-      <SceneLayersPanel
-        layerVisibility={layerVisibility}
-        onLayerVisibilityChange={handleLayerVisibilityChange}
-        onFlyToGangnam={handleFlyToOverview}
-        flyToLabel="연안 조망"
-      />
     </div>
   )
 }

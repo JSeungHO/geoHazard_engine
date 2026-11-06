@@ -3,7 +3,8 @@ import WaterLevelControl from './WaterLevelControl'
 import SimulationOptions from './SimulationOptions'
 import ScenarioPanel from './ScenarioPanel'
 import CollapsibleSection from '../../../components/CollapsibleSection'
-import './FloodMainUI.css'
+import Panel from '../../../components/ui/Panel'
+import { rainIntensityToMmPerHour } from '../utils/displayUnits'
 
 export default function FloodMainUI({
   rainIntensity,
@@ -20,63 +21,35 @@ export default function FloodMainUI({
   onReset,
 }) {
   return (
-    <aside className="flood-main-ui">
-      <header className="flood-main-ui__header">
-        <div className="flood-main-ui__header-row">
-          <div>
-            <h1 className="flood-main-ui__title">GeoHazard Engine</h1>
-            <p className="flood-main-ui__subtitle">강남역 침수 · 강수 시뮬레이션</p>
-          </div>
-          <button type="button" className="flood-main-ui__reset" onClick={onReset}>
-            초기화
-          </button>
-        </div>
-      </header>
+    <Panel title="도시 침수" location="서울 강남구 · 강남역 일대" onReset={onReset} label="침수 시뮬레이션 설정">
+      <CollapsibleSection title="시나리오" defaultOpen>
+        <ScenarioPanel onApply={onScenarioApply} activeScenarioId={activeScenarioId} />
+      </CollapsibleSection>
 
-      <div className="flood-main-ui__content">
-        <CollapsibleSection title="📋 시나리오" defaultOpen>
-          <ScenarioPanel onApply={onScenarioApply} activeScenarioId={activeScenarioId} />
-        </CollapsibleSection>
+      <CollapsibleSection
+        title="강우"
+        defaultOpen
+        aside={rainIntensity > 0 ? `${rainIntensityToMmPerHour(rainIntensity)} mm/h` : null}
+      >
+        <RainControl
+          intensity={rainIntensity}
+          onIntensityChange={onRainIntensityChange}
+          autoAccumulate={autoWaterRise}
+          onAutoAccumulateChange={onAutoWaterRiseChange}
+        />
+      </CollapsibleSection>
 
-        <CollapsibleSection title="강수" defaultOpen badge={`${rainIntensity}%`}>
-          <RainControl
-            intensity={rainIntensity}
-            onIntensityChange={onRainIntensityChange}
-            autoAccumulate={autoWaterRise}
-            onAutoAccumulateChange={onAutoWaterRiseChange}
-          />
-        </CollapsibleSection>
+      <CollapsibleSection title="수위" defaultOpen aside={`${Number(waterLevel).toFixed(2)} m`}>
+        <WaterLevelControl waterLevel={waterLevel} onWaterLevelChange={onWaterLevelChange} />
+      </CollapsibleSection>
 
-        <CollapsibleSection
-          title="수위"
-          defaultOpen
-          badge={`${Number(waterLevel).toFixed(2)} m`}
-        >
-          <WaterLevelControl
-            waterLevel={waterLevel}
-            onWaterLevelChange={onWaterLevelChange}
-          />
-        </CollapsibleSection>
-
-        <CollapsibleSection title="시뮬레이션 옵션">
-          <SimulationOptions
-            options={simulationOptions}
-            onOptionChange={onOptionChange}
-            onPresetApply={onPresetApply}
-          />
-        </CollapsibleSection>
-      </div>
-
-      <footer className="flood-main-ui__footer">
-        <div className="flood-main-ui__stat">
-          <span className="flood-main-ui__stat-label">강수</span>
-          <span className="flood-main-ui__stat-value">{rainIntensity}%</span>
-        </div>
-        <div className="flood-main-ui__stat">
-          <span className="flood-main-ui__stat-label">수위</span>
-          <span className="flood-main-ui__stat-value">{Number(waterLevel).toFixed(2)} m</span>
-        </div>
-      </footer>
-    </aside>
+      <CollapsibleSection title="시뮬레이션 옵션">
+        <SimulationOptions
+          options={simulationOptions}
+          onOptionChange={onOptionChange}
+          onPresetApply={onPresetApply}
+        />
+      </CollapsibleSection>
+    </Panel>
   )
 }

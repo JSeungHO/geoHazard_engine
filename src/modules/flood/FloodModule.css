@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  background: var(--color-bg);
+  background: var(--bg-app);
   isolation: isolate;
 }
 
@@ -16,7 +16,6 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
-  margin-right: 280px;
   overflow: hidden;
 }
 
@@ -24,10 +23,6 @@
   position: relative;
   z-index: 0;
   overflow: hidden;
-}
-
-.flood-module-map .map-status-bar {
-  padding-right: 120px;
 }
 
 .flood-module-map .cesium-map-viewer,

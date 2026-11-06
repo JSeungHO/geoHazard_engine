@@ -6,6 +6,9 @@
 export const EPICENTER_PRESETS = [
   {
     id: 'gyeongju_2016',
+    name: '경주',
+    year: 2016,
+    kind: 'historical',
     label: '경주 (2016)',
     lat: 35.76,
     lon: 129.19,
@@ -15,6 +18,9 @@ export const EPICENTER_PRESETS = [
   },
   {
     id: 'pohang_2017',
+    name: '포항',
+    year: 2017,
+    kind: 'historical',
     label: '포항 (2017)',
     lat: 36.11,
     lon: 129.36,
@@ -24,6 +30,9 @@ export const EPICENTER_PRESETS = [
   },
   {
     id: 'yangsan_fault',
+    name: '양산단층',
+    year: null,
+    kind: 'scenario',
     label: '양산단층 (가상)',
     lat: 35.50,
     lon: 129.15,
@@ -33,6 +42,9 @@ export const EPICENTER_PRESETS = [
   },
   {
     id: 'west_sea',
+    name: '서해 해역',
+    year: null,
+    kind: 'scenario',
     label: '서해 해역 (가상)',
     lat: 36.0,
     lon: 124.5,
@@ -42,6 +54,9 @@ export const EPICENTER_PRESETS = [
   },
   {
     id: 'east_sea',
+    name: '동해 해역',
+    year: null,
+    kind: 'scenario',
     label: '동해 해역 (가상)',
     lat: 37.5,
     lon: 131.5,

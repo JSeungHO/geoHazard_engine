@@ -6,47 +6,82 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 10px 16px;
-  background: rgba(15, 23, 42, 0.88);
-  border-top: 1px solid var(--color-border);
+  gap: 20px;
+  height: var(--statusbar-height);
+  padding: 0 48px 0 12px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-overlay);
   pointer-events: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: var(--fs-xs);
 }
 
 .map-status-bar__item {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
 .map-status-bar__label {
   flex-shrink: 0;
-  color: var(--color-text-subtle);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  color: var(--text-3);
 }
 
 .map-status-bar__value {
-  color: var(--color-text);
-  font-size: 12px;
-  font-weight: 500;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.map-status-bar__value--primary {
-  color: var(--color-primary);
+.map-status-bar__item:nth-child(1) .map-status-bar__value,
+.map-status-bar__item:nth-child(2) .map-status-bar__value {
+  min-width: 11ch;
 }
 
-.map-status-bar__value--danger {
-  color: var(--color-danger);
-}
-
-.map-status-bar__item--flood {
+.map-status-bar__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-left: auto;
-  padding-left: 20px;
-  border-left: 1px solid var(--color-border);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.map-status-bar__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+
+.map-status-bar__status--accent .map-status-bar__dot { background: var(--accent); }
+.map-status-bar__status--warning .map-status-bar__dot { background: var(--warning); }
+.map-status-bar__status--danger .map-status-bar__dot { background: var(--danger); }
+
+.map-status-bar__status--warning,
+.map-status-bar__status--danger {
+  color: var(--text-1);
+}
+
+/* Cesium 크레딧·전체화면 버튼을 상태 바 위로 정렬 */
+.cesium-viewer-bottom {
+  bottom: calc(var(--statusbar-height) + 4px) !important;
+  opacity: 0.6;
+}
+
+.cesium-viewer-fullscreenContainer {
+  bottom: 0 !important;
+  right: 0 !important;
+  width: var(--statusbar-height) !important;
+  height: var(--statusbar-height) !important;
+  z-index: 21;
+}
+
+.cesium-viewer-fullscreenContainer .cesium-button {
+  border: none;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
 }

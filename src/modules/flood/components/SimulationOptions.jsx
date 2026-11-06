@@ -1,6 +1,6 @@
 import { SIMULATION_OPTION_RANGES, WAVE_PRESETS, findActivePresetId } from '../constants/simulationDefaults'
 import CollapsibleSection from '../../../components/CollapsibleSection'
-import './SimulationOptions.css'
+import Field from '../../../components/ui/Field'
 
 const OPTION_SECTIONS = [
   {
@@ -66,25 +66,17 @@ function OptionSlider({ optionKey, label, hint, value, format, onChange }) {
   const range = SIMULATION_OPTION_RANGES[optionKey]
 
   return (
-    <div className="sim-option-field">
-      <label htmlFor={`opt-${optionKey}`} className="sim-option-label">
-        {label}
-      </label>
-      <input
-        id={`opt-${optionKey}`}
-        type="range"
-        min={range.min}
-        max={range.max}
-        step={range.step}
-        value={value}
-        onChange={(e) => onChange(optionKey, Number(e.target.value))}
-        className="sim-option-slider"
-      />
-      <div className="sim-option-meta">
-        <span className="sim-option-value">{format(value)}</span>
-        <span className="sim-option-hint">{hint}</span>
-      </div>
-    </div>
+    <Field
+      id={`opt-${optionKey}`}
+      label={label}
+      value={value}
+      displayValue={format(value)}
+      min={range.min}
+      max={range.max}
+      step={range.step}
+      hint={hint}
+      onChange={(next) => onChange(optionKey, next)}
+    />
   )
 }
 
@@ -92,13 +84,13 @@ export default function SimulationOptions({ options, onOptionChange, onPresetApp
   const activePresetId = findActivePresetId(options)
 
   return (
-    <div className="sim-options">
-      <div className="sim-preset-bar" role="group" aria-label="시뮬레이션 프리셋">
+    <>
+      <div className="segmented" role="group" aria-label="수면 표현 프리셋">
         {WAVE_PRESETS.map((preset) => (
           <button
             key={preset.id}
             type="button"
-            className={`sim-preset-btn ${activePresetId === preset.id ? 'sim-preset-btn--active' : ''}`}
+            className={`segmented__item${activePresetId === preset.id ? ' segmented__item--active' : ''}`}
             title={preset.description}
             aria-pressed={activePresetId === preset.id}
             onClick={() => onPresetApply(preset.values)}
@@ -108,21 +100,23 @@ export default function SimulationOptions({ options, onOptionChange, onPresetApp
         ))}
       </div>
 
-      {OPTION_SECTIONS.map((section) => (
-        <CollapsibleSection key={section.title} title={section.title} nested>
-          {section.items.map((item) => (
-            <OptionSlider
-              key={item.key}
-              optionKey={item.key}
-              label={item.label}
-              hint={item.hint}
-              value={options[item.key]}
-              format={item.format}
-              onChange={onOptionChange}
-            />
-          ))}
-        </CollapsibleSection>
-      ))}
-    </div>
+      <div>
+        {OPTION_SECTIONS.map((section) => (
+          <CollapsibleSection key={section.title} title={section.title} nested>
+            {section.items.map((item) => (
+              <OptionSlider
+                key={item.key}
+                optionKey={item.key}
+                label={item.label}
+                hint={item.hint}
+                value={options[item.key]}
+                format={item.format}
+                onChange={onOptionChange}
+              />
+            ))}
+          </CollapsibleSection>
+        ))}
+      </div>
+    </>
   )
 }

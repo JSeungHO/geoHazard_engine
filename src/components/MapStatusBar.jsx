@@ -10,11 +10,12 @@ import './MapStatusBar.css'
 const formatCoord = (value, positiveSuffix, negativeSuffix) => {
   const abs = Math.abs(value).toFixed(5)
   const suffix = value >= 0 ? positiveSuffix : negativeSuffix
-  return `${abs}°${suffix}`
+  return `${abs}° ${suffix}`
 }
 
 const formatMeters = (value) => {
   if (value == null || Number.isNaN(value)) return '—'
+  if (Math.abs(value) >= 10_000) return `${(value / 1000).toFixed(1)} km`
   return `${value.toFixed(1)} m`
 }
 
@@ -24,7 +25,11 @@ const getViewer = (viewerRef) => {
   return viewer
 }
 
-export default function MapStatusBar({ viewerRef, isActive = false, waterLevel = 0, levelLabel = '침수' }) {
+/**
+ * 지도 하단 상태 바 — 커서 좌표·고도와 모듈 상태 표시.
+ * @param {{ status?: { label: string, value?: string, tone?: 'neutral' | 'accent' | 'warning' | 'danger' } | null }} props
+ */
+export default function MapStatusBar({ viewerRef, isActive = false, status = null }) {
   const [mouseLat, setMouseLat] = useState(null)
   const [mouseLon, setMouseLon] = useState(null)
   const [elevation, setElevation] = useState(null)
@@ -81,33 +86,28 @@ export default function MapStatusBar({ viewerRef, isActive = false, waterLevel =
   const hasMouse = mouseLat != null && mouseLon != null
 
   return (
-    <div className="map-status-bar">
+    <div className="map-status-bar" role="status">
       <div className="map-status-bar__item">
-        <span className="map-status-bar__label">경위도</span>
-        <span className="map-status-bar__value">
-          {hasMouse
-            ? `${formatCoord(mouseLat, 'N', 'S')}, ${formatCoord(mouseLon, 'E', 'W')}`
-            : '—'}
-        </span>
+        <span className="map-status-bar__label">위도</span>
+        <span className="map-status-bar__value">{hasMouse ? formatCoord(mouseLat, 'N', 'S') : '—'}</span>
       </div>
       <div className="map-status-bar__item">
-        <span className="map-status-bar__label">카메라 고도</span>
-        <span className="map-status-bar__value map-status-bar__value--primary">
-          {formatMeters(cameraHeight)}
-        </span>
+        <span className="map-status-bar__label">경도</span>
+        <span className="map-status-bar__value">{hasMouse ? formatCoord(mouseLon, 'E', 'W') : '—'}</span>
       </div>
       <div className="map-status-bar__item">
-        <span className="map-status-bar__label">지표 고도</span>
-        <span className="map-status-bar__value map-status-bar__value--danger">
-          {formatMeters(elevation)}
-        </span>
+        <span className="map-status-bar__label">지표고</span>
+        <span className="map-status-bar__value">{formatMeters(elevation)}</span>
       </div>
-      {waterLevel > 0 && (
-        <div className="map-status-bar__item map-status-bar__item--flood">
-          <span className="map-status-bar__label">{levelLabel}</span>
-          <span className="map-status-bar__value map-status-bar__value--danger">
-            💧 {Number(waterLevel).toFixed(2)} m
-          </span>
+      <div className="map-status-bar__item">
+        <span className="map-status-bar__label">카메라</span>
+        <span className="map-status-bar__value">{formatMeters(cameraHeight)}</span>
+      </div>
+      {status && (
+        <div className={`map-status-bar__status map-status-bar__status--${status.tone ?? 'neutral'}`}>
+          <span className="map-status-bar__dot" aria-hidden="true" />
+          <span>{status.label}</span>
+          {status.value && <span className="map-status-bar__value">{status.value}</span>}
         </div>
       )}
     </div>

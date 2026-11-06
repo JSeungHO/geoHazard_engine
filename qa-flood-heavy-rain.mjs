@@ -18,7 +18,7 @@ page.on('console', (msg) => {
 await page.goto('http://localhost:5173', { waitUntil: 'load', timeout: 60000 })
 await page.waitForTimeout(8000)
 
-const heavyRain = page.locator('button.scenario-btn', { hasText: '집중호우' })
+const heavyRain = page.locator('button.option-row', { hasText: '집중호우' })
 await heavyRain.click()
 await page.waitForTimeout(8000)
 

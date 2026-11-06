@@ -1,39 +1,32 @@
 .mobile-warning {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 100000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
-  padding: 24px;
+  padding: 16px;
+  background: var(--bg-app);
 }
 
 .mobile-warning__card {
-  max-width: 320px;
+  max-width: 340px;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
 }
 
 .mobile-warning__icon {
-  font-size: 48px;
-  line-height: 1;
+  color: var(--text-2);
 }
 
 .mobile-warning__title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text);
-  letter-spacing: -0.02em;
+  margin-top: 12px;
+  font-size: var(--fs-lg);
+  font-weight: 600;
 }
 
 .mobile-warning__body {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-text-muted);
+  margin-top: 6px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
   line-height: 1.6;
 }

@@ -63,8 +63,8 @@ if (await eqTab.count() > 0) {
 }
 
 // ─── 공용 locators ───────────────────────────────────────────
-const playBtn    = page.locator('button').filter({ hasText: /^▶ 시작$|^시작$/ }).first()
-const resumeBtn  = page.locator('button').filter({ hasText: /^▶ 재개$|^재개$/ }).first()
+const playBtn    = page.locator('button').filter({ hasText: /^(▶ )?(시뮬레이션 )?시작$/ }).first()
+const resumeBtn  = page.locator('button').filter({ hasText: /^(▶ )?재개$/ }).first()
 const pauseBtn   = page.locator('button').filter({ hasText: /일시정지|⏸/ }).first()
 const resetBtn   = page.locator('button').filter({ hasText: /초기화/ }).first()
 
@@ -91,7 +91,7 @@ if (await gyeongjuPreset.count() > 0) {
 
 // ─── #1,#2 시작 → P/S파 ring 확산 ───────────────────────────
 console.log('\n🔷 #1,#2 시뮬 시작 → ring 확산...')
-const startLocator = page.locator('button').filter({ hasText: /▶ 시작|시작/ }).first()
+const startLocator = page.locator('button').filter({ hasText: /시뮬레이션 시작|▶ 시작/ }).first()
 if (await startLocator.count() > 0) {
   await startLocator.click()
   await page.waitForTimeout(3000)
@@ -130,7 +130,7 @@ if (await pauseLocator.count() > 0) {
   await shot(page, '06-paused')
   pass(6, '일시정지')
 
-  const resumeLocator = page.locator('button').filter({ hasText: /▶ 재개|재개/ }).first()
+  const resumeLocator = page.locator('button').filter({ hasText: /^재개$|▶ 재개/ }).first()
   if (await resumeLocator.count() > 0) {
     await resumeLocator.click()
     await page.waitForTimeout(1200)
@@ -181,7 +181,7 @@ if (await resetBtn.count() > 0) {
 
 // ─── #8 탭 전환 후 재진입 ─────────────────────────────────────
 console.log('\n🔷 #8 홍수 탭 전환 후 재진입...')
-const floodTab = page.locator('button, [role="tab"]').filter({ hasText: /홍수|flood/i }).first()
+const floodTab = page.locator('button, [role="tab"]').filter({ hasText: /침수|홍수|flood/i }).first()
 if (await floodTab.count() > 0) {
   await floodTab.click()
   await page.waitForTimeout(2000)
@@ -231,7 +231,7 @@ if (await pickBtn.count() > 0) {
 console.log('\n🔷 #11 초기화 후 규모 슬라이더...')
 if (await resetBtn.count() > 0) await resetBtn.click()
 await page.waitForTimeout(1000)
-const magnitudeSlider = page.locator('.earthquake-main-ui input[type="range"]').first()
+const magnitudeSlider = page.locator('.panel input[type="range"]').first()
 if (await magnitudeSlider.count() > 0) {
   const sliderBox = await magnitudeSlider.boundingBox()
   if (sliderBox) {
@@ -257,7 +257,7 @@ await page.waitForTimeout(1000)
 // ═══════════════════════════════════════════════════════════════
 console.log('\n🔷 [Phase 3] OSM 건물 토글 ON...')
 // SceneLayersPanel 은 항상 visible (fixed right)
-const osmToggle = page.locator('[role="switch"][aria-label*="OSM 건물"]').first()
+const osmToggle = page.getByRole('switch', { name: /OSM 건물/ }).first()
 if (await osmToggle.count() > 0) {
   const isOn = (await osmToggle.getAttribute('aria-checked')) === 'true'
   if (!isOn) {
@@ -287,7 +287,7 @@ if (await yangsanPreset.count() > 0) {
 }
 
 console.log('\n🔷 [Phase 3] 시뮬 시작 → S파 도달 대기...')
-const startForP3 = page.locator('button').filter({ hasText: /▶ 시작|시작/ }).first()
+const startForP3 = page.locator('button').filter({ hasText: /시뮬레이션 시작|▶ 시작/ }).first()
 if (await startForP3.count() > 0) {
   await startForP3.click()
   // S파가 울산(~18km)에 도달하려면 ~0.1s 실시간 → 넉넉히 5초 대기
@@ -322,9 +322,9 @@ if (await yangsanP4.count() > 0) {
 }
 
 // "여진 시퀀스 포함" 체크박스 확인
-const aftershockCheckbox = page.locator('input[type="checkbox"]').first()
+const aftershockCheckbox = page.getByRole('switch', { name: /여진/ }).first()
 if (await aftershockCheckbox.count() > 0) {
-  const checked = await aftershockCheckbox.isChecked()
+  const checked = (await aftershockCheckbox.getAttribute('aria-checked')) === 'true'
   if (checked) {
     pass('P4-toggle', '여진 시퀀스 포함 체크박스 ON 확인')
   } else {
@@ -337,7 +337,7 @@ if (await aftershockCheckbox.count() > 0) {
 }
 
 console.log('\n🔷 [Phase 4] 전체 시뮬 실행 → 여진·균열·액상화 대기...')
-const startP4 = page.locator('button').filter({ hasText: /▶ 시작|시작/ }).first()
+const startP4 = page.locator('button').filter({ hasText: /시뮬레이션 시작|▶ 시작/ }).first()
 if (await startP4.count() > 0) {
   await startP4.click()
 
@@ -372,7 +372,7 @@ if (await startP4.count() > 0) {
   else                    warn('P4-aftershock-ring', '여진 ring 텍스트 미확인 — 스크린샷 육안 확인 필요')
 
   // done 상태 확인
-  const isDoneState = /전파 완료|완료/.test(bodyP4)
+  const isDoneState = /전파 종료|전파 완료|완료/.test(bodyP4)
   if (isDoneState) pass('P4-done', '시뮬레이션 완료 상태 확인')
   else             warn('P4-done', '완료 텍스트 미확인')
 
@@ -391,7 +391,7 @@ const yangsanP4b = page.locator('button').filter({ hasText: /양산단층/ }).fi
 if (await yangsanP4b.count() > 0) await yangsanP4b.click()
 await page.waitForTimeout(600)
 
-const startP4b = page.locator('button').filter({ hasText: /▶ 시작|시작/ }).first()
+const startP4b = page.locator('button').filter({ hasText: /시뮬레이션 시작|▶ 시작/ }).first()
 if (await startP4b.count() > 0) {
   await startP4b.click()
   // 본진 완료 (~4.5s) + 여진 시작 직후
@@ -433,7 +433,7 @@ const passCount = results.filter((r) => r.status.includes('PASS')).length
 
 console.log(`\n  PASS: ${passCount}  /  WARN: ${warnCount}  /  FAIL: ${failCount}`)
 console.log(`  JS 콘솔 에러: ${jsErrors.length}개`)
-console.log('📁 스크린샷: ./qa-screenshots/')
+console.log(`📁 스크린샷: ${SS_DIR}/`)
 console.log('═'.repeat(64))
 
 await browser.close()

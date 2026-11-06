@@ -1,4 +1,5 @@
-import './RainControl.css'
+import Field from '../../../components/ui/Field'
+import SwitchRow from '../../../components/ui/SwitchRow'
 import { rainIntensityToMmPerHour } from '../utils/displayUnits'
 
 export default function RainControl({
@@ -7,38 +8,28 @@ export default function RainControl({
   autoAccumulate,
   onAutoAccumulateChange,
 }) {
-  const mmPerHour = rainIntensityToMmPerHour(intensity)
-
   return (
-    <div className="rain-control">
-      <label htmlFor="rain-slider" className="rain-label">
-        강수량 (화면 내 강도)
-      </label>
-      <input
+    <>
+      <Field
         id="rain-slider"
-        type="range"
-        min="0"
-        max="100"
+        label="강우 강도"
         value={intensity}
-        onChange={(e) => onIntensityChange(Number(e.target.value))}
-        className="rain-slider"
+        displayValue={intensity > 0 ? `≈ ${rainIntensityToMmPerHour(intensity)}` : '0'}
+        unit="mm/h"
+        min={0}
+        max={100}
+        step={1}
+        minLabel="0"
+        maxLabel={`${rainIntensityToMmPerHour(100)} mm/h`}
+        hint={`연출 강도 ${intensity}% 기준 환산값 (교육용 근사)`}
+        onChange={onIntensityChange}
       />
-      <span className="rain-value">{intensity}%</span>
-      {intensity > 0 && (
-        <p className="rain-hint">≈ {mmPerHour} mm/h (교육용 근사치)</p>
-      )}
-
-      <button
-        type="button"
-        className={`rain-toggle ${autoAccumulate ? 'rain-toggle--on' : ''}`}
-        onClick={() => onAutoAccumulateChange(!autoAccumulate)}
-        aria-pressed={autoAccumulate}
-      >
-        <span className="rain-toggle-knob" />
-        <span className="rain-toggle-label">
-          {autoAccumulate ? '강수 → 수위 자동 상승 ON' : '강수 → 수위 자동 상승 OFF'}
-        </span>
-      </button>
-    </div>
+      <SwitchRow
+        label="강우량 연동 수위 상승"
+        description="강우 강도에 비례해 침수 깊이가 자동으로 증가합니다"
+        checked={autoAccumulate}
+        onChange={onAutoAccumulateChange}
+      />
+    </>
   )
 }

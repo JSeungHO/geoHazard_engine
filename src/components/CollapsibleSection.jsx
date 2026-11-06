@@ -1,32 +1,34 @@
-import { useState } from 'react'
-import './CollapsibleSection.css'
+import { useId, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 export default function CollapsibleSection({
   title,
   defaultOpen = false,
   nested = false,
-  badge,
+  aside,
   children,
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const bodyId = useId()
 
   return (
-    <section
-      className={`collapse-section ${nested ? 'collapse-section--nested' : ''} ${
-        open ? 'collapse-section--open' : ''
-      }`}
-    >
+    <section className={`section${nested ? ' section--nested' : ''}${open ? ' section--open' : ''}`}>
       <button
         type="button"
-        className="collapse-section__header"
+        className="section__header"
         aria-expanded={open}
+        aria-controls={bodyId}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="collapse-section__title">{title}</span>
-        {badge != null && <span className="collapse-section__badge">{badge}</span>}
-        <span className="collapse-section__chevron" aria-hidden />
+        <span className="section__title">{title}</span>
+        {aside != null && <span className="section__aside">{aside}</span>}
+        <ChevronDown className="section__chevron" size={14} strokeWidth={2} aria-hidden="true" />
       </button>
-      {open && <div className="collapse-section__body">{children}</div>}
+      {open && (
+        <div id={bodyId} className="section__body">
+          {children}
+        </div>
+      )}
     </section>
   )
 }

@@ -18,7 +18,7 @@ import {
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
 } from 'cesium'
-import { EarthquakeWaveModel, getMMILabel, getShakeParams } from '../../../physics/EarthquakeWaveModel'
+import { EarthquakeWaveModel, getMMIColor, getMMILabel, getShakeParams } from '../../../physics/EarthquakeWaveModel'
 import { startCameraShakeFromParams } from '../utils/cameraShake'
 import { syncMMILayer, clearMMILayer } from '../utils/earthquakeMMILayer'
 import { syncBuildingEffects, clearBuildingEffects } from '../utils/earthquakeBuildingEffects'
@@ -30,6 +30,9 @@ import {
 } from '../utils/earthquakeLiquefactionLayer'
 import { computeMMIBounds } from '../utils/earthquakeMMILayer'
 import { resolveSimulationEvent } from '../constants/earthquakeAftershocks'
+
+/** Cesium 라벨 폰트 — 앱 UI 서체와 통일 */
+const MAP_LABEL_FONT = "'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', sans-serif"
 
 const EPICENTER_ENTITY_ID = 'eq-epicenter'
 const AFTERSHOCK_ENTITY_ID = 'eq-aftershock-active'
@@ -79,10 +82,10 @@ function createAftershockEntity(viewer, epicenter, label) {
     },
     label: {
       text: label ?? '여진',
-      font: 'bold 11px sans-serif',
+      font: `600 11px ${MAP_LABEL_FONT}`,
       pixelOffset: new Cartesian2(0, -22),
       fillColor: Color.fromCssColorString('#FF9500'),
-      outlineColor: Color.fromCssColorString('#1A1A2E'),
+      outlineColor: Color.fromCssColorString('#0b0e12'),
       outlineWidth: 2,
       style: LabelStyle.FILL_AND_OUTLINE,
     },
@@ -116,10 +119,10 @@ function createEpicenterEntity(viewer, epicenter) {
     },
     label: {
       text: '진앙',
-      font: 'bold 12px sans-serif',
+      font: `600 12px ${MAP_LABEL_FONT}`,
       pixelOffset: new Cartesian2(0, -26),
       fillColor: Color.WHITE,
-      outlineColor: Color.fromCssColorString('#1A1A2E'),
+      outlineColor: Color.fromCssColorString('#0b0e12'),
       outlineWidth: 2,
       style: LabelStyle.FILL_AND_OUTLINE,
     },
@@ -179,10 +182,10 @@ function syncCityEntities(viewer, summary) {
     const existing = viewer.entities.getById(entityId)
 
     const color = city.sWaveReached
-      ? Color.fromCssColorString(mmiToColor(city.mmi))
+      ? Color.fromCssColorString(getMMIColor(city.mmi))
       : city.pWaveReached
         ? Color.fromCssColorString('#AAAAAA')
-        : Color.fromCssColorString('#555577')
+        : Color.fromCssColorString('#6c7380')
 
     const labelText = city.sWaveReached
       ? `${city.label} MMI ${city.mmiLabel}`
@@ -191,10 +194,10 @@ function syncCityEntities(viewer, summary) {
         : city.label
 
     const labelColor = city.sWaveReached
-      ? Color.fromCssColorString(mmiToColor(city.mmi))
+      ? Color.fromCssColorString(getMMIColor(city.mmi))
       : city.pWaveReached
         ? Color.fromCssColorString('#CCCCCC')
-        : Color.fromCssColorString('#8888AA')
+        : Color.fromCssColorString('#a1a8b3')
 
     if (!existing) {
       viewer.entities.add({
@@ -203,15 +206,15 @@ function syncCityEntities(viewer, summary) {
         point: {
           pixelSize: city.sWaveReached ? 12 : city.pWaveReached ? 9 : 7,
           color,
-          outlineColor: Color.fromCssColorString('#1A1A2E'),
+          outlineColor: Color.fromCssColorString('#0b0e12'),
           outlineWidth: 1,
         },
         label: {
           text: labelText,
-          font: '11px sans-serif',
+          font: `500 11px ${MAP_LABEL_FONT}`,
           pixelOffset: new Cartesian2(0, -20),
           fillColor: labelColor,
-          outlineColor: Color.fromCssColorString('#1A1A2E'),
+          outlineColor: Color.fromCssColorString('#0b0e12'),
           outlineWidth: 2,
           style: LabelStyle.FILL_AND_OUTLINE,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -224,18 +227,6 @@ function syncCityEntities(viewer, summary) {
       existing.label.fillColor = labelColor
     }
   })
-}
-
-/** MMI → 색상 hex */
-function mmiToColor(mmi) {
-  const clamped = Math.round(Math.max(1, Math.min(12, mmi)))
-  if (clamped <= 3) return '#FFFFFF'
-  if (clamped === 4) return '#8DD9F5'
-  if (clamped === 5) return '#FFF87A'
-  if (clamped === 6) return '#FFC700'
-  if (clamped === 7) return '#FF8C00'
-  if (clamped === 8) return '#FF4500'
-  return '#CC0000'
 }
 
 // ─── 컴포넌트 ────────────────────────────────────────────────────

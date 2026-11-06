@@ -62,9 +62,9 @@ if (await eqTab.count() > 0) {
 }
 
 console.log('\n🔷 UI 컨트롤 확인...')
-const playBtn = page.locator('button').filter({ hasText: /시작|▶/ }).first()
+const playBtn = page.locator('button').filter({ hasText: /시뮬레이션 시작|▶/ }).first()
 const resetBtn = page.locator('button').filter({ hasText: /초기화|reset/i }).first()
-const magnitudeSlider = page.locator('.earthquake-main-ui input[type="range"]').first()
+const magnitudeSlider = page.locator('.panel input[type="range"]').first()
 
 if (await playBtn.count() > 0) pass(6, '시작 버튼 존재')
 else warn(6, '시작 버튼 미발견')
@@ -108,7 +108,7 @@ if (await pauseBtn.count() > 0) {
   await shot(page, 'paused')
   pass(6, '일시정지')
 
-  const resumeBtn = page.locator('button').filter({ hasText: /재개|▶/ }).first()
+  const resumeBtn = page.locator('button').filter({ hasText: /^재개$|▶/ }).first()
   if (await resumeBtn.count() > 0) {
     await resumeBtn.click()
     await page.waitForTimeout(1200)
@@ -148,7 +148,7 @@ if (await resetBtn.count() > 0) {
 }
 
 console.log('\n🔷 #8 탭 전환 후 재진입...')
-const floodTab = page.locator('button, [role="tab"]').filter({ hasText: /홍수|flood/i }).first()
+const floodTab = page.locator('button, [role="tab"]').filter({ hasText: /침수|홍수|flood/i }).first()
 if (await floodTab.count() > 0) {
   await floodTab.click()
   await page.waitForTimeout(2000)

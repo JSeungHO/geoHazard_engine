@@ -1,0 +1,65 @@
+.mmi-legend {
+  position: absolute;
+  right: 12px;
+  bottom: calc(var(--statusbar-height) + 12px);
+  z-index: 30;
+  width: 300px;
+  padding: 10px 12px;
+}
+
+.mmi-legend__title {
+  margin-bottom: 8px;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.mmi-legend__unit {
+  margin-left: 4px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.mmi-legend__scale {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+
+.mmi-legend__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  cursor: default;
+}
+
+.mmi-legend__swatch {
+  height: 8px;
+  border-radius: 1px;
+}
+
+.mmi-legend__cell:first-child .mmi-legend__swatch {
+  border-radius: 2px 1px 1px 2px;
+}
+
+.mmi-legend__cell:last-child .mmi-legend__swatch {
+  border-radius: 1px 2px 2px 1px;
+}
+
+.mmi-legend__label {
+  color: var(--text-2);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.mmi-legend__axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  color: var(--text-3);
+  font-size: 10.5px;
+}

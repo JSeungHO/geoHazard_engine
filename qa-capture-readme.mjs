@@ -33,9 +33,9 @@ await page.waitForTimeout(6000)
 
 // ── 홍수 탭 (기본 탭) · 2022 강남역 ─────────────────────────────
 console.log('홍수: 2022 강남역 시나리오...')
-const floodTab = page.locator('.module-shell__tab', { hasText: '홍수' }).first()
+const floodTab = page.locator('.app-bar__tab', { hasText: '침수' }).first()
 if (await floodTab.count()) { await floodTab.click(); await page.waitForTimeout(1500) }
-const gangnam = page.locator('button.scenario-btn', { hasText: '2022 강남역' }).first()
+const gangnam = page.locator('button.option-row', { hasText: '2022 강남역' }).first()
 await gangnam.click()
 await page.waitForTimeout(9000) // terrain grid + 침수흔적 overlay 로딩
 await page.screenshot({ path: join(SS, 'flood-gangnam-2022.png') })
@@ -43,7 +43,7 @@ console.log('  📸 flood-gangnam-2022.png')
 
 // ── 지진 탭 · 경주 프리셋 → 시작 → 파동 프레임 캡처 ───────────
 console.log('지진: 경주 프리셋 → 시뮬 시작...')
-const eqTab = page.locator('.module-shell__tab', { hasText: '지진' }).first()
+const eqTab = page.locator('.app-bar__tab', { hasText: '지진' }).first()
 await eqTab.click()
 await page.waitForTimeout(4000)
 
@@ -51,13 +51,13 @@ const gyeongju = page.locator('button', { hasText: /경주/ }).first()
 if (await gyeongju.count()) { await gyeongju.click(); await page.waitForTimeout(1500) }
 
 // OSM 건물 ON (건물 흔들림 연출)
-const osm = page.locator('[role="switch"][aria-label*="OSM 건물"]').first()
+const osm = page.getByRole('switch', { name: /OSM 건물/ }).first()
 if (await osm.count() && (await osm.getAttribute('aria-checked')) !== 'true') {
   await osm.click()
   await page.waitForTimeout(3000)
 }
 
-const start = page.locator('button', { hasText: /▶ 시작|^시작/ }).first()
+const start = page.locator('button', { hasText: /시뮬레이션 시작|▶ 시작/ }).first()
 await start.click()
 
 // 파동 확산 프레임: 200ms 간격 × 40프레임 ≈ 8초

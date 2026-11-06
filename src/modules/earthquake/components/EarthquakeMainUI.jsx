@@ -1,16 +1,21 @@
 /**
- * EarthquakeMainUI.jsx — 지진 모듈 사이드바
+ * EarthquakeMainUI.jsx — 지진 모듈 좌측 제어 패널
  * 참조: earthquake-ui.md
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { AlertTriangle, MapPin, Pause, Play } from 'lucide-react'
 import CollapsibleSection from '../../../components/CollapsibleSection'
+import Panel from '../../../components/ui/Panel'
+import Field from '../../../components/ui/Field'
+import Slider from '../../../components/ui/Slider'
+import SwitchRow from '../../../components/ui/SwitchRow'
 import { EPICENTER_PRESETS } from '../constants/earthquakePresets'
+import { getMMIColor } from '../../../physics/EarthquakeWaveModel'
 import './EarthquakeMainUI.css'
 
 // ─── 포맷 유틸 ───────────────────────────────────────────────────
 
-const fmtElapsed = (ms) => {
+const fmtClock = (ms) => {
   const s = Math.floor(ms / 1000)
   const m = Math.floor(s / 60)
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -18,96 +23,173 @@ const fmtElapsed = (ms) => {
 
 const fmtKm = (m) => (m >= 1000 ? `${(m / 1000).toFixed(0)} km` : `${Math.round(m)} m`)
 
-const fmtSec = (ms) => `${(ms / 1000).toFixed(0)}s`
+/** 애니메이션 ms × 배속 → 물리 시간(초) 표기 */
+const fmtSec = (ms, timeScale) => {
+  const sec = (ms * timeScale) / 1000
+  return sec < 100 ? `${sec.toFixed(1)}s` : `${Math.round(sec)}s`
+}
+
+/** 애니메이션 ms × 배속 → 물리 시간 mm:ss */
+const fmtPhysClock = (ms, timeScale) => fmtClock(ms * timeScale)
 
 const fmtArea = (km2) => {
-  if (km2 >= 1_000_000) return `${(km2 / 1_000_000).toFixed(2)}M km²`
-  if (km2 >= 1000) return `${(km2 / 1000).toFixed(1)}k km²`
-  return `${Math.round(km2)} km²`
+  if (km2 >= 10_000) return `${Math.round(km2 / 1000).toLocaleString('ko-KR')}천 km²`
+  return `${Math.round(km2).toLocaleString('ko-KR')} km²`
 }
 
 const fmtPopulation = (n) => {
-  if (n >= 1_000_000) return `약 ${(n / 1_000_000).toFixed(1)}M명`
-  if (n >= 10_000) return `약 ${Math.round(n / 10_000)}만명`
-  return `약 ${Math.round(n).toLocaleString('ko-KR')}명`
+  if (n >= 10_000) return `${Math.round(n / 10_000).toLocaleString('ko-KR')}만 명`
+  return `${Math.round(n).toLocaleString('ko-KR')}명`
 }
 
 const magnitudeHint = (m) => {
-  if (m < 5.0) return 'M 4~4.9 — 소규모·일부 지역 약한 흔들림'
-  if (m < 6.0) return 'M 5~5.9 — 중규모·건물 피해 가능'
-  if (m < 7.0) return 'M 6~6.9 — 대규모·광범위한 피해'
-  return 'M 7+ — 초대규모·대규모 재난'
+  if (m < 5.0) return '소규모 — 일부 지역에서 약한 흔들림'
+  if (m < 6.0) return '중규모 — 진앙 인근 건물 피해 가능'
+  if (m < 7.0) return '대규모 — 광범위한 피해 가능'
+  return '초대규모 — 광역 재난 수준'
 }
 
-// ─── ScrubBar ────────────────────────────────────────────────────
+// ─── 진원 프리셋 ─────────────────────────────────────────────────
 
-function ScrubBar({ elapsedMs, totalMs, firstPArrivalMs, firstSArrivalMs, onSeek }) {
-  const max = Math.round(totalMs)
-  const value = Math.min(Math.round(elapsedMs), max)
-
-  const pPct = firstPArrivalMs != null && totalMs > 0 ? (firstPArrivalMs / totalMs) * 100 : null
-  const sPct = firstSArrivalMs != null && totalMs > 0 ? (firstSArrivalMs / totalMs) * 100 : null
-
+function EpicenterPresetList({ activeId, disabled, onSelect }) {
   return (
-    <div className="scrub-bar">
-      <div className="scrub-bar__track">
-        {pPct != null && (
-          <div
-            className="scrub-bar__marker scrub-bar__marker--pwave"
-            style={{ left: `${pPct}%` }}
-            title={`P파 최초 도달 ${fmtSec(firstPArrivalMs)}`}
-          />
-        )}
-        {sPct != null && (
-          <div
-            className="scrub-bar__marker scrub-bar__marker--swave"
-            style={{ left: `${sPct}%` }}
-            title={`S파 최초 도달 ${fmtSec(firstSArrivalMs)}`}
-          />
-        )}
-        <input
-          type="range"
-          className="scrub-bar__input"
-          min={0}
-          max={max}
-          step={100}
-          value={value}
-          onChange={(e) => onSeek?.(Number(e.target.value))}
-        />
-      </div>
-      <div className="scrub-bar__labels">
-        <span>0s</span>
-        {firstPArrivalMs != null && (
-          <span className="scrub-bar__label--pwave">P {fmtSec(firstPArrivalMs)}</span>
-        )}
-        {firstSArrivalMs != null && (
-          <span className="scrub-bar__label--swave">S {fmtSec(firstSArrivalMs)}</span>
-        )}
-        <span>{fmtSec(totalMs)}</span>
-      </div>
+    <div className="option-list" role="radiogroup" aria-label="진원 프리셋">
+      {EPICENTER_PRESETS.map((preset) => {
+        const isActive = activeId === preset.id
+        return (
+          <button
+            key={preset.id}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            className={`option-row${isActive ? ' option-row--active' : ''}`}
+            disabled={disabled}
+            onClick={() => onSelect(preset)}
+            title={preset.description}
+          >
+            <span className="option-row__main">
+              <span className="option-row__title">
+                {preset.name ?? preset.label}
+                {preset.kind === 'historical' ? (
+                  <span className="tag">{preset.year} 관측</span>
+                ) : (
+                  <span className="tag">가상</span>
+                )}
+              </span>
+              <span className="option-row__desc">{preset.description}</span>
+            </span>
+            <span className="option-row__meta">
+              <span>M {preset.magnitude.toFixed(1)}</span>
+              <span>{preset.depthKm} km</span>
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
 
-// ─── EarthquakeSimTimeline ───────────────────────────────────────
+// ─── 피해 추정 ───────────────────────────────────────────────────
 
-function TimelineStep({ status, label, sub, progress, barClass }) {
+function MmiChip({ mmi, label }) {
   return (
-    <div className={`eq-tl__step eq-tl__step--${status}`}>
-      <div className="eq-tl__dot" aria-hidden="true" />
-      <div className="eq-tl__body">
-        <span className="eq-tl__label">{label}</span>
-        {sub && <span className="eq-tl__sub">{sub}</span>}
-        {progress != null && (
-          <div className="eq-tl__bar-track">
-            <div
-              className={`eq-tl__bar-fill ${barClass ?? ''}`}
-              style={{ width: `${Math.round(progress)}%` }}
-            />
+    <span className="mmi-chip">
+      <span className="mmi-chip__swatch" style={{ background: getMMIColor(mmi) }} aria-hidden="true" />
+      {label}
+    </span>
+  )
+}
+
+function ImpactPanel({ impactSummary, timeScale }) {
+  if (!impactSummary) {
+    return <p className="field__hint">시뮬레이션을 시작하면 도시별 도달 시각과 진도가 표시됩니다.</p>
+  }
+
+  // 도달 순(진앙 거리 순) 정렬 — 미도달·범위 밖은 하단
+  const byArrival = (a, b) => (a.sArrivalMs ?? Infinity) - (b.sArrivalMs ?? Infinity)
+  const reached = impactSummary.cities.filter((c) => c.sWaveReached).sort(byArrival)
+  const pending = impactSummary.cities.filter((c) => !c.sWaveReached).sort(byArrival)
+
+  const metrics = [
+    ['P파 반경', `${impactSummary.pWaveRadiusKm.toFixed(0)} km`],
+    ['S파 반경', `${impactSummary.sWaveRadiusKm.toFixed(0)} km`],
+    ['영향 도시', `${impactSummary.affectedCount} / ${impactSummary.totalCities}`],
+    ['최대 진도', impactSummary.maxMMI > 0 ? `MMI ${impactSummary.maxMMILabel}` : '—'],
+    ['영향 면적', impactSummary.sWaveRadiusKm > 0 ? fmtArea(impactSummary.estimatedAreaKm2) : '—'],
+    [
+      '노출 인구',
+      impactSummary.estimatedAffectedPopulation > 0
+        ? fmtPopulation(impactSummary.estimatedAffectedPopulation)
+        : '—',
+    ],
+  ]
+
+  return (
+    <>
+      <div className="kv">
+        {metrics.map(([label, value]) => (
+          <div key={label} className="kv__cell">
+            <span className="kv__label">{label}</span>
+            <span className="kv__value">{value}</span>
           </div>
-        )}
+        ))}
       </div>
-    </div>
+
+      {(impactSummary.strongShakeCount > 0 || impactSummary.liquefactionAreaKm2 > 0) && (
+        <div className="notice notice--warning">
+          <AlertTriangle size={13} strokeWidth={2} color="var(--warning)" aria-hidden="true" />
+          <span>
+            {impactSummary.strongShakeCount > 0 &&
+              `MMI VI 이상 ${impactSummary.strongShakeCount}개 도시 — OSM 건물 손상색 표시. `}
+            {impactSummary.liquefactionAreaKm2 > 0 &&
+              `연안·하구 저지대 액상화 위험 ${fmtArea(impactSummary.liquefactionAreaKm2)}.`}
+          </span>
+        </div>
+      )}
+
+      <table className="eq-city-table">
+        <thead>
+          <tr>
+            <th scope="col">도시</th>
+            <th scope="col">진도</th>
+            <th scope="col" className="num">P 도달</th>
+            <th scope="col" className="num">S 도달</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reached.map((city) => (
+            <tr key={city.id}>
+              <td>{city.label}</td>
+              <td>
+                <MmiChip mmi={city.mmi} label={city.mmiLabel} />
+              </td>
+              <td className="num">{city.pArrivalMs != null ? fmtSec(city.pArrivalMs, timeScale) : '—'}</td>
+              <td className="num">{city.sArrivalMs != null ? fmtSec(city.sArrivalMs, timeScale) : '—'}</td>
+            </tr>
+          ))}
+          {pending.map((city) => (
+            <tr key={city.id} className="eq-city-table__row--pending">
+              <td>{city.label}</td>
+              <td colSpan={3} className="num">
+                {city.etaMs != null ? `S파 도달까지 ${fmtSec(city.etaMs, timeScale)}` : '전파 범위 밖'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  )
+}
+
+// ─── 진행 단계 ───────────────────────────────────────────────────
+
+function TimelineStep({ status, label, sub }) {
+  return (
+    <li className={`eq-tl__step eq-tl__step--${status}`}>
+      <span className="eq-tl__dot" aria-hidden="true" />
+      <span className="eq-tl__label">{label}</span>
+      {sub && <span className="eq-tl__sub">{sub}</span>}
+    </li>
   )
 }
 
@@ -116,23 +198,12 @@ function EarthquakeSimTimeline({
   elapsedMs,
   impactSummary,
   pRadiusM,
-  sRadiusM,
-  totalMs,
-  firstPArrivalMs,
   firstSArrivalMs,
   maxPropagationKm,
-  shakeAlert,
   aftershockPlan = [],
   activeAftershock,
+  timeScale,
 }) {
-  const pPct = firstPArrivalMs != null && firstPArrivalMs > 0
-    ? Math.min((elapsedMs / firstPArrivalMs) * 100, 100)
-    : Math.min((elapsedMs / totalMs) * 100, 100)
-
-  const sPct = firstSArrivalMs != null && firstSArrivalMs > 0
-    ? Math.min((elapsedMs / firstSArrivalMs) * 100, 100)
-    : Math.min((elapsedMs / totalMs) * 100, 100)
-
   const affectedCount = impactSummary?.affectedCount ?? 0
   const totalCities = impactSummary?.totalCities ?? 0
 
@@ -141,32 +212,15 @@ function EarthquakeSimTimeline({
   const isDone = phase === 'done'
   const isAftershock = phase === 'aftershock'
   const isLiquefaction = phase === 'liquefaction' || (impactSummary?.liquefactionAreaKm2 ?? 0) > 0
-  const sReached = isSwave || isDone
 
   return (
-    <div className="eq-tl">
-      <div className="eq-tl__header">
-        <span className="eq-tl__clock">{fmtElapsed(elapsedMs)}</span>
-        <span className="eq-tl__radius">P {fmtKm(pRadiusM)}</span>
-        <span className="eq-tl__radius eq-tl__radius--s">S {fmtKm(sRadiusM)}</span>
-      </div>
-
-      <TimelineStep status="done" label="진원 진동" sub="지하 지진 발생" />
-
+    <ol className="eq-tl">
+      <TimelineStep status="done" label="진원 파열" sub="지하 단층 파열 발생" />
       <TimelineStep
-        status={isDone ? 'done' : isPwave || isSwave ? 'active' : 'pending'}
+        status={isDone || isSwave ? 'done' : isPwave ? 'active' : 'pending'}
         label="P파 전파"
-        sub={
-          affectedCount > 0
-            ? `${affectedCount}개 도시 S파 도달`
-            : isPwave
-              ? `${fmtKm(pRadiusM)} 전파 중`
-              : 'P파 이동 중'
-        }
-        progress={pPct}
-        barClass="eq-tl__bar-fill--pwave"
+        sub={isPwave ? `${fmtKm(pRadiusM)} 전파 중` : null}
       />
-
       <TimelineStep
         status={isDone ? 'done' : isSwave ? 'active' : 'pending'}
         label="S파 도달"
@@ -174,145 +228,138 @@ function EarthquakeSimTimeline({
           isSwave || isDone
             ? `${affectedCount} / ${totalCities}개 도시 흔들림`
             : firstSArrivalMs != null
-              ? `최초 도달까지 ${Math.max(0, (firstSArrivalMs - elapsedMs) / 1000).toFixed(1)}초`
-              : 'S파 이동 중'
+              ? `첫 도달까지 ${fmtSec(Math.max(0, firstSArrivalMs - elapsedMs), timeScale)}`
+              : null
         }
-        progress={sReached ? sPct : null}
-        barClass="eq-tl__bar-fill--swave"
       />
-
       <TimelineStep
-        status={isDone ? 'done' : 'pending'}
-        label="전파 완료"
-        sub={isDone ? `최대 ${maxPropagationKm} km` : '전파 범위 확장 중'}
-      />
-
-      <TimelineStep
-        status={isDone && !isAftershock ? 'done' : isLiquefaction ? 'active' : isDone ? 'done' : 'pending'}
+        status={isDone || isAftershock ? 'done' : isLiquefaction ? 'active' : 'pending'}
         label="지표 균열·액상화"
         sub={
           isLiquefaction
-            ? `액상화 위험 ${fmtArea(impactSummary?.liquefactionAreaKm2 ?? 0)}`
-            : 'MMI VI+ 연안·하구'
+            ? `위험 구역 ${fmtArea(impactSummary?.liquefactionAreaKm2 ?? 0)}`
+            : 'MMI VI 이상 연안·하구'
         }
       />
-
       {aftershockPlan.length > 0 && (
         <TimelineStep
           status={isAftershock ? 'active' : isDone ? 'done' : 'pending'}
-          label="여진 시퀀스"
+          label="여진"
           sub={
             isAftershock && activeAftershock
-              ? `${activeAftershock.label} M ${activeAftershock.magnitude.toFixed(1)}`
-              : `${aftershockPlan.length}회 예상`
+              ? `${activeAftershock.label} · M ${activeAftershock.magnitude.toFixed(1)}`
+              : `${aftershockPlan.length}회 예정`
           }
         />
       )}
-
-      {shakeAlert && (
-        <div className="earthquake-main-ui__shake-alert">
-          ⚡ 현재 위치 흔들림 — MMI {shakeAlert.mmiLabel || shakeAlert.mmi?.toFixed(0)}
-        </div>
-      )}
-    </div>
+      <TimelineStep
+        status={isDone ? 'done' : 'pending'}
+        label="전파 종료"
+        sub={isDone ? `최대 ${maxPropagationKm} km` : null}
+      />
+    </ol>
   )
 }
 
-// ─── 피해 범위 패널 ──────────────────────────────────────────────
+// ─── 재생 컨트롤 (패널 푸터) ─────────────────────────────────────
 
-function ImpactPanel({ impactSummary, elapsedMs }) {
-  if (!impactSummary) return (
-    <p className="earthquake-main-ui__hint">시뮬레이션 시작 후 실시간으로 표시됩니다.</p>
-  )
+function Transport({
+  simState,
+  elapsedMs,
+  totalMs,
+  firstPArrivalMs,
+  firstSArrivalMs,
+  shakeAlert,
+  timeScale,
+  onStart,
+  onPause,
+  onSeek,
+}) {
+  const isRunning = simState === 'running'
+  const isPaused = simState === 'paused'
+  const isDone = simState === 'done'
+  const isActive = isRunning || isPaused || isDone
 
-  const reached = impactSummary.cities.filter((c) => c.sWaveReached)
-  const notReached = impactSummary.cities.filter((c) => !c.sWaveReached)
+  const max = Math.max(1, Math.round(totalMs))
+  const value = Math.min(Math.round(elapsedMs), max)
+  const pct = (ms) => (ms != null && totalMs > 0 ? `${(ms / totalMs) * 100}%` : null)
 
   return (
-    <div>
-      <div className="earthquake-main-ui__stats">
-        <div className="earthquake-main-ui__stat">
-          <span className="earthquake-main-ui__stat-value">{impactSummary.pWaveRadiusKm.toFixed(0)} km</span>
-          <span className="earthquake-main-ui__stat-label">P파 반경</span>
+    <div className="eq-transport">
+      {shakeAlert && (
+        <div className="notice notice--danger" role="alert">
+          <AlertTriangle size={13} strokeWidth={2} color="var(--danger)" aria-hidden="true" />
+          <span>현재 시점 흔들림 감지 — MMI {shakeAlert.mmiLabel || shakeAlert.mmi?.toFixed(0)}</span>
         </div>
-        <div className="earthquake-main-ui__stat">
-          <span className="earthquake-main-ui__stat-value">{impactSummary.sWaveRadiusKm.toFixed(0)} km</span>
-          <span className="earthquake-main-ui__stat-label">S파 반경</span>
-        </div>
-        <div className="earthquake-main-ui__stat">
-          <span className="earthquake-main-ui__stat-value">
-            {impactSummary.affectedCount} / {impactSummary.totalCities}
-          </span>
-          <span className="earthquake-main-ui__stat-label">영향 도시</span>
-        </div>
-        <div className="earthquake-main-ui__stat">
-          <span className="earthquake-main-ui__stat-value">
-            {impactSummary.maxMMI > 0 ? `MMI ${impactSummary.maxMMILabel}` : '—'}
-          </span>
-          <span className="earthquake-main-ui__stat-label">최대 진도</span>
-        </div>
-        <div className="earthquake-main-ui__stat">
-          <span className="earthquake-main-ui__stat-value">
-            {impactSummary.sWaveRadiusKm > 0 ? fmtArea(impactSummary.estimatedAreaKm2) : '—'}
-          </span>
-          <span className="earthquake-main-ui__stat-label">추정 면적</span>
-        </div>
-        <div className="earthquake-main-ui__stat">
-          <span className="earthquake-main-ui__stat-value">
-            {impactSummary.estimatedAffectedPopulation > 0
-              ? fmtPopulation(impactSummary.estimatedAffectedPopulation)
-              : '—'}
-          </span>
-          <span className="earthquake-main-ui__stat-label">추정 인구</span>
-        </div>
+      )}
+
+      <div className="eq-transport__row">
+        {isRunning ? (
+          <button type="button" className="btn btn--lg eq-transport__play" onClick={onPause}>
+            <Pause size={14} strokeWidth={2.25} aria-hidden="true" />
+            일시정지
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn--primary btn--lg eq-transport__play"
+            disabled={isDone}
+            onClick={onStart}
+          >
+            <Play size={14} strokeWidth={2.25} aria-hidden="true" />
+            {isPaused ? '재개' : isDone ? '완료' : '시뮬레이션 시작'}
+          </button>
+        )}
+        <span className="eq-transport__clock mono" aria-label="발생 후 경과 시간">
+          T+{fmtPhysClock(isActive ? elapsedMs : 0, timeScale)}
+          <span className="eq-transport__total"> / {fmtPhysClock(totalMs, timeScale)}</span>
+        </span>
+        <span className="tag" title={`실제 1초에 ${timeScale}초가 진행됩니다`}>×{timeScale}</span>
       </div>
 
-      {impactSummary.liquefactionAreaKm2 > 0 && (
-        <p className="earthquake-main-ui__hint earthquake-main-ui__hint--liquefaction">
-          🟤 액상화 위험 구역 {fmtArea(impactSummary.liquefactionAreaKm2)} (연안·하구 저지대)
-        </p>
-      )}
-
-      {impactSummary.strongShakeCount > 0 && (
-        <p className="earthquake-main-ui__hint earthquake-main-ui__hint--impact">
-          중진 이상(MMI VI+) {impactSummary.strongShakeCount}개 도시 · OSM 건물 손상색 표시
-        </p>
-      )}
-
-      {reached.length > 0 && (
-        <ul className="earthquake-main-ui__city-list">
-          {reached.map((city) => (
-            <li key={city.id} className="earthquake-main-ui__city-item earthquake-main-ui__city-item--reached">
-              <span className="earthquake-main-ui__city-emoji">{city.mmiEmoji}</span>
-              <span className="earthquake-main-ui__city-name">{city.label}</span>
-              <span className="earthquake-main-ui__city-mmi">MMI {city.mmiLabel}</span>
-              <span className="earthquake-main-ui__city-time">
-                P {city.pArrivalMs != null ? fmtSec(city.pArrivalMs) : '—'}
-                &nbsp;S {city.sArrivalMs != null ? fmtSec(city.sArrivalMs) : '—'}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {notReached.length > 0 && (
-        <ul className="earthquake-main-ui__city-list earthquake-main-ui__city-list--pending">
-          {notReached.map((city) => (
-            <li key={city.id} className="earthquake-main-ui__city-item">
-              <span className="earthquake-main-ui__city-emoji">⚪</span>
-              <span className="earthquake-main-ui__city-name">{city.label}</span>
-              <span className="earthquake-main-ui__city-eta">
-                {city.etaMs != null ? `도달까지 ${fmtSec(city.etaMs)}` : '범위 외'}
-              </span>
-            </li>
-          ))}
-        </ul>
+      {isActive && (
+        <div className="eq-scrub">
+          <div className="eq-scrub__track">
+            {pct(firstPArrivalMs) && (
+              <span
+                className="eq-scrub__marker eq-scrub__marker--p"
+                style={{ left: pct(firstPArrivalMs) }}
+                title={`P파 첫 도달 ${fmtSec(firstPArrivalMs, timeScale)}`}
+              />
+            )}
+            {pct(firstSArrivalMs) && (
+              <span
+                className="eq-scrub__marker eq-scrub__marker--s"
+                style={{ left: pct(firstSArrivalMs) }}
+                title={`S파 첫 도달 ${fmtSec(firstSArrivalMs, timeScale)}`}
+              />
+            )}
+            <Slider
+              aria-label="시뮬레이션 시점 이동"
+              min={0}
+              max={max}
+              step={100}
+              value={value}
+              onChange={(e) => onSeek?.(Number(e.target.value))}
+            />
+          </div>
+          <div className="field__range">
+            <span>0s</span>
+            {firstPArrivalMs != null && (
+              <span className="eq-scrub__label--p">P 첫 도달 {fmtSec(firstPArrivalMs, timeScale)}</span>
+            )}
+            {firstSArrivalMs != null && (
+              <span className="eq-scrub__label--s">S 첫 도달 {fmtSec(firstSArrivalMs, timeScale)}</span>
+            )}
+            <span>{fmtSec(totalMs, timeScale)}</span>
+          </div>
+        </div>
       )}
     </div>
   )
 }
 
-// ─── 메인 사이드바 ───────────────────────────────────────────────
+// ─── 메인 패널 ───────────────────────────────────────────────────
 
 export default function EarthquakeMainUI({
   simState,
@@ -322,7 +369,6 @@ export default function EarthquakeMainUI({
   impactSummary,
   elapsedMs,
   pRadiusM,
-  sRadiusM,
   totalMs,
   isPickMode,
   shakeAlert,
@@ -336,167 +382,123 @@ export default function EarthquakeMainUI({
   onReset,
   onSeek,
 }) {
-  const isRunning = simState === 'running'
-  const isPaused = simState === 'paused'
-  const isDone = simState === 'done'
-  const isActive = isRunning || isPaused || isDone
+  const isActive = simState === 'running' || simState === 'paused' || simState === 'done'
   const controlsLocked = isActive
 
   const firstPArrivalMs = impactSummary?.firstPArrivalMs ?? null
   const firstSArrivalMs = impactSummary?.firstSArrivalMs ?? null
 
   return (
-    <aside className="earthquake-main-ui">
-      <header className="earthquake-main-ui__header">
-        <div className="earthquake-main-ui__header-row">
-          <div>
-            <h1 className="earthquake-main-ui__title">GeoHazard Engine</h1>
-            <p className="earthquake-main-ui__subtitle">🌍 지진 — 지진파 전파·진도 분포</p>
+    <Panel
+      title="지진동 전파"
+      location={`한반도 · ${epicenter.name ?? epicenter.label}`}
+      onReset={onReset}
+      label="지진 시뮬레이션 설정"
+      footer={
+        <Transport
+          simState={simState}
+          elapsedMs={elapsedMs}
+          totalMs={totalMs}
+          firstPArrivalMs={firstPArrivalMs}
+          firstSArrivalMs={firstSArrivalMs}
+          shakeAlert={shakeAlert}
+          timeScale={options.timeScale}
+          onStart={onStart}
+          onPause={onPause}
+          onSeek={onSeek}
+        />
+      }
+    >
+      <CollapsibleSection title="진원" defaultOpen>
+        <EpicenterPresetList
+          activeId={epicenter.id}
+          disabled={controlsLocked}
+          onSelect={onEpicenterChange}
+        />
+        <div className="kv kv--4">
+          <div className="kv__cell kv__cell--span2">
+            <span className="kv__label">진앙</span>
+            <span className="kv__value">
+              {epicenter.lat.toFixed(2)}° N, {epicenter.lon.toFixed(2)}° E
+            </span>
           </div>
-          <button type="button" className="earthquake-main-ui__reset" onClick={onReset}>
-            ↺ 초기화
-          </button>
+          <div className="kv__cell">
+            <span className="kv__label">깊이</span>
+            <span className="kv__value">{options.depthKm} km</span>
+          </div>
+          <div className="kv__cell">
+            <span className="kv__label">규모</span>
+            <span className="kv__value">M {options.magnitude.toFixed(1)}</span>
+          </div>
         </div>
-      </header>
+        <button
+          type="button"
+          className={`btn btn--block${isPickMode ? ' btn--active' : ''}`}
+          disabled={controlsLocked}
+          onClick={onPickEpicenter}
+          aria-pressed={isPickMode}
+        >
+          <MapPin size={13} strokeWidth={2} aria-hidden="true" />
+          {isPickMode ? '지도에서 진앙을 클릭하세요' : '지도에서 진앙 지정'}
+        </button>
+      </CollapsibleSection>
 
-      <div className="earthquake-main-ui__content">
+      <CollapsibleSection title="지진 파라미터" defaultOpen>
+        <Field
+          id="eq-magnitude"
+          label="규모"
+          value={options.magnitude}
+          displayValue={`M ${options.magnitude.toFixed(1)}`}
+          min={4}
+          max={8}
+          step={0.1}
+          minLabel="4.0"
+          maxLabel="8.0"
+          hint={magnitudeHint(options.magnitude)}
+          disabled={controlsLocked}
+          onChange={(v) => onOptionsChange('magnitude', v)}
+        />
+        <Field
+          id="eq-depth"
+          label="진원 깊이"
+          value={options.depthKm}
+          unit="km"
+          min={1}
+          max={60}
+          step={1}
+          minLabel="1 km"
+          maxLabel="60 km"
+          disabled={controlsLocked}
+          onChange={(v) => onOptionsChange('depthKm', v)}
+        />
+        <SwitchRow
+          label="여진 시퀀스 포함"
+          description="본진 이후 규모가 작은 여진을 순차적으로 재현합니다"
+          checked={options.aftershocksEnabled !== false}
+          disabled={controlsLocked}
+          onChange={(v) => onOptionsChange('aftershocksEnabled', v)}
+        />
+      </CollapsibleSection>
 
-        {/* 섹션 1: 진원 설정 */}
-        <CollapsibleSection title="진원 설정" defaultOpen>
-          <div className="earthquake-main-ui__preset-grid">
-            {EPICENTER_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                className={`earthquake-main-ui__preset${epicenter.id === preset.id ? ' earthquake-main-ui__preset--active' : ''}`}
-                disabled={controlsLocked}
-                onClick={() => onEpicenterChange(preset)}
-                title={preset.description}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-          <div className="earthquake-main-ui__coords">
-            <span>위도 {epicenter.lat.toFixed(2)}°</span>
-            <span>경도 {epicenter.lon.toFixed(2)}°</span>
-          </div>
-          <div className="earthquake-main-ui__attrs">
-            <span>깊이 {options.depthKm} km</span>
-            <span>규모 M {options.magnitude.toFixed(1)}</span>
-          </div>
-          <button
-            type="button"
-            className={`earthquake-main-ui__pick${isPickMode ? ' earthquake-main-ui__pick--active' : ''}`}
-            disabled={controlsLocked}
-            onClick={onPickEpicenter}
-          >
-            {isPickMode ? '📍 지도에서 클릭…' : '📍 지도에서 선택'}
-          </button>
+      {isActive && (
+        <CollapsibleSection title="진행 단계" defaultOpen aside={`T+${fmtPhysClock(elapsedMs, options.timeScale)}`}>
+          <EarthquakeSimTimeline
+            phase={phase}
+            elapsedMs={elapsedMs}
+            impactSummary={impactSummary}
+            pRadiusM={pRadiusM}
+            firstSArrivalMs={firstSArrivalMs}
+            maxPropagationKm={options.maxPropagationKm}
+            aftershockPlan={aftershockPlan}
+            activeAftershock={activeAftershock}
+            timeScale={options.timeScale}
+          />
         </CollapsibleSection>
+      )}
 
-        {/* 섹션 2: 지진 설정 */}
-        <CollapsibleSection title="지진 설정" defaultOpen>
-          <label className="earthquake-main-ui__field">
-            <span className="earthquake-main-ui__field-label">
-              규모 (M) <strong>{options.magnitude.toFixed(1)}</strong>
-            </span>
-            <input
-              type="range"
-              min="4.0"
-              max="8.0"
-              step="0.1"
-              value={options.magnitude}
-              disabled={controlsLocked}
-              onChange={(e) => onOptionsChange('magnitude', Number(e.target.value))}
-            />
-            <span className="earthquake-main-ui__range-labels">
-              <span>4.0</span><span>8.0</span>
-            </span>
-          </label>
-          <p className="earthquake-main-ui__hint">{magnitudeHint(options.magnitude)}</p>
-
-          <label className="earthquake-main-ui__field">
-            <span className="earthquake-main-ui__field-label">
-              진원 깊이 <strong>{options.depthKm} km</strong>
-            </span>
-            <input
-              type="range"
-              min="1"
-              max="60"
-              step="1"
-              value={options.depthKm}
-              disabled={controlsLocked}
-              onChange={(e) => onOptionsChange('depthKm', Number(e.target.value))}
-            />
-            <span className="earthquake-main-ui__range-labels">
-              <span>1 km</span><span>60 km</span>
-            </span>
-          </label>
-
-          <label className="earthquake-main-ui__toggle">
-            <input
-              type="checkbox"
-              checked={options.aftershocksEnabled !== false}
-              disabled={controlsLocked}
-              onChange={(e) => onOptionsChange('aftershocksEnabled', e.target.checked)}
-            />
-            <span>여진 시퀀스 포함 (Phase 4)</span>
-          </label>
-        </CollapsibleSection>
-
-        {/* 섹션 3: 피해 범위 */}
-        <CollapsibleSection title="피해 범위" defaultOpen>
-          <ImpactPanel impactSummary={isActive ? impactSummary : null} elapsedMs={elapsedMs} />
-        </CollapsibleSection>
-
-        {/* 섹션 4: 시뮬레이션 */}
-        <CollapsibleSection title="시뮬레이션" defaultOpen>
-          <div className="earthquake-main-ui__actions">
-            {isRunning ? (
-              <button type="button" className="earthquake-main-ui__action" onClick={onPause}>
-                ⏸ 일시정지
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="earthquake-main-ui__action earthquake-main-ui__action--primary"
-                disabled={isDone}
-                onClick={onStart}
-              >
-                {isPaused ? '▶ 재개' : '▶ 시작'}
-              </button>
-            )}
-          </div>
-
-          {isActive && (
-            <>
-              <EarthquakeSimTimeline
-                phase={phase}
-                elapsedMs={elapsedMs}
-                impactSummary={impactSummary}
-                pRadiusM={pRadiusM}
-                sRadiusM={sRadiusM}
-                totalMs={totalMs}
-                firstPArrivalMs={firstPArrivalMs}
-                firstSArrivalMs={firstSArrivalMs}
-                maxPropagationKm={options.maxPropagationKm}
-                shakeAlert={shakeAlert}
-                aftershockPlan={aftershockPlan}
-                activeAftershock={activeAftershock}
-              />
-              <ScrubBar
-                elapsedMs={elapsedMs}
-                totalMs={totalMs}
-                firstPArrivalMs={firstPArrivalMs}
-                firstSArrivalMs={firstSArrivalMs}
-                onSeek={onSeek}
-              />
-            </>
-          )}
-        </CollapsibleSection>
-
-      </div>
-    </aside>
+      <CollapsibleSection title="피해 추정" defaultOpen>
+        <ImpactPanel impactSummary={isActive ? impactSummary : null} timeScale={options.timeScale} />
+      </CollapsibleSection>
+    </Panel>
   )
 }

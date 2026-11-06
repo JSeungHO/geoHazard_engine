@@ -4,58 +4,102 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: var(--color-bg);
+  background: var(--bg-app);
 }
 
-.module-shell__nav {
+/* ── App bar ──────────────────────────────────────────── */
+
+.app-bar {
   flex-shrink: 0;
   display: flex;
-  gap: 8px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-footer-bg);
+  align-items: stretch;
+  height: var(--appbar-height);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-app);
 }
 
-.module-shell__tab {
-  display: inline-flex;
+.app-bar__brand {
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  width: calc(var(--sidebar-width) - 16px);
+  color: var(--text-1);
 }
 
-.module-shell__tab:hover:not(:disabled) {
-  color: var(--color-text);
-  border-color: var(--color-primary-border);
-  background: var(--color-surface-hover);
+.app-bar__mark {
+  width: 20px;
+  height: 20px;
 }
 
-.module-shell__tab--active {
-  color: var(--color-text);
-  border-color: var(--color-primary-border);
-  background: var(--color-primary-dim);
+.app-bar__name {
+  font-size: var(--fs-md);
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
-.module-shell__tab:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.app-bar__nav {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
 }
 
-.module-shell__badge {
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--color-border);
-  color: var(--color-text-subtle);
-  font-size: 10px;
+.app-bar__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-md);
   font-weight: 500;
+  cursor: pointer;
+  transition: color 0.12s;
 }
+
+.app-bar__tab:hover:not(:disabled) {
+  color: var(--text-1);
+}
+
+.app-bar__tab--active {
+  color: var(--text-1);
+}
+
+.app-bar__tab--active::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.app-bar__tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.app-bar__end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.app-bar__disclaimer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  cursor: help;
+}
+
+/* ── Main ─────────────────────────────────────────────── */
 
 .module-shell__main {
   flex: 1;

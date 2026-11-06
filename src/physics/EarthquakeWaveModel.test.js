@@ -3,7 +3,8 @@ import {
   EarthquakeWaveModel,
   haversineDistanceM,
   getMMILabel,
-  getMMIEmoji,
+  getMMIColor,
+  MMI_COLORS,
   getShakeParams,
   getMMIExposureFactor,
   estimateAffectedPopulation,
@@ -229,11 +230,13 @@ describe('getMMILabel', () => {
   it('소수점 반올림 — 6.6 → VII', () => expect(getMMILabel(6.6)).toBe('VII'))
 })
 
-describe('getMMIEmoji', () => {
-  it('MMI 1~3 → ⚪', () => expect(getMMIEmoji(2)).toBe('⚪'))
-  it('MMI 4~5 → 🟡', () => expect(getMMIEmoji(5)).toBe('🟡'))
-  it('MMI 6~7 → 🟠', () => expect(getMMIEmoji(6)).toBe('🟠'))
-  it('MMI 8+ → 🔴', () => expect(getMMIEmoji(9)).toBe('🔴'))
+describe('getMMIColor', () => {
+  it('정수 진도 → ShakeMap 색상', () => expect(getMMIColor(6)).toBe(MMI_COLORS[6]))
+  it('소수 진도는 반올림', () => expect(getMMIColor(6.6)).toBe(MMI_COLORS[7]))
+  it('범위 밖 값은 1~12로 클램프', () => {
+    expect(getMMIColor(0)).toBe(MMI_COLORS[1])
+    expect(getMMIColor(15)).toBe(MMI_COLORS[12])
+  })
 })
 
 describe('getMMIExposureFactor / estimateAffectedPopulation', () => {

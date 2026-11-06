@@ -1,82 +1,57 @@
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
+import { ChevronDown, Crosshair, Layers } from 'lucide-react'
 import { SCENE_LAYER_DEFS } from '../constants/sceneLayers'
+import SwitchRow from './ui/SwitchRow'
 import './SceneLayersPanel.css'
 
-function LayerToggle({ layer, visible, onChange }) {
+/**
+ * 지도 우상단 플로팅 레이어 컨트롤 — 지도 컨테이너 내부에 렌더한다.
+ */
+export default function SceneLayersPanel({
+  layerVisibility,
+  onLayerVisibilityChange,
+  onFlyTo,
+  flyToLabel = '기본 시점으로 이동',
+}) {
+  const [open, setOpen] = useState(true)
+
   return (
-    <label className="scene-layer-row">
-      <div className="scene-layer-row__info">
-        <span className="scene-layer-row__label">{layer.label}</span>
-        <span className="scene-layer-row__desc">{layer.description}</span>
-      </div>
+    <div className="map-layers overlay-surface">
       <button
         type="button"
-        role="switch"
-        className={`scene-layer-toggle ${visible ? 'scene-layer-toggle--on' : ''}`}
-        aria-checked={visible}
-        aria-label={`${layer.label} ${visible ? '표시' : '숨김'}`}
-        onClick={() => onChange(layer.id, !visible)}
+        className="map-layers__header"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="scene-layer-toggle__knob" />
+        <Layers size={14} strokeWidth={2} aria-hidden="true" />
+        <span className="map-layers__title">레이어</span>
+        <ChevronDown
+          className={`map-layers__chevron${open ? ' map-layers__chevron--open' : ''}`}
+          size={14}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
       </button>
-    </label>
+
+      {open && (
+        <div className="map-layers__body">
+          {SCENE_LAYER_DEFS.map((layer) => (
+            <SwitchRow
+              key={layer.id}
+              label={layer.label}
+              description={layer.description}
+              checked={Boolean(layerVisibility[layer.id])}
+              onChange={(visible) => onLayerVisibilityChange(layer.id, visible)}
+            />
+          ))}
+          {onFlyTo && (
+            <button type="button" className="btn btn--block" onClick={onFlyTo}>
+              <Crosshair size={13} strokeWidth={2} aria-hidden="true" />
+              {flyToLabel}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
-}
-
-function SceneLayersPanelContent({ layerVisibility, onLayerVisibilityChange, onFlyToGangnam, flyToLabel = '강남역으로 이동' }) {
-  return (
-    <aside
-      className="scene-layers-panel"
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: 280,
-        zIndex: 10000,
-        background: '#0f172a',
-      }}
-    >
-      <header className="scene-layers-panel__header">
-        <h2 className="scene-layers-panel__title">레이어</h2>
-        <p className="scene-layers-panel__subtitle">지도 객체 표시 설정</p>
-      </header>
-
-      <div className="scene-layers-panel__content">
-        <section className="scene-layers-panel__section">
-          <h3 className="scene-layers-panel__section-title">뷰</h3>
-          <button
-            type="button"
-            className="scene-layers-panel__fly-btn"
-            onClick={onFlyToGangnam}
-          >
-            {flyToLabel}
-          </button>
-        </section>
-
-        <section className="scene-layers-panel__section">
-          <h3 className="scene-layers-panel__section-title">3D 객체</h3>
-          <div className="scene-layers-panel__list">
-            {SCENE_LAYER_DEFS.map((layer) => (
-              <LayerToggle
-                key={layer.id}
-                layer={layer}
-                visible={layerVisibility[layer.id]}
-                onChange={onLayerVisibilityChange}
-              />
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <footer className="scene-layers-panel__footer">
-        <span className="scene-layers-panel__hint">레이어는 설정 파일에서 추가할 수 있습니다.</span>
-      </footer>
-    </aside>
-  )
-}
-
-/** body에 portal로 렌더 — Cesium canvas 위에 항상 표시 */
-export default function SceneLayersPanel(props) {
-  return createPortal(<SceneLayersPanelContent {...props} />, document.body)
 }

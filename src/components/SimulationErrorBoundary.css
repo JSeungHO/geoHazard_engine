@@ -1,45 +1,28 @@
 .simulation-error {
   position: absolute;
-  inset: 0;
-  z-index: 900;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 12px;
-  padding: 24px;
-  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
-  color: var(--color-text);
-  text-align: center;
+  width: 360px;
+  padding: 16px;
+  transform: translate(-50%, -50%);
+}
+
+.simulation-error__icon {
+  flex-shrink: 0;
+  color: var(--danger);
 }
 
 .simulation-error__title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-danger);
+  font-size: var(--fs-md);
+  font-weight: 600;
 }
 
 .simulation-error__message {
-  margin: 0;
-  max-width: 320px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-}
-
-.simulation-error__retry {
-  margin-top: 4px;
-  padding: 8px 16px;
-  border: 1px solid var(--color-primary-border);
-  border-radius: 8px;
-  background: var(--color-primary-dim);
-  color: var(--color-text);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.simulation-error__retry:hover {
-  background: var(--color-surface-hover);
+  margin: 4px 0 12px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
 }

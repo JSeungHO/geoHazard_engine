@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { AlertTriangle, RotateCcw } from 'lucide-react'
 import './SimulationErrorBoundary.css'
 
 export default class SimulationErrorBoundary extends Component {
@@ -23,14 +24,18 @@ export default class SimulationErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="simulation-error">
-          <p className="simulation-error__title">시뮬레이션 오류</p>
-          <p className="simulation-error__message">
-            3D 침수·강수 렌더링 중 문제가 발생했습니다. 새로고침하거나 다시 시도해 주세요.
-          </p>
-          <button type="button" className="simulation-error__retry" onClick={this.handleRetry}>
-            다시 시도
-          </button>
+        <div className="simulation-error overlay-surface" role="alert">
+          <AlertTriangle size={18} strokeWidth={2} className="simulation-error__icon" aria-hidden="true" />
+          <div>
+            <p className="simulation-error__title">렌더링 오류</p>
+            <p className="simulation-error__message">
+              3D 시뮬레이션 레이어를 그리는 중 문제가 발생했습니다. 다시 시도하거나 페이지를 새로고침해 주세요.
+            </p>
+            <button type="button" className="btn" onClick={this.handleRetry}>
+              <RotateCcw size={13} strokeWidth={2} aria-hidden="true" />
+              다시 시도
+            </button>
+          </div>
         </div>
       )
     }

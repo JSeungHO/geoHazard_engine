@@ -138,21 +138,25 @@ export default function FloodModule() {
                   onTerrainLoadingChange={handleTerrainLoadingChange}
                 />
               </SimulationErrorBoundary>
+              <SceneLayersPanel
+                layerVisibility={layerVisibility}
+                onLayerVisibilityChange={handleLayerVisibilityChange}
+                onFlyTo={handleFlyToGangnam}
+                flyToLabel="강남역 시점으로 이동"
+              />
               <MapStatusBar
                 viewerRef={viewerRef}
                 isActive={isViewerReady}
-                waterLevel={waterLevel}
+                status={
+                  waterLevel > 0
+                    ? { label: '침수 깊이', value: `${Number(waterLevel).toFixed(2)} m`, tone: 'accent' }
+                    : { label: '침수 없음' }
+                }
               />
             </>
           )}
         </div>
       </div>
-
-      <SceneLayersPanel
-        layerVisibility={layerVisibility}
-        onLayerVisibilityChange={handleLayerVisibilityChange}
-        onFlyToGangnam={handleFlyToGangnam}
-      />
     </div>
   )
 }

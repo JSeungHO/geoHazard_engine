@@ -30,29 +30,43 @@ const C4 = 0.0059
 const C5 = 7.58   // USGS ShakeMap 보정값 (원 3.23 → 한반도 거리 스케일 조정)
 const C6 = 0.955  // 원 1.51 → USGS Worden et al. 2012 기반
 
-/** MMI 진도 → 색상 매핑 */
+/**
+ * MMI 진도 → 색상 매핑 — USGS ShakeMap 표준 진도 색상표
+ * (https://usgs.github.io/shakemap/ — Instrumental Intensity scale)
+ */
 export const MMI_COLORS = {
   1: '#FFFFFF',
-  2: '#FFFFFF',
-  3: '#A9F5A9',
-  4: '#8DD9F5',
-  5: '#FFF87A',
-  6: '#FFC700',
-  7: '#FF8C00',
-  8: '#FF4500',
-  9: '#CC0000',
-  10: '#CC0000',
-  11: '#CC0000',
-  12: '#CC0000',
+  2: '#BFCCFF',
+  3: '#A0E6FF',
+  4: '#80FFFF',
+  5: '#7AFF93',
+  6: '#FFFF00',
+  7: '#FFC800',
+  8: '#FF9100',
+  9: '#FF0000',
+  10: '#C80000',
+  11: '#800000',
+  12: '#800000',
 }
 
-/** MMI 진도 → 이모지 마커 */
-export function getMMIEmoji(mmi) {
+/** MMI 진도별 체감·피해 기술 (USGS ShakeMap 범례 기준, 한국어) */
+export const MMI_SCALE = [
+  { level: 1, label: 'I', shaking: '무감', damage: '없음' },
+  { level: 2, label: 'II', shaking: '약함', damage: '없음' },
+  { level: 3, label: 'III', shaking: '약함', damage: '없음' },
+  { level: 4, label: 'IV', shaking: '가벼움', damage: '없음' },
+  { level: 5, label: 'V', shaking: '중간', damage: '매우 경미' },
+  { level: 6, label: 'VI', shaking: '강함', damage: '경미' },
+  { level: 7, label: 'VII', shaking: '매우 강함', damage: '중간' },
+  { level: 8, label: 'VIII', shaking: '심함', damage: '중대' },
+  { level: 9, label: 'IX', shaking: '격렬함', damage: '심각' },
+  { level: 10, label: 'X+', shaking: '극심함', damage: '매우 심각' },
+]
+
+/** MMI 값 → 색상 hex (1~12 클램프) */
+export function getMMIColor(mmi) {
   const clamped = Math.round(Math.max(1, Math.min(12, mmi)))
-  if (clamped <= 3) return '⚪'
-  if (clamped <= 5) return '🟡'
-  if (clamped <= 7) return '🟠'
-  return '🔴'
+  return MMI_COLORS[clamped]
 }
 
 /** MMI 숫자 → 로마자 라벨 */
@@ -247,7 +261,6 @@ export class EarthquakeWaveModel {
         sWaveReached,
         mmi,
         mmiLabel: getMMILabel(mmi),
-        mmiEmoji: getMMIEmoji(mmi),
         etaMs,
       }
     })
