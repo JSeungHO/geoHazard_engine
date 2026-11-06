@@ -274,6 +274,7 @@ export default function EarthquakeVisualization({
   const buildingCacheRef = useRef({})
   const crackCacheRef = useRef({})
   const liqCacheRef = useRef({})
+  const mainSummaryCacheRef = useRef({ key: null, summary: null })
   const layerVisibilityRef = useRef(layerVisibility)
   const ringEpicenterRef = useRef(epicenter)
 
@@ -404,7 +405,41 @@ export default function EarthquakeVisualization({
     syncBuildingLayer(summary, eventElapsed, state, event.epicenter)
     syncPhase4Effects(viewer, model, event, summary, eventElapsed)
 
-    return { done: false, event, summary, eventElapsed, model }
+    return { done: false, event, summary, panelSummary: getPanelSummary(event, summary), eventElapsed, model }
+  }
+
+  /**
+   * 패널용 피해 요약 — 여진 구간에도 본진 전파 완료 시점의 결과를 유지한다.
+   * (여진은 전파 범위·규모가 작아 그대로 보여주면 본진 피해가 줄어든 것처럼 보인다)
+   */
+  const getPanelSummary = (event, summary) => {
+    if (event.type !== 'aftershock') return summary
+
+    const mainEvent = resolveSimulationEvent(
+      mainDurationMsRef.current,
+      epicenterRef.current,
+      options,
+      [],
+      mainDurationMsRef.current,
+    )
+    const key = `${mainEvent.epicenter.lat},${mainEvent.epicenter.lon},${mainEvent.magnitude},${mainEvent.depthKm}`
+    if (mainSummaryCacheRef.current.key !== key) {
+      const mainModel = modelFromEvent(mainEvent)
+      mainSummaryCacheRef.current = {
+        key,
+        summary: augmentSummary(
+          mainModel.getImpactSummary(mainEvent.eventElapsedMs, citiesRef.current),
+          mainModel,
+          mainEvent,
+          mainEvent.eventElapsedMs,
+        ),
+      }
+    }
+    return {
+      ...mainSummaryCacheRef.current.summary,
+      eventType: 'aftershock',
+      aftershockLabel: event.aftershock?.label ?? null,
+    }
   }
 
   // ── 지도 클릭으로 진앙 설정 ────────────────────────────────────
@@ -504,7 +539,7 @@ export default function EarthquakeVisualization({
       pausedElapsedRef.current = elapsedMsRef.current
       const frame = applySimulationFrame(viewer, elapsedMsRef.current, 'paused')
       if (frame.summary) {
-        onImpactSummaryChange?.(frame.summary)
+        onImpactSummaryChange?.(frame.panelSummary)
         onStatsChange?.({
           elapsedMs: elapsedMsRef.current,
           pRadiusM: frame.summary.pWaveRadiusM,
@@ -569,7 +604,7 @@ export default function EarthquakeVisualization({
         }
 
         const { summary, model, eventElapsed } = frame
-        onImpactSummaryChange?.(summary)
+        onImpactSummaryChange?.(frame.panelSummary)
         onStatsChange?.({
           elapsedMs: elapsed,
           pRadiusM: summary.pWaveRadiusM,
@@ -644,7 +679,7 @@ export default function EarthquakeVisualization({
     createPWaveRing(viewer, frame.event.epicenter, pRadiusRef)
     createSWaveRing(viewer, frame.event.epicenter, sRadiusRef)
 
-    onImpactSummaryChange?.(frame.summary)
+    onImpactSummaryChange?.(frame.panelSummary)
     onStatsChange?.({
       elapsedMs: seekMs,
       pRadiusM: frame.summary.pWaveRadiusM,

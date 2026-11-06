@@ -12,7 +12,17 @@
 
 **Production**: [geohazard-engine.vercel.app](https://geohazard-engine.vercel.app)
 
-> 교육·체험용 **단순화 모델 + 3D 연출**에 집중합니다. 정밀 CFD/구조 해석은 대상이 아닙니다.
+> 교육·체험용 **단순화 모델 + 3D 연출**에 집중합니다. 정밀 CFD/구조 해석은 대상이 아니며, 실제 재난 예측에 사용할 수 없습니다.
+
+## 모델과 신뢰 수준
+
+| 구분 | 모델 | 보정·검증 | 신뢰 수준 |
+|------|------|-----------|-----------|
+| 침수 깊이 | 단일 저류조 강우–배수 모델 | 2022.8.8 강남역 침수흔적도(실측 0.2~1.8 m)로 보정 | 사례 재현용 |
+| 지진파 도달 | 등속 원형 전파 (P 6.0 · S 3.5 km/s) | 지각 평균 속도 | 개략값 |
+| 진도(MMI) | 간소화 감쇠식 | 경주·포항 관측 4건 중 1건 일치 | **낮음** (원거리 과소) |
+
+가정, 파라미터 출처, 검증 결과, 한계는 [docs/model.md](./docs/model.md)에 정리했습니다.
 
 ## 스크린샷
 
@@ -26,6 +36,7 @@
 | 문서 | 설명 |
 |------|------|
 | [docs/README.md](./docs/README.md) | 문서 목차·읽는 순서 |
+| [docs/model.md](./docs/model.md) | **모델 가정·근거·검증** |
 | [docs/goals.md](./docs/goals.md) | 로드맵, 재난별 Phase, 배포 |
 | [docs/features.md](./docs/features.md) | 구현 기능, 파일 구조, 테스트 |
 | [docs/session-handoff.md](./docs/session-handoff.md) | 현재 상태·다음 작업 요약 |
@@ -65,9 +76,9 @@ npm run dev
 <img src="./docs/images/flood-gangnam-2022.png" width="480" align="right" alt="강남역 침수 시나리오">
 
 - terrain grid + 저지대 기준 수면, 2D 파동, 하늘 반사 셰이더
-- 강수 ParticleSystem, 강수량 → 수위 자동 상승
+- 강우 강도(mm/h) → 강우–배수 저류 모델로 수위 계산, 배수능·유출계수 조절
 - pitch view bounds — 카메라 각도에 맞춘 침수·강수 범위
-- 시나리오 프리셋 (2022 강남역 등)
+- 시나리오 프리셋 (2022 강남역 실측 침수심 + 서울시 침수흔적도 overlay 등)
 
 ### 지진 (한반도 단층·해역)
 

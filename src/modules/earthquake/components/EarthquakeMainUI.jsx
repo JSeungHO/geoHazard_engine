@@ -33,7 +33,7 @@ const fmtSec = (ms, timeScale) => {
 const fmtPhysClock = (ms, timeScale) => fmtClock(ms * timeScale)
 
 const fmtArea = (km2) => {
-  if (km2 >= 10_000) return `${Math.round(km2 / 1000).toLocaleString('ko-KR')}천 km²`
+  if (km2 >= 10_000) return `${Math.round(km2 / 10_000).toLocaleString('ko-KR')}만 km²`
   return `${Math.round(km2).toLocaleString('ko-KR')} km²`
 }
 

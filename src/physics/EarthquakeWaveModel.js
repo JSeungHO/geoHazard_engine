@@ -12,16 +12,19 @@ export const P_WAVE_SPEED = 6_000
 export const S_WAVE_SPEED = 3_500
 
 /**
- * 간소화 GMPE 계수 (Atkinson & Boore 2003 + USGS ShakeMap MMI-PGA 보정)
+ * 간소화 진도 감쇠 계수 — 교육용
  *
- * PGA 항 (C1~C4): Atkinson & Boore 2003 기반, PGA 단위 g
- *   ln(PGA_g) = C1 + C2·M - C3·ln(R_hypo_km) - C4·R_hypo_km
+ *   ln(PGA_g) = C1 + C2·M − C3·ln(R_hypo_km) − C4·R_hypo_km
+ *   MMI       = C5 + C6·ln(PGA_g)
  *
- * MMI 항 (C5~C6): Worden et al. 2012 스타일 (cm/s²→g 단위 변환 적용)
- *   MMI = C5 + C6·ln(PGA_g)
+ * 함수 형태는 Atkinson & Boore(2003)형 GMPE와 Worden et al.(2012)형 PGA–MMI 변환을 따른다.
+ * C1~C4는 원 논문 계수와 대조 확인되지 않았고, C5·C6는 결과 분포를 맞추려고 조정한 값이다
+ * (원 3.23 → 7.58, 1.51 → 0.955). 어느 쪽도 한반도 관측 자료로 회귀 분석한 결과가 아니다.
+ * M에는 기상청 국지규모(ML)를 넣는다.
  *
- * 교육용 검증: 경주(2016) M5.8 부산(~67km) → MMI≈4, 서울(~281km) → MMI≈1
- *              포항(2017) M5.4 포항 시내(~5km) → MMI≈7
+ * 관측 대비 검증 결과 (src/physics/validation, docs/model.md §2.3):
+ *   경주 2016 — 경주 VI 일치 / 대구 VI → 모델 IV (과소) / 서울 유감 → 모델 I (과소)
+ *   포항 2017 — 포항 VI → 모델 VII (과대)
  */
 const C1 = 0.04
 const C2 = 0.61
