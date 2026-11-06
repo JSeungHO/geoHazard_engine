@@ -4,17 +4,6 @@ import Field from '../../../components/ui/Field'
 
 const OPTION_SECTIONS = [
   {
-    title: '수위 상승',
-    items: [
-      {
-        key: 'waterRiseSpeed',
-        label: '자동 상승 속도 (100% 강수)',
-        hint: '강수량 %에 비례해 상승',
-        format: (v) => `${v.toFixed(2)} m/s`,
-      },
-    ],
-  },
-  {
     title: '파도',
     items: [
       {

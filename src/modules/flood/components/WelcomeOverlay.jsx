@@ -33,7 +33,7 @@ export default function WelcomeOverlay() {
         <ol className="welcome-overlay__steps">
           <li>
             <span className="welcome-overlay__step-no">1</span>
-            좌측 패널에서 시나리오를 고르거나 강우 강도를 조절합니다.
+            좌측 패널에서 시나리오를 고르거나 강우 강도(mm/h)를 조절합니다.
           </li>
           <li>
             <span className="welcome-overlay__step-no">2</span>
@@ -45,7 +45,8 @@ export default function WelcomeOverlay() {
           </li>
         </ol>
         <p className="welcome-overlay__note">
-          지형 위에 수평 수면을 채우는 단순화 모델로, 배수 체계·유출 과정은 반영하지 않습니다.
+          저지대를 하나의 저류조로 본 단순화 모델입니다. 강우·배수능 차이로 수위를 계산하며, 관로 흐름과
+          지표 유하 경로는 반영하지 않습니다.
         </p>
         <div className="welcome-overlay__actions">
           <button type="button" className="btn btn--primary btn--lg" onClick={dismiss}>

@@ -1,5 +1,4 @@
 export const DEFAULT_SIMULATION_OPTIONS = {
-  waterRiseSpeed: 0.24,
   waveTimeScale: 0.32,
   waveStiffness: 0.16,
   waveMaxAmplitude: 4.2,
@@ -8,13 +7,13 @@ export const DEFAULT_SIMULATION_OPTIONS = {
   reflectivity: 0.48,
 }
 
+/** 수면 표현 프리셋 — 시각 효과 전용 (수위 계산과 무관) */
 export const WAVE_PRESETS = [
   {
     id: 'calm',
     label: '잔잔',
     description: '잔잔한 수면',
     values: {
-      waterRiseSpeed: 0.12,
       waveTimeScale: 0.12,
       waveStiffness: 0.08,
       waveMaxAmplitude: 1.8,
@@ -34,7 +33,6 @@ export const WAVE_PRESETS = [
     label: '폭풍',
     description: '거친 파도',
     values: {
-      waterRiseSpeed: 0.6,
       waveTimeScale: 0.75,
       waveStiffness: 0.35,
       waveMaxAmplitude: 8.0,
@@ -59,11 +57,16 @@ export function findActivePresetId(options) {
 }
 
 export const SIMULATION_OPTION_RANGES = {
-  waterRiseSpeed: { min: 0.05, max: 0.8, step: 0.01, unit: 'm/s' },
   waveTimeScale: { min: 0.1, max: 1.0, step: 0.01, unit: '×' },
   waveStiffness: { min: 0.05, max: 0.4, step: 0.01, unit: '' },
   waveMaxAmplitude: { min: 1, max: 8, step: 0.1, unit: 'm' },
   rainImpactStrength: { min: 0.01, max: 0.15, step: 0.01, unit: '' },
   glintStrength: { min: 0, max: 2.5, step: 0.05, unit: '×' },
   reflectivity: { min: 0.2, max: 1.0, step: 0.01, unit: '' },
+}
+
+/** 배수 모델 파라미터 슬라이더 범위 — physics/UrbanPondingModel 참조 */
+export const PONDING_PARAM_RANGES = {
+  drainageCapacityMmH: { min: 20, max: 120, step: 5 },
+  runoffCoefficient: { min: 0.5, max: 1.0, step: 0.05 },
 }

@@ -16,6 +16,8 @@ import { DEFAULT_LAYER_VISIBILITY } from '../../constants/sceneLayers'
 import useRainWaterAccumulation from './hooks/useRainWaterAccumulation'
 import useMapLayout from './hooks/useMapLayout'
 import { flyToGangnam } from '../../locations/gangnam'
+import { rainfallToVisualPercent } from './utils/displayUnits'
+import { PONDING_DEFAULTS } from '../../physics/UrbanPondingModel'
 import './FloodModule.css'
 
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN
@@ -27,7 +29,8 @@ export default function FloodModule() {
   const mapContainerRef = useRef(null)
 
   const [isViewerReady, setIsViewerReady] = useState(false)
-  const [rainIntensity, setRainIntensity] = useState(0)
+  const [rainfallMmH, setRainfallMmH] = useState(0)
+  const [pondingParams, setPondingParams] = useState(PONDING_DEFAULTS)
   const [waterLevel, setWaterLevel] = useState(0)
   const [autoWaterRise, setAutoWaterRise] = useState(false)
   const [simulationOptions, setSimulationOptions] = useState(DEFAULT_SIMULATION_OPTIONS)
@@ -44,6 +47,10 @@ export default function FloodModule() {
     setSimulationOptions((prev) => ({ ...prev, [key]: value }))
   }, [])
 
+  const handlePondingParamChange = useCallback((key, value) => {
+    setPondingParams((prev) => ({ ...prev, [key]: value }))
+  }, [])
+
   const handleLayerVisibilityChange = useCallback((layerId, visible) => {
     setLayerVisibility((prev) => ({ ...prev, [layerId]: visible }))
   }, [])
@@ -58,7 +65,7 @@ export default function FloodModule() {
 
   const handleScenarioApply = useCallback((scenario) => {
     setActiveScenarioId(scenario.id)
-    setRainIntensity(scenario.rain)
+    setRainfallMmH(scenario.rain)
     setWaterLevel(scenario.water)
     setAutoWaterRise(scenario.autoRise)
     if (scenario.id === 'gangnam_2022') {
@@ -67,7 +74,8 @@ export default function FloodModule() {
   }, [])
 
   const handleReset = useCallback(() => {
-    setRainIntensity(0)
+    setRainfallMmH(0)
+    setPondingParams(PONDING_DEFAULTS)
     setWaterLevel(0)
     setAutoWaterRise(false)
     setSimulationOptions(DEFAULT_SIMULATION_OPTIONS)
@@ -80,20 +88,20 @@ export default function FloodModule() {
     setIsTerrainLoading(loading)
   }, [])
 
-  useRainWaterAccumulation(
-    autoWaterRise,
-    rainIntensity,
-    simulationOptions.waterRiseSpeed,
-    setWaterLevel
-  )
+  useRainWaterAccumulation(autoWaterRise, rainfallMmH, pondingParams, setWaterLevel)
+
+  /** 강수 파티클·수면 파문 연출 강도 (0~100) */
+  const rainVisualPercent = rainfallToVisualPercent(rainfallMmH)
 
   useMapLayout(mapContainerRef, viewerRef, isViewerReady)
 
   return (
     <div className="flood-module">
       <FloodMainUI
-        rainIntensity={rainIntensity}
-        onRainIntensityChange={setRainIntensity}
+        rainfallMmH={rainfallMmH}
+        onRainfallChange={setRainfallMmH}
+        pondingParams={pondingParams}
+        onPondingParamChange={handlePondingParamChange}
         autoWaterRise={autoWaterRise}
         onAutoWaterRiseChange={setAutoWaterRise}
         waterLevel={waterLevel}
@@ -125,7 +133,7 @@ export default function FloodModule() {
                   viewerRef={viewerRef}
                   layerVisibility={layerVisibility}
                 />
-                <RainSystem viewerRef={viewerRef} intensity={rainIntensity} />
+                <RainSystem viewerRef={viewerRef} intensity={rainVisualPercent} />
                 <FloodTraceOverlay
                   viewerRef={viewerRef}
                   activeScenarioId={activeScenarioId}
@@ -133,7 +141,7 @@ export default function FloodModule() {
                 <FloodVisualization
                   viewerRef={viewerRef}
                   waterLevel={waterLevel}
-                  rainIntensity={rainIntensity}
+                  rainIntensity={rainVisualPercent}
                   simulationOptions={simulationOptions}
                   onTerrainLoadingChange={handleTerrainLoadingChange}
                 />

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { bboxAroundPoint, bboxIntersects, featureBBox, featureInBBox } from './lib/bbox.js'
 import { reprojectCoord, reprojectFeature } from './lib/reproject.js'
+import { sanitizeFeature } from './lib/sanitize.js'
 
 describe('reproject', () => {
   it('EPSG:5179 강남역 부근 좌표를 WGS84로 변환', () => {
@@ -55,5 +56,19 @@ describe('bbox', () => {
     }
     const box = bboxAroundPoint(127.0267, 37.4975, 0.01)
     expect(featureInBBox(feature, box)).toBe(false)
+  })
+})
+
+describe('sanitizeFeature', () => {
+  it('작업자 로컬 경로(path)·layer 속성을 제거하고 나머지는 유지', () => {
+    const feature = {
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [127.03, 37.5] },
+      properties: { F_SHIM: 0.5, path: 'D:/someone/file.shp', layer: 'merged' },
+    }
+    const out = sanitizeFeature(feature)
+    expect(out.properties).toEqual({ F_SHIM: 0.5 })
+    expect(out.geometry).toBe(feature.geometry)
+    expect(feature.properties.path).toBeDefined()
   })
 })

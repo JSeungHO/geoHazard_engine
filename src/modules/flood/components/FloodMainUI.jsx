@@ -1,14 +1,15 @@
-import RainControl from './RainControl'
+import RainControl, { PondingParamsControl } from './RainControl'
 import WaterLevelControl from './WaterLevelControl'
 import SimulationOptions from './SimulationOptions'
 import ScenarioPanel from './ScenarioPanel'
 import CollapsibleSection from '../../../components/CollapsibleSection'
 import Panel from '../../../components/ui/Panel'
-import { rainIntensityToMmPerHour } from '../utils/displayUnits'
 
 export default function FloodMainUI({
-  rainIntensity,
-  onRainIntensityChange,
+  rainfallMmH,
+  onRainfallChange,
+  pondingParams,
+  onPondingParamChange,
   autoWaterRise,
   onAutoWaterRiseChange,
   waterLevel,
@@ -29,13 +30,14 @@ export default function FloodMainUI({
       <CollapsibleSection
         title="강우"
         defaultOpen
-        aside={rainIntensity > 0 ? `${rainIntensityToMmPerHour(rainIntensity)} mm/h` : null}
+        aside={rainfallMmH > 0 ? `${rainfallMmH} mm/h` : null}
       >
         <RainControl
-          intensity={rainIntensity}
-          onIntensityChange={onRainIntensityChange}
+          rainfallMmH={rainfallMmH}
+          onRainfallChange={onRainfallChange}
           autoAccumulate={autoWaterRise}
           onAutoAccumulateChange={onAutoWaterRiseChange}
+          pondingParams={pondingParams}
         />
       </CollapsibleSection>
 
@@ -43,7 +45,11 @@ export default function FloodMainUI({
         <WaterLevelControl waterLevel={waterLevel} onWaterLevelChange={onWaterLevelChange} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="시뮬레이션 옵션">
+      <CollapsibleSection title="배수 조건">
+        <PondingParamsControl pondingParams={pondingParams} onPondingParamChange={onPondingParamChange} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="수면 표현">
         <SimulationOptions
           options={simulationOptions}
           onOptionChange={onOptionChange}

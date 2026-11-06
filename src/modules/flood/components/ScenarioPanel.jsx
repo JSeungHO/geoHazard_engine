@@ -1,5 +1,4 @@
 import { SCENARIOS } from '../constants/scenarios'
-import { rainIntensityToMmPerHour } from '../utils/displayUnits'
 
 export default function ScenarioPanel({ onApply, activeScenarioId = null }) {
   return (
@@ -20,8 +19,8 @@ export default function ScenarioPanel({ onApply, activeScenarioId = null }) {
               <span className="option-row__desc">{scenario.description}</span>
             </span>
             <span className="option-row__meta">
-              <span>{rainIntensityToMmPerHour(scenario.rain)} mm/h</span>
-              <span>{scenario.autoRise ? '수위 자동' : `${scenario.water.toFixed(1)} m`}</span>
+              <span>{scenario.rain} mm/h</span>
+              <span>{scenario.autoRise ? '수위 계산' : `침수 ${scenario.water.toFixed(1)} m`}</span>
             </span>
           </button>
         )

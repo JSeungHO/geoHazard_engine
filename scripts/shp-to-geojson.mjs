@@ -15,6 +15,7 @@ import { open } from 'shapefile'
 import { bboxAroundPoint, featureInBBox } from './lib/bbox.js'
 import { readShapefileEncoding } from './lib/encoding.js'
 import { reprojectFeature } from './lib/reproject.js'
+import { sanitizeFeature } from './lib/sanitize.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -122,7 +123,7 @@ async function convertShapefile(opts) {
     if (result.done) break
     read += 1
 
-    const projected = reprojectFeature(result.value)
+    const projected = sanitizeFeature(reprojectFeature(result.value))
     if (!passesFilter(filterBBox, projected)) continue
 
     features.push(projected)
