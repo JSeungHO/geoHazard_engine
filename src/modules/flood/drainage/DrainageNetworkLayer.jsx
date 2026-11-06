@@ -90,7 +90,7 @@ export default function DrainageNetworkLayer({
 
     setup().catch((err) => {
       console.error('[DrainageNetworkLayer]', err)
-      report({ state: 'error', message: '배수망을 불러오지 못했습니다' })
+      report({ state: 'error', message: `배수망을 불러오지 못했습니다 — ${err?.message ?? err}` })
     })
 
     return () => {

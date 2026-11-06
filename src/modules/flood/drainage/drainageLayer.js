@@ -32,14 +32,41 @@ export async function loadDrainageGeometry(url = DRAINAGE_NETWORK_URL) {
 }
 
 /**
+ * Viewer의 지형이 실제 지형 공급자로 바뀔 때까지 대기.
+ * Viewer는 처음에 평평한 EllipsoidTerrainProvider로 시작하고 Cesium World Terrain은 비동기로 붙는다.
+ * 타일 가용성(availability)이 없는 공급자로는 sampleTerrainMostDetailed를 쓸 수 없다.
+ */
+export function waitForTerrainProvider(viewer, timeoutMs = 20_000) {
+  const ready = () => Boolean(viewer.terrainProvider?.availability)
+  if (ready()) return Promise.resolve(viewer.terrainProvider)
+
+  return new Promise((resolve, reject) => {
+    const started = performance.now()
+    const id = window.setInterval(() => {
+      if (viewer.isDestroyed?.()) {
+        window.clearInterval(id)
+        reject(new Error('viewer destroyed'))
+      } else if (ready()) {
+        window.clearInterval(id)
+        resolve(viewer.terrainProvider)
+      } else if (performance.now() - started > timeoutMs) {
+        window.clearInterval(id)
+        reject(new Error('지형 데이터가 준비되지 않았습니다 (Cesium Ion 토큰·네트워크 확인)'))
+      }
+    }, 200)
+  })
+}
+
+/**
  * 노드 지면 고도 샘플링 (Cesium World Terrain 최고 해상도)
  * @returns {Promise<Float64Array>}
  */
 export async function sampleGroundElevations(viewer, nodes, batchSize = 400) {
+  const terrainProvider = await waitForTerrainProvider(viewer)
   const out = new Float64Array(nodes.length)
   for (let start = 0; start < nodes.length; start += batchSize) {
     const batch = nodes.slice(start, start + batchSize).map((n) => Cartographic.fromDegrees(n.lon, n.lat))
-    const sampled = await sampleTerrainMostDetailed(viewer.terrainProvider, batch)
+    const sampled = await sampleTerrainMostDetailed(terrainProvider, batch)
     sampled.forEach((c, i) => {
       out[start + i] = Number.isFinite(c.height) ? c.height : NaN
     })
