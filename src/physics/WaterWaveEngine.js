@@ -11,7 +11,7 @@ export class WaterWaveEngine {
     this.damping = 0.994
     this.stiffness = 0.16
     this.timeScale = 0.32
-    this.maxAmplitude = 4.2
+    this.maxAmplitude = 0.3
   }
 
   step(deltaSeconds = 1 / 60) {

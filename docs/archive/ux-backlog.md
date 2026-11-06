@@ -572,4 +572,4 @@ import MobileWarning from './components/MobileWarning'
 
 - [기획·테스트 평가](./evaluation.md) — 문제 정의 원본
 - [구현 기능](./features.md) — 현재 컴포넌트 구조
-- [디자인 가이드](./design.md) — UI 레이아웃 개요
+- [디자인 가이드](../design.md) — UI 레이아웃 개요

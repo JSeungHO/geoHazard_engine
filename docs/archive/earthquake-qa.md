@@ -91,7 +91,7 @@ npm run qa:earthquake  # Playwright QA 스크립트
 
 ### 원인 분석
 
-`estimateLiquefactionAreaKm2` ([earthquakeLiquefactionLayer.js:94](../src/modules/earthquake/utils/earthquakeLiquefactionLayer.js#L94))는 **32×32 샘플 캔버스**로 면적을 추정한다.
+`estimateLiquefactionAreaKm2` ([earthquakeLiquefactionLayer.js:94](../../src/modules/earthquake/utils/earthquakeLiquefactionLayer.js#L94))는 **32×32 샘플 캔버스**로 면적을 추정한다.
 
 ```
 bounds 폭 ≈ 21.56° → 32픽셀 = 픽셀당 약 61km
@@ -194,7 +194,7 @@ const liquefactionAreaKm2 = event.type === 'main' && summary.maxMMI >= 6
 
 | 파일 | 용도 |
 |------|------|
-| [scripts/qa/earthquake.mjs](../scripts/qa/earthquake.mjs) | 전체 QA Playwright 스크립트 |
+| [scripts/qa/earthquake.mjs](../../scripts/qa/earthquake.mjs) | 전체 QA Playwright 스크립트 |
 | `qa-screenshots/` | 스크린샷 출력 폴더 (git 미추적, 실행 시 생성) |
 | [earthquake-plan.md](./earthquake-plan.md) | §13 체크리스트 원본 |
 | [earthquake-status.md](./earthquake-status.md) | 모듈 현황 |

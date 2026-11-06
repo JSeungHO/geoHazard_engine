@@ -1,7 +1,7 @@
 export const DEFAULT_SIMULATION_OPTIONS = {
   waveTimeScale: 0.32,
   waveStiffness: 0.16,
-  waveMaxAmplitude: 4.2,
+  waveMaxAmplitude: 0.3,
   rainImpactStrength: 0.03,
   glintStrength: 0.78,
   reflectivity: 0.48,
@@ -16,7 +16,7 @@ export const WAVE_PRESETS = [
     values: {
       waveTimeScale: 0.12,
       waveStiffness: 0.08,
-      waveMaxAmplitude: 1.8,
+      waveMaxAmplitude: 0.1,
       rainImpactStrength: 0.01,
       glintStrength: 0.35,
       reflectivity: 0.65,
@@ -35,7 +35,7 @@ export const WAVE_PRESETS = [
     values: {
       waveTimeScale: 0.75,
       waveStiffness: 0.35,
-      waveMaxAmplitude: 8.0,
+      waveMaxAmplitude: 0.6,
       rainImpactStrength: 0.12,
       glintStrength: 1.8,
       reflectivity: 0.3,
@@ -59,7 +59,7 @@ export function findActivePresetId(options) {
 export const SIMULATION_OPTION_RANGES = {
   waveTimeScale: { min: 0.1, max: 1.0, step: 0.01, unit: '×' },
   waveStiffness: { min: 0.05, max: 0.4, step: 0.01, unit: '' },
-  waveMaxAmplitude: { min: 1, max: 8, step: 0.1, unit: 'm' },
+  waveMaxAmplitude: { min: 0.05, max: 1, step: 0.05, unit: 'm' },
   rainImpactStrength: { min: 0.01, max: 0.15, step: 0.01, unit: '' },
   glintStrength: { min: 0, max: 2.5, step: 0.05, unit: '×' },
   reflectivity: { min: 0.2, max: 1.0, step: 0.01, unit: '' },

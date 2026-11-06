@@ -20,9 +20,9 @@ const OPTION_SECTIONS = [
       },
       {
         key: 'waveMaxAmplitude',
-        label: '파도 최대 높이',
-        hint: '수면 출렁임 한계',
-        format: (v) => `${v.toFixed(1)} m`,
+        label: '수면 출렁임 상한',
+        hint: '파동 높이 제한 — 도로 침수 수면 표현용',
+        format: (v) => `${v.toFixed(2)} m`,
       },
       {
         key: 'rainImpactStrength',

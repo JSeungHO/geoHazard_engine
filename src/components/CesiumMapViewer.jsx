@@ -14,7 +14,7 @@ const resizeViewer = (viewer) => {
 
 /**
  * Cesium Viewer는 이 컴포넌트에서 단 한 번만 마운트된다.
- * viewer 인스턴스는 부모의 viewerRef에 저장한다 (PROJECT_PLAN.md).
+ * viewer 인스턴스는 부모의 viewerRef에 저장한다 (docs/architecture.md).
  */
 function CesiumMapViewer({ viewerRef, mapContainerRef, onViewerReady, initialLocation }) {
   const resiumRef = useRef(null)

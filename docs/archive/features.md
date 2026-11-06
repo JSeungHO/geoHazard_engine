@@ -315,4 +315,4 @@ MODULE_REGISTRY = [
 - [쓰나미 Phase 1 기획서](./tsunami-phase1.md)
 - [성능 2차 기획서](./perf-phase2.md)
 - [작업 목표](./goals.md)
-- [디자인 가이드](./design.md)
+- [디자인 가이드](../design.md)

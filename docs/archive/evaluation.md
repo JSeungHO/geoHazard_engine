@@ -336,4 +336,4 @@ src/utils/flyToGangnam.js         ← 강남 flyTo
 
 - [구현 기능](./features.md)
 - [작업 목표](./goals.md) — 평가 반영 수정 로드맵
-- [디자인 가이드](./design.md) — UX 개선 백로그·UI 스펙
+- [디자인 가이드](../design.md) — UX 개선 백로그·UI 스펙

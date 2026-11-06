@@ -199,4 +199,4 @@ npx vitest run                     # 단위 테스트
 - [구현 기능](./features.md) — 현재 코드·아키텍처 상세
 - [성능 2차 기획서](./perf-phase2.md) — P-1~P-5 최적화
 - [기획·테스트 평가](./evaluation.md) — 완료 체크리스트
-- [디자인 가이드](./design.md) — UI 레이아웃·토큰
+- [디자인 가이드](../design.md) — UI 레이아웃·토큰

@@ -3,7 +3,7 @@
 > 작성일: 2026-05-24  
 > 대상 브랜치: `dev`  
 > 상태: **기획 중**  
-> 참조: [earthquake-plan.md](./earthquake-plan.md), [design.md](./design.md)
+> 참조: [earthquake-plan.md](./earthquake-plan.md), [design.md](../design.md)
 
 ---
 
@@ -405,5 +405,5 @@ src/modules/earthquake/
 |------|------|
 | [earthquake-plan.md](./earthquake-plan.md) | 물리 모델·Phase 계획·하지 말아야 할 것 |
 | [tsunami-phase1.md](./tsunami-phase1.md) | 재사용 패턴 참고 (ring, ScrubBar, 타임라인) |
-| [design.md](./design.md) | 컬러 팔레트·레이아웃 토큰 |
+| [design.md](../design.md) | 컬러 팔레트·레이아웃 토큰 |
 | [features.md](./features.md) | 모듈 라우터 구조 |
