@@ -14,7 +14,8 @@
     "qa:flood": "node scripts/qa/flood-heavy-rain.mjs",
     "qa:readme": "node scripts/qa/capture-readme.mjs",
     "data:shp2geojson": "node scripts/shp-to-geojson.mjs",
-    "data:publish-flood-trace": "npm run data:shp2geojson && node scripts/copy-flood-trace-to-public.mjs"
+    "data:publish-flood-trace": "npm run data:shp2geojson && node scripts/copy-flood-trace-to-public.mjs",
+    "data:drainage": "node scripts/build-drainage-network.mjs"
   },
   "dependencies": {
     "cesium": "^1.141.0",

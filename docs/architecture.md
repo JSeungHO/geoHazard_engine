@@ -27,6 +27,7 @@ src/
 │   └── tsunami/                 보류 — registry 미등록
 ├── physics/                     렌더링과 무관한 순수 계산 (단위 테스트 대상)
 │   ├── UrbanPondingModel.js     강우–배수 저류 모델
+│   ├── DrainageNetworkModel.js  배수망(빗물받이·맨홀·관로) 수리 모델
 │   ├── EarthquakeWaveModel.js   지진파 전파·진도
 │   ├── WaterWaveEngine.js       수면 2D 파동 (시각 효과)
 │   ├── TsunamiWaveModel.js      보류
@@ -38,6 +39,7 @@ src/
 
 scripts/
 ├── shp-to-geojson.mjs           침수흔적도 Shapefile → WGS84 GeoJSON (+ lib/)
+├── build-drainage-network.mjs   OSM 도로망 → 추정 배수망 JSON
 ├── copy-flood-trace-to-public.mjs
 └── qa/                          Playwright 브라우저 QA (lib.mjs 공통 설정)
 ```
@@ -87,6 +89,14 @@ scripts/
               └── WaterWaveEngine: 수면 출렁임 (시각 효과, 수위 계산과 무관)
 
 2022 시나리오 ─► FloodTraceOverlay ─► public/data/seoul-flood-2022-gangnam.geojson
+
+배수망 (drainage/)
+  public/data/gangnam-drainage-network.json   ← npm run data:drainage (OSM 도로 → 맨홀·관로·빗물받이)
+   └─► DrainageNetworkLayer
+        ├── sampleGroundElevations: 맨홀 지면 고도 (1회 캐시)
+        ├── buildDrainageNetwork: 방류구·흐름 트리·관경·관저고 (설계 강우 바뀌면 재구성)
+        ├── DrainageNetworkModel.step: 강우 → 빗물받이 → 관로 → 방류구, 만관·역류
+        └── drainageLayer: PolylineCollection(관로) · PointPrimitiveCollection(맨홀) 색상 갱신
 ```
 
 침수·강수 범위는 카메라가 보는 지표 범위(`utils/floodViewBounds.js`)를 공유합니다. 카메라 pitch가 수평에 가까울수록 지평선 쪽을 잘라 냅니다.

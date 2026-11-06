@@ -4,6 +4,7 @@ import SimulationOptions from './SimulationOptions'
 import ScenarioPanel from './ScenarioPanel'
 import CollapsibleSection from '../../../components/CollapsibleSection'
 import Panel from '../../../components/ui/Panel'
+import DrainagePanel from '../drainage/DrainagePanel'
 
 export default function FloodMainUI({
   rainfallMmH,
@@ -20,6 +21,7 @@ export default function FloodMainUI({
   onScenarioApply,
   activeScenarioId,
   onReset,
+  drainage,
 }) {
   return (
     <Panel title="도시 침수" location="서울 강남구 · 강남역 일대" onReset={onReset} label="침수 시뮬레이션 설정">
@@ -43,6 +45,14 @@ export default function FloodMainUI({
 
       <CollapsibleSection title="수위" defaultOpen aside={`${Number(waterLevel).toFixed(2)} m`}>
         <WaterLevelControl waterLevel={waterLevel} onWaterLevelChange={onWaterLevelChange} />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="배수망"
+        defaultOpen
+        aside={drainage.summary?.overflowingManholes ? `역류 ${drainage.summary.overflowingManholes}` : null}
+      >
+        <DrainagePanel {...drainage} />
       </CollapsibleSection>
 
       <CollapsibleSection title="배수 조건">

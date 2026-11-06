@@ -1,0 +1,61 @@
+.drainage-legend {
+  position: absolute;
+  right: 12px;
+  bottom: calc(var(--statusbar-height) + 12px);
+  z-index: 30;
+  padding: 10px 12px;
+}
+
+.drainage-legend__title {
+  margin-bottom: 8px;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.drainage-legend__unit {
+  margin-left: 4px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.drainage-legend__list {
+  display: flex;
+  gap: 12px;
+  list-style: none;
+}
+
+.drainage-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  cursor: default;
+}
+
+.drainage-legend__swatch {
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.drainage-legend__swatch--outfall {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--data-water);
+  border-radius: 50%;
+  background: #fff;
+}
+
+.drainage-spin {
+  vertical-align: -2px;
+  color: var(--accent);
+  animation: drainage-spin 0.9s linear infinite;
+}
+
+@keyframes drainage-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -54,3 +54,16 @@ npm run data:publish-flood-trace
 
 데이터 출처·이용 조건은 **서울시 공개 데이터** 정책을 따릅니다.  
 배포·데모에는 가공된 GeoJSON만 포함하고, 원본 Shapefile은 로컬·CI 아티팩트로 관리합니다.
+
+## 추정 배수망 (OpenStreetMap)
+
+실제 하수관로 위치 자료는 공개되어 있지 않아, OSM 도로 중심선을 관로 경로로 가정한 배수망을 생성합니다.
+
+```bash
+npm run data:drainage                      # Overpass API 조회 (인터넷 필요)
+npm run data:drainage -- --input osm.json  # 저장해 둔 Overpass 응답 사용
+```
+
+출력: `public/data/gangnam-drainage-network.json` (맨홀 노드·관로 링크·빗물받이 수·집수 면적). 가정은 [docs/model.md §1.5](../docs/model.md)를 참고하세요. 도로 데이터 © OpenStreetMap contributors (ODbL 1.0).
+
+프록시 환경에서 Node 22.21 이상이라면 `NODE_USE_ENV_PROXY=1 npm run data:drainage`로 실행합니다.

@@ -15,6 +15,7 @@
 - 개발 과정 문서 16개를 `docs/archive/`로 이동, `PROJECT_PLAN.md` 삭제
 
 ### Added
+- 추정 배수망: OSM 도로 기반 맨홀·관로·빗물받이 생성(`npm run data:drainage`), 배수망 수리 모델(만관·역류·배수 영향), 지도 충수 상태 표시·범례, 빗물받이 막힘률·관로 설계 강우 조절
 - `docs/model.md`: 모델 가정·파라미터 출처·검증·한계
 - `docs/architecture.md`(코드 구조·데이터 흐름·Cesium 제약), `docs/roadmap.md`
 - 지진 진도 관측 대비 검증 테스트 (알려진 오차 3건은 `it.fails`로 고정)

@@ -11,6 +11,8 @@ import MapStatusBar from '../../components/MapStatusBar'
 import SimulationErrorBoundary from '../../components/SimulationErrorBoundary'
 import WelcomeOverlay from './components/WelcomeOverlay'
 import TerrainLoadingBadge from './components/TerrainLoadingBadge'
+import DrainageNetworkLayer from './drainage/DrainageNetworkLayer'
+import DrainageLegend from './drainage/DrainageLegend'
 import { DEFAULT_SIMULATION_OPTIONS } from './constants/simulationDefaults'
 import { DEFAULT_LAYER_VISIBILITY } from '../../constants/sceneLayers'
 import useRainWaterAccumulation from './hooks/useRainWaterAccumulation'
@@ -18,6 +20,13 @@ import useMapLayout from './hooks/useMapLayout'
 import { flyToGangnam } from '../../locations/gangnam'
 import { rainfallToVisualPercent } from './utils/displayUnits'
 import { PONDING_DEFAULTS } from '../../physics/UrbanPondingModel'
+import { DRAINAGE_DEFAULTS } from '../../physics/DrainageNetworkModel'
+import { BUILDER_DEFAULTS } from '../../utils/drainageNetworkBuilder'
+
+const DRAINAGE_PARAM_DEFAULTS = {
+  inletClogging: DRAINAGE_DEFAULTS.inletClogging,
+  designRainMmH: BUILDER_DEFAULTS.designRainMmH,
+}
 import './FloodModule.css'
 
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN
@@ -38,6 +47,10 @@ export default function FloodModule() {
   const [isTerrainLoading, setIsTerrainLoading] = useState(false)
   const [simulationEpoch, setSimulationEpoch] = useState(0)
   const [activeScenarioId, setActiveScenarioId] = useState(null)
+  const [drainageVisible, setDrainageVisible] = useState(true)
+  const [drainageParams, setDrainageParams] = useState(DRAINAGE_PARAM_DEFAULTS)
+  const [drainageStatus, setDrainageStatus] = useState(null)
+  const [drainageSummary, setDrainageSummary] = useState(null)
 
   const handleViewerReady = useCallback(() => {
     setIsViewerReady(true)
@@ -49,6 +62,10 @@ export default function FloodModule() {
 
   const handlePondingParamChange = useCallback((key, value) => {
     setPondingParams((prev) => ({ ...prev, [key]: value }))
+  }, [])
+
+  const handleDrainageParamChange = useCallback((key, value) => {
+    setDrainageParams((prev) => ({ ...prev, [key]: value }))
   }, [])
 
   const handleLayerVisibilityChange = useCallback((layerId, visible) => {
@@ -76,6 +93,7 @@ export default function FloodModule() {
   const handleReset = useCallback(() => {
     setRainfallMmH(0)
     setPondingParams(PONDING_DEFAULTS)
+    setDrainageParams(DRAINAGE_PARAM_DEFAULTS)
     setWaterLevel(0)
     setAutoWaterRise(false)
     setSimulationOptions(DEFAULT_SIMULATION_OPTIONS)
@@ -112,6 +130,14 @@ export default function FloodModule() {
         onScenarioApply={handleScenarioApply}
         activeScenarioId={activeScenarioId}
         onReset={handleReset}
+        drainage={{
+          visible: drainageVisible,
+          onVisibleChange: setDrainageVisible,
+          status: drainageStatus,
+          summary: drainageSummary,
+          params: drainageParams,
+          onParamChange: handleDrainageParamChange,
+        }}
       />
 
       <div className="flood-module-stage">
@@ -138,6 +164,16 @@ export default function FloodModule() {
                   viewerRef={viewerRef}
                   activeScenarioId={activeScenarioId}
                 />
+                <DrainageNetworkLayer
+                  viewerRef={viewerRef}
+                  visible={drainageVisible}
+                  rainfallMmH={rainfallMmH}
+                  inletClogging={drainageParams.inletClogging}
+                  designRainMmH={drainageParams.designRainMmH}
+                  epoch={simulationEpoch}
+                  onStatusChange={setDrainageStatus}
+                  onSummaryChange={setDrainageSummary}
+                />
                 <FloodVisualization
                   viewerRef={viewerRef}
                   waterLevel={waterLevel}
@@ -146,6 +182,7 @@ export default function FloodModule() {
                   onTerrainLoadingChange={handleTerrainLoadingChange}
                 />
               </SimulationErrorBoundary>
+              {drainageVisible && drainageStatus?.state === 'ready' && <DrainageLegend />}
               <SceneLayersPanel
                 layerVisibility={layerVisibility}
                 onLayerVisibilityChange={handleLayerVisibilityChange}
